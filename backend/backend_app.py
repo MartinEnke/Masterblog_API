@@ -31,6 +31,9 @@ def get_posts():
     sort_field = request.args.get("sort")
     direction = request.args.get("direction", "asc")
 
+    page = int(request.args.get("page", 1))
+    limit = int(request.args.get("limit", 5))
+
     # Copy original list to avoid modifying global state
     sorted_posts = POSTS.copy()
 
@@ -44,7 +47,17 @@ def get_posts():
         reverse = direction == "desc"
         sorted_posts.sort(key=lambda post: post[sort_field].lower(), reverse=reverse)
 
-    return jsonify(sorted_posts)
+    # Pagination
+    start = (page - 1) * limit
+    end = start + limit
+    paginated_posts = sorted_posts[start:end]
+
+    return jsonify({
+        "page": page,
+        "limit": limit,
+        "total_posts": len(sorted_posts),
+        "posts": paginated_posts
+    })
 
 
 @app.route('/api/posts', methods=['POST'])
