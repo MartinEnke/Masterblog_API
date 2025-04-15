@@ -26,9 +26,25 @@ def validate_post_data(data):
     return None  # No errors
 
 
-@app.route('/api/posts', methods=['GET'])
+@app.route("/api/posts", methods=["GET"])
 def get_posts():
-    return jsonify(POSTS)
+    sort_field = request.args.get("sort")
+    direction = request.args.get("direction", "asc")
+
+    # Copy original list to avoid modifying global state
+    sorted_posts = POSTS.copy()
+
+    # If sorting is requested
+    if sort_field:
+        if sort_field not in ["title", "content"]:
+            return jsonify({"error": "Invalid sort field. Use 'title' or 'content'."}), 400
+        if direction not in ["asc", "desc"]:
+            return jsonify({"error": "Invalid direction. Use 'asc' or 'desc'."}), 400
+
+        reverse = direction == "desc"
+        sorted_posts.sort(key=lambda post: post[sort_field].lower(), reverse=reverse)
+
+    return jsonify(sorted_posts)
 
 
 @app.route('/api/posts', methods=['POST'])
