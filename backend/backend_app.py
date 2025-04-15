@@ -66,7 +66,6 @@ def delete_post(post_id):
 
 @app.route("/api/posts/<int:post_id>", methods=['PUT'])
 def update_post(post_id):
-    global POSTS
     for post in POSTS:
         if post['id'] == post_id:
             new_data = request.get_json()
@@ -81,6 +80,24 @@ def update_post(post_id):
 
             return jsonify(post), 200
     return jsonify({"error": f"Post with ID {post_id} not found"}), 404
+
+
+@app.route("/api/posts/search", methods=['GET'])
+def search_post():
+    search_text = request.args.get("q", "").lower()
+    if not search_text:
+        return jsonify({"error": "Please provide a search term using '?q=your_query'"}), 400
+
+    # Find all matches (case-insensitive)
+    results = [
+        post for post in POSTS
+        if search_text in post['title'].lower() or search_text in post['content'].lower()
+    ]
+
+    if not results:
+        return jsonify({"error": f"No posts found matching '{search_text}'"}), 404
+
+    return jsonify(results), 200
 
 
 if __name__ == '__main__':
