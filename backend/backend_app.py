@@ -24,6 +24,7 @@ def validate_post_data(data):
 def get_posts():
     return jsonify(POSTS)
 
+
 @app.route('/api/posts', methods=['POST'])
 def add_post():
     data = request.get_json()
@@ -43,5 +44,19 @@ def add_post():
     return jsonify(new_post), 201
 
 
+@app.route("/api/posts/<int:post_id>", methods=['DELETE'])
+def delete_post(post_id):
+    global POSTS
+    for post in POSTS:
+        if post['id'] == post_id:
+            break
+    else:
+        # This else runs only if the for-loop completes WITHOUT breaking
+        return jsonify({"error": f"{post_id} not found"}), 404
+
+    POSTS = [post for post in POSTS if post["id"] != post_id]
+    return jsonify({"message": f"Post {post_id} deleted"}), 200
+
+
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5020, debug=True)
+    app.run(host="0.0.0.0", port=5019, debug=True)
