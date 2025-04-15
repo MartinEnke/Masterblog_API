@@ -9,6 +9,12 @@ POSTS = [
     {"id": 2, "title": "Second post", "content": "This is the second post."},
 ]
 
+
+@app.route("/", methods=['GET'])
+def home():
+    return "Hello, FLASK API"
+
+
 def validate_post_data(data):
     '''Reusable data validation'''
     if not data:
@@ -56,6 +62,25 @@ def delete_post(post_id):
 
     POSTS = [post for post in POSTS if post["id"] != post_id]
     return jsonify({"message": f"Post {post_id} deleted"}), 200
+
+
+@app.route("/api/posts/<int:post_id>", methods=['PUT'])
+def update_post(post_id):
+    global POSTS
+    for post in POSTS:
+        if post['id'] == post_id:
+            new_data = request.get_json()
+
+            # Call data validator
+            error = validate_post_data(new_data)
+            if error:
+                return jsonify(error), 400
+
+            post['title'] = new_data['title']
+            post['content'] = new_data['content']
+
+            return jsonify(post), 200
+    return jsonify({"error": f"Post with ID {post_id} not found"}), 404
 
 
 if __name__ == '__main__':
