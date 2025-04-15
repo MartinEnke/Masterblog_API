@@ -1,0 +1,39 @@
+[
+    {
+        "id": 1,
+        "author": "Martin",
+        "title": "The Anomaly Of H\u2082O - The Stuff That Defies The Rules",
+        "content": "The Anomaly of H\u2082O refers to the unique and unusual behaviors of water that defy typical scientific expectations for liquids. Most substances contract when frozen, but water expands\u2014making ice less dense and able to float, insulating life below. Water also has an unusually high heat capacity, allowing it to regulate Earth\u2019s temperature and support stable ecosystems. These anomalies arise from hydrogen bonding, a subtle but powerful molecular force that gives water its life-sustaining qualities. While strange from a physics perspective, these properties are precisely what make water essential for life as we know it.",
+        "date": "April 10, 2025",
+        "category": "Chemistry",
+        "likes": 11
+    },
+    {
+        "id": 2,
+        "author": "Martin",
+        "title": "A Moon Like No Other",
+        "content": "Earth\u2019s Moon Is Huge \u2014 Without this oversized companion, Earth might have faced wild climate shifts, unstable seasons, and a much more hostile environment for complex life to develop. Most moons in the solar system are tiny compared to their planets, but Earth\u2019s moon is over 1/4 the size of Earth in diameter, making it a true anomaly. This large size has played a crucial role in stabilizing Earth\u2019s axial tilt, which keeps our climate relatively stable over long periods\u2014essential for the evolution of life. The Moon's gravitational pull has also gradually slowed Earth\u2019s rotation, turning what were once chaotic, fast-spinning days into the 24-hour cycle that supports biological rhythms.",
+        "date": "April 11, 2025",
+        "category": "Astronomy",
+        "likes": 8
+    },
+    {
+        "id": 3,
+        "author": "Martin",
+        "title": "The Tunnel Effect \u2013 A Quantum Shortcut To Life",
+        "content": "In classical physics, particles like protons shouldn\u2019t be able to fuse in a star\u2019s core \u2014 their positive charges repel with immense force, creating a seemingly insurmountable energy barrier. But quantum mechanics tells a stranger story. In stars like our Sun, quantum tunneling allows protons to fuse into helium, even at temperatures and pressures lower than classical physics would require. Without it, stars couldn\u2019t produce enough energy to shine steadily \u2014 fusion would be far too rare. But because of tunneling, stars burn, radiate light and heat, and ultimately synthesize the heavier elements that life depends on. It\u2019s the reason we have sunlight, planets, and the chemistry of life. The tunnel effect isn\u2019t just a theoretical curiosity. It\u2019s the invisible magic behind everything warm and living.",
+        "date": "April 12, 2025",
+        "category": "Quantum Physics",
+        "likes": 11,
+        "updated": "April 15, 2025"
+    },
+    {
+        "id": 4,
+        "author": "Martin",
+        "title": "The Beryllium Barrier \u2014 A Brief Pause In The Making Of Life",
+        "content": "Inside the hearts of stars, helium burns and fuses in a cosmic fire. But when two helium nuclei collide, they form something deeply unstable: beryllium-8, a nucleus so fragile it vanishes almost as soon as it appears. This momentary pause is known as the beryllium barrier \u2014 a kind of nuclear dead end. And yet, against the clock, something extraordinary happens. In only the tiniest sliver of time, unimaginable 10\u207b\u00b9\u2076 seconds to be precise, a third helium nucleus can strike this vanishing beryllium and fuse to form carbon-12 \u2014 the backbone of life. This process only works because of a precise quantum resonance, a hidden harmonic in carbon known as the Hoyle state. Without that specific resonance, the universe might never have made carbon. The stars would burn, but they wouldn\u2019t build. And we wouldn\u2019t be here to wonder about it.",
+        "date": "April 13, 2025",
+        "category": "Chemistry",
+        "likes": 17
+    }
+]
