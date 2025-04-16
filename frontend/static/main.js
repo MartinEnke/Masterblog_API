@@ -11,6 +11,13 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
+document.getElementById('search-input').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        searchPosts(); // your custom function
+    }
+});
+
+
 // Function to fetch all the posts from the API and display them on the page
 function loadPosts() {
     const baseUrl = document.getElementById('api-base-url').value;
@@ -213,9 +220,12 @@ function likePost(postId) {
 
 function searchPosts() {
     const baseUrl = document.getElementById('api-base-url').value;
-    const query = document.getElementById('search-query').value.trim();
+    const query = document.getElementById('search-input').value.trim();
 
-    if (!query) return;
+    if (!query) {
+        loadPosts(); // fallback
+        return;
+    }
 
     fetch(`${baseUrl}/posts/search?q=${encodeURIComponent(query)}`)
         .then(response => response.json())
@@ -223,19 +233,37 @@ function searchPosts() {
             const postContainer = document.getElementById('post-container');
             postContainer.innerHTML = '';
 
-            const posts = data.posts || data;
-
-            if (!posts.length) {
-                postContainer.innerHTML = "<p>No posts found matching your search.</p>";
+            if (data.error) {
+                postContainer.innerHTML = `<p>${data.error}</p>`;
                 return;
             }
 
-            posts.forEach(renderPost); // You can abstract out the rendering to avoid repeating code
+            const posts = data.posts || data;
+
+            posts.forEach(post => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+
+                const title = document.createElement('h2');
+                title.textContent = post.title;
+
+                const content = document.createElement('p');
+                content.textContent = post.content;
+
+                const date = document.createElement('p');
+                date.textContent = `${post.date || 'No date'}`;
+                date.style.fontStyle = 'italic';
+
+                postDiv.appendChild(title);
+                postDiv.appendChild(content);
+                postDiv.appendChild(date);
+
+                postContainer.appendChild(postDiv);
+            });
         })
-        .catch(err => {
-            console.error("Search failed:", err);
-        });
+        .catch(error => console.error('Search error:', error));
 }
+
 
 
 function renderPost(post) {
