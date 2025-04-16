@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCategories();
     loadPosts();
     updateAuthButton();  // Add this line
+    updateUserInfo();
 });
 
 
@@ -512,7 +513,9 @@ function submitLogin() {
     .then(data => {
     if (data.token) {
         localStorage.setItem("authToken", data.token);
-        updateAuthButton();  // ✅ Add this!
+        localStorage.setItem("username", username);  // store username and password
+        updateUserInfo();
+        updateAuthButton();
         alert("🎉 Logged in successfully!");
         closeLoginModal();
         loadPosts();
@@ -606,6 +609,8 @@ function submitSignup() {
     if (!loginData || !loginData.token) return;
 
     localStorage.setItem("authToken", loginData.token);
+    localStorage.setItem("username", username);
+    updateUserInfo();     // 👈 To show the username on the page
     updateAuthButton();         // 👈 update login/logout state
     closeSignupModal();
     loadPosts();
@@ -628,6 +633,17 @@ function handleLoginToggle() {
 function updateLoginButton() {
   const token = localStorage.getItem("authToken");
   document.getElementById('login-toggle-btn').textContent = token ? "Logout" : "Login";
+}
+
+function updateUserInfo() {
+  const username = localStorage.getItem("username");
+  const userInfo = document.getElementById("user-info");
+
+  if (username) {
+    userInfo.textContent = `👋 Welcome, ${username}`;
+  } else {
+    userInfo.textContent = ""; // leer wenn ausgeloggt
+  }
 }
 
 // Call this when DOM loads

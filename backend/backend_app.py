@@ -1,3 +1,6 @@
+
+''' username show if login, author add, author username connect for edit or delete'''
+
 from flask_cors import CORS
 import json
 from datetime import datetime
