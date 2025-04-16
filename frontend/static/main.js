@@ -1,13 +1,14 @@
 let categories = [];
 
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
     const savedBaseUrl = localStorage.getItem('apiBaseUrl');
     if (savedBaseUrl) {
         document.getElementById('api-base-url').value = savedBaseUrl;
     }
-    loadCategories(); // Always load categories after DOM is ready
-    loadPosts();      // Load posts (optional if base URL is prefilled)
+
+    loadCategories();
+    loadPosts();
 });
 
 
@@ -113,43 +114,45 @@ function loadPosts() {
 
 // Function to send a POST request to the API to add a new post
 function addPost() {
-    // Retrieve the values from the input fields
-    var baseUrl = document.getElementById('api-base-url').value;
-    var postTitle = document.getElementById('post-title').value;
-    var postContent = document.getElementById('post-content').value;
-    var postCategory = document.getElementById('post-category').value;
+    const baseUrl = document.getElementById('api-base-url').value;
 
-    // Use the Fetch API to send a POST request to the /posts endpoint
-    fetch(baseUrl + '/posts', {
+    fetch(`${baseUrl}/posts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-            title: postTitle,
-            content: postContent,
-            category: postCategory
+            title: document.getElementById('add-title').value,
+            content: document.getElementById('add-content').value,
+            category: document.getElementById('add-category').value,
+            author: "Anonymous"  // ← now correctly separated
         })
     })
     .then(response => response.json())
     .then(post => {
         console.log('Post added:', post);
         loadPosts();
+        closeModal(); // Optionally close the modal here
     })
     .catch(error => console.error('Error:', error));
 }
 
+
 // Function to send a DELETE request to the API to delete a post
 function deletePost(postId) {
-    var baseUrl = document.getElementById('api-base-url').value;
+    const confirmed = confirm("🗑️ Are you sure you want to delete this post?");
+    if (!confirmed) return;
 
-    // Use the Fetch API to send a DELETE request to the specific post's endpoint
-    fetch(baseUrl + '/posts/' + postId, {
+    const baseUrl = document.getElementById('api-base-url').value;
+
+    fetch(`${baseUrl}/posts/${postId}`, {
         method: 'DELETE'
     })
     .then(response => {
-        console.log('Post deleted:', postId);
-        loadPosts(); // Reload the posts after deleting one
+        console.log('✅ Post deleted:', postId);
+        loadPosts();
     })
-    .catch(error => console.error('Error:', error));  // If an error occurs, log it to the console
+    .catch(error => console.error('❌ Error deleting post:', error));
 }
 
 
@@ -161,34 +164,40 @@ function loadCategories() {
     fetch(baseUrl + '/categories')
         .then(response => response.json())
         .then(fetchedCategories => {
-            categories = fetchedCategories; // ✅ store globally!
+            console.log("✅ Categories received:", fetchedCategories);
+            categories = fetchedCategories; // update global list
 
-            console.log("✅ Categories received:", categories);
-
-            const categorySelect = document.getElementById('post-category');
+            // Get dropdowns
             const filterSelect = document.getElementById('filter-category');
+            const addSelect = document.getElementById('add-category');
             const editSelect = document.getElementById('edit-category');
 
-            if (!categorySelect) console.warn("⚠️ post-category not found");
-            if (!filterSelect) console.warn("⚠️ filter-category not found");
-            if (!editSelect) console.warn("⚠️ edit-category not found");
+            // 🧼 Clear & repopulate Filter dropdown
+            if (filterSelect) {
+                filterSelect.innerHTML = '<option value="">All Categories</option>';
+                categories.forEach(cat => {
+                    const opt = new Option(cat, cat);
+                    filterSelect.appendChild(opt);
+                });
+            }
 
-            if (!categorySelect || !filterSelect || !editSelect) return;
+            // 🧼 Clear & repopulate Add dropdown
+            if (addSelect) {
+                addSelect.innerHTML = '<option value="">Select Category</option>';
+                categories.forEach(cat => {
+                    const opt = new Option(cat, cat);
+                    addSelect.appendChild(opt);
+                });
+            }
 
-            // Reset dropdowns
-            categorySelect.innerHTML = '<option value="">Select Category</option>';
-            filterSelect.innerHTML = '<option value="">All Categories</option>';
-            editSelect.innerHTML = '<option value="">Select Category</option>';
-
-            categories.forEach(cat => {
-                const opt1 = new Option(cat, cat);
-                const opt2 = new Option(cat, cat);
-                const opt3 = new Option(cat, cat);
-
-                categorySelect.appendChild(opt1);
-                filterSelect.appendChild(opt2);
-                editSelect.appendChild(opt3);
-            });
+            // 🧼 Clear & repopulate Edit dropdown (leave selection logic to `openEditModal`)
+            if (editSelect) {
+                editSelect.innerHTML = '<option value="">Select Category</option>';
+                categories.forEach(cat => {
+                    const opt = new Option(cat, cat);
+                    editSelect.appendChild(opt);
+                });
+            }
         })
         .catch(error => {
             console.error("❌ Failed to load categories:", error);
@@ -322,31 +331,17 @@ function openEditModal(post) {
     document.getElementById('edit-content').value = post.content;
 
     const dropdown = document.getElementById('edit-category');
-    dropdown.innerHTML = ''; // Clear old options
-
-    let categoryFound = false;
+    dropdown.innerHTML = '';
 
     categories.forEach(cat => {
         const option = document.createElement('option');
         option.value = cat;
         option.textContent = cat;
-
         if (cat.trim().toLowerCase() === post.category.trim().toLowerCase()) {
             option.selected = true;
-            categoryFound = true;
         }
-
         dropdown.appendChild(option);
     });
-
-    // Only add fallback if no matching category was found
-    if (!categoryFound) {
-        const fallbackOption = document.createElement('option');
-        fallbackOption.value = post.category;
-        fallbackOption.textContent = post.category;
-        fallbackOption.selected = true;
-        dropdown.appendChild(fallbackOption);
-    }
 
     document.getElementById('update-modal').classList.remove('hidden');
 }
@@ -363,7 +358,8 @@ function submitUpdate() {
     const updatedPost = {
         title: document.getElementById('edit-title').value,
         content: document.getElementById('edit-content').value,
-        category: document.getElementById('edit-category').value
+        category: document.getElementById('edit-category').value,
+        author: "Anonymous"  // ← now correctly separated
     };
 
     fetch(`${baseUrl}/posts/${postToEditId}`, {
@@ -381,3 +377,51 @@ function submitUpdate() {
     });
 }
 
+function openAddModal() {
+    // Clear previous values
+    document.getElementById('add-title').value = '';
+    document.getElementById('add-content').value = '';
+
+    const dropdown = document.getElementById('add-category');
+    dropdown.innerHTML = '<option value="">Select Category</option>';
+
+    categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        dropdown.appendChild(option);
+    });
+
+    document.getElementById('add-modal').classList.remove('hidden');
+}
+
+function closeAddModal() {
+    document.getElementById('add-modal').classList.add('hidden');
+}
+
+function submitAdd() {
+    console.log("🚀 Trying to submit a new post...");
+    const baseUrl = document.getElementById('api-base-url').value;
+
+    const newPost = {
+        title: document.getElementById('add-title').value,
+        content: document.getElementById('add-content').value,
+        category: document.getElementById('add-category').value,
+        author: "Anonymous"  // ← now correctly separated
+    };
+
+
+    fetch(`${baseUrl}/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPost)
+    })
+    .then(response => response.json())
+    .then(data => {
+        closeAddModal();
+        loadPosts();
+    })
+    .catch(err => {
+        console.error("❌ Failed to add post", err);
+    });
+}

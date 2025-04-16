@@ -5,7 +5,8 @@ from datetime import datetime
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "http://127.0.0.1:5003"}})
+# Enables Cross-Origin Resource Sharing for *all* routes and *all* methods
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 
 def load_posts():

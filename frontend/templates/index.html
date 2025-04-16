@@ -15,36 +15,22 @@
 
     <div class="container">
 
-
-
-
         <!-- API URL Input -->
         <div class="input-field">
             <input type="text" id="api-base-url" placeholder="Enter API Base URL" value="http://127.0.0.1:5021/api">
             <button onclick="loadPosts()">Load Posts</button>
         </div>
 
-       <div class="input-field">
-    <input type="text" id="post-title" placeholder="Enter Post Title">
-    <input type="text" id="post-content" placeholder="Enter Post Content">
-
-    <select id="post-category">
-        <option value="">Select Category</option>
-    </select>
-
-    <button onclick="addPost()">Add Post</button>
-</div>
 
         <!-- Filters & Sorting -->
         <div class="input-field">
-            <select id="filter-category">
-                <option value="">All Categories</option>
+            <select id="filter-category" class="styled-select">
+              <option value="">All Categories</option>
             </select>
 
             <select id="sort-field">
                 <option value="">No Sorting</option>
                 <option value="title">Title</option>
-                <option value="content">Content</option>
                 <option value="likes">Likes</option>
                 <option value="date">Date</option>
                 <option value="updated">Last Updated</option>
@@ -59,7 +45,7 @@
 
             <input type="text" id="search-input" placeholder="Search title or content...">
 
-
+            <button onclick="openAddModal()">Add Post</button>
 
         </div>
 
@@ -81,6 +67,20 @@
         <div class="modal-buttons">
           <button onclick="submitUpdate()">Save</button>
           <button onclick="closeModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔧 Modal for Adding a Post -->
+    <div id="add-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>📝 Add Post</h2>
+        <input type="text" id="add-title" placeholder="Title">
+        <textarea id="add-content" placeholder="Content"></textarea>
+        <select id="add-category"></select>
+        <div class="modal-buttons">
+          <button onclick="submitAdd()">Save</button>
+          <button onclick="closeAddModal()">Cancel</button>
         </div>
       </div>
     </div>
