@@ -10,6 +10,20 @@ body {
     height: 100vh;
 }
 
+.banner {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.banner img {
+  width: 100%;
+  max-width: 80%; /* same as .container width */
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.15);
+}
+
 .container {
     background-color: #fff;
     width: 80%;
@@ -103,6 +117,18 @@ button:hover {
 }
 
 
+/* Footer */
+footer {
+
+    color: #aaa;
+    text-align: center;
+    padding: 10px;
+    font-size: 0.9em;
+    margin-top: 90px;
+}
+
+
+/* Modal form for Editing posts */
 .modal {
   position: fixed;
   top: 0; left: 0;
@@ -183,4 +209,5 @@ button:hover {
 .hidden {
   display: none;
 }
+
 
