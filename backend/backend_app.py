@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json
 from datetime import datetime
+from flask import Flask, request, jsonify
+from auth import register_user, login_user, token_required
 
 
 app = Flask(__name__)
@@ -80,6 +81,7 @@ def get_posts():
 
 
 @app.route('/api/posts', methods=['POST'])
+@token_required
 def add_post():
     POSTS = load_posts()
     data = request.get_json()
@@ -105,6 +107,7 @@ def add_post():
 
 
 @app.route("/api/posts/<int:post_id>", methods=['DELETE'])
+@token_required
 def delete_post(post_id):
     POSTS = load_posts()
     filtered_posts = [post for post in POSTS if post["id"] != post_id]
@@ -117,6 +120,7 @@ def delete_post(post_id):
 
 
 @app.route("/api/posts/<int:post_id>", methods=['PUT'])
+@token_required
 def update_post(post_id):
     POSTS = load_posts()
     for post in POSTS:
@@ -182,6 +186,23 @@ def like_post(post_id):
             return jsonify({"message": f"Post {post_id} liked", "likes": post["likes"]}), 200
 
     return jsonify({"error": f"Post with ID {post_id} not found"}), 404
+
+
+'''Register & Login Part'''
+@app.route("/api/register", methods=["POST"])
+def register():
+    return register_user()
+
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    return login_user()
+
+# Example of how you'd protect a route:
+@app.route('/api/secret', methods=['GET'])
+@token_required
+def secret(current_user):
+    return jsonify({'message': f'Welcome, {current_user}!'}), 200
 
 
 if __name__ == '__main__':

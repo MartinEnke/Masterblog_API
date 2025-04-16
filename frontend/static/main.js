@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadCategories();
     loadPosts();
+    updateAuthButton();  // Add this line
 });
 
 
@@ -115,44 +116,61 @@ function loadPosts() {
 // Function to send a POST request to the API to add a new post
 function addPost() {
     const baseUrl = document.getElementById('api-base-url').value;
+    const token = localStorage.getItem('authToken');
 
     fetch(`${baseUrl}/posts`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': token || ""
         },
         body: JSON.stringify({
             title: document.getElementById('add-title').value,
             content: document.getElementById('add-content').value,
             category: document.getElementById('add-category').value,
-            author: "Anonymous"  // ← now correctly separated
+            author: "Anonymous"  // Replace later if needed
         })
     })
     .then(response => response.json())
-    .then(post => {
-        console.log('Post added:', post);
+    .then(data => {
+        console.log('✅ Post added:', data);
         loadPosts();
-        closeModal(); // Optionally close the modal here
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('❌ Failed to add post:', error);
+        alert("You need to be logged in to add a post.");
+    });
 }
-
 
 // Function to send a DELETE request to the API to delete a post
 function deletePost(postId) {
-    const confirmed = confirm("🗑️ Are you sure you want to delete this post?");
-    if (!confirmed) return;
-
     const baseUrl = document.getElementById('api-base-url').value;
+    const token = localStorage.getItem('authToken');
+
+    if (!confirm("🛑 Are you sure you want to delete this post?")) return;
 
     fetch(`${baseUrl}/posts/${postId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+            'Authorization': token || ""
+        }
     })
     .then(response => {
-        console.log('✅ Post deleted:', postId);
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || "Failed to delete post");
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("✅ Deleted:", data);
         loadPosts();
     })
-    .catch(error => console.error('❌ Error deleting post:', error));
+    .catch(error => {
+        console.error("❌ Delete failed:", error.message);
+        alert("Error: " + error.message);
+    });
 }
 
 
@@ -318,6 +336,29 @@ function renderPost(post) {
 }
 
 
+// Registration Part //
+function loginUser(username, password) {
+    const baseUrl = document.getElementById('api-base-url').value;
+
+    fetch(`${baseUrl.replace(/\/api$/, '')}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.token) {
+            localStorage.setItem('authToken', data.token);
+            alert("✅ Logged in successfully");
+        } else {
+            alert("❌ Login failed: " + (data.error || "Unknown error"));
+        }
+    })
+    .catch(err => {
+        console.error("Login error:", err);
+        alert("❌ Login request failed");
+    });
+}
 
 let postToEditId = null;
 
@@ -354,26 +395,38 @@ function closeModal() {
 
 function submitUpdate() {
     const baseUrl = document.getElementById('api-base-url').value;
+    const token = localStorage.getItem('authToken');
 
     const updatedPost = {
         title: document.getElementById('edit-title').value,
         content: document.getElementById('edit-content').value,
         category: document.getElementById('edit-category').value,
-        author: "Anonymous"  // ← now correctly separated
+        author: "Anonymous" // Optional, adjust as needed
     };
 
     fetch(`${baseUrl}/posts/${postToEditId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token || ""
+        },
         body: JSON.stringify(updatedPost)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || "Update failed");
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         closeModal();
         loadPosts();
     })
     .catch(err => {
-        console.error("Failed to update post", err);
+        console.error("❌ Failed to update post:", err.message);
+        alert("Error: " + err.message);
     });
 }
 
@@ -399,29 +452,183 @@ function closeAddModal() {
     document.getElementById('add-modal').classList.add('hidden');
 }
 
+
 function submitAdd() {
-    console.log("🚀 Trying to submit a new post...");
     const baseUrl = document.getElementById('api-base-url').value;
+    const token = localStorage.getItem('authToken');
 
     const newPost = {
         title: document.getElementById('add-title').value,
         content: document.getElementById('add-content').value,
         category: document.getElementById('add-category').value,
-        author: "Anonymous"  // ← now correctly separated
+        author: "Anonymous" // Optional: use logged-in username if available
     };
-
 
     fetch(`${baseUrl}/posts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token || ""
+        },
         body: JSON.stringify(newPost)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || "Add post failed");
+            });
+        }
+        return response.json();
+    })
     .then(data => {
-        closeAddModal();
+        closeModal();
         loadPosts();
     })
     .catch(err => {
-        console.error("❌ Failed to add post", err);
+        console.error("❌ Failed to add post:", err.message);
+        alert("Error: " + err.message);
     });
 }
+
+function openLoginModal() {
+    document.getElementById('login-modal').classList.remove('hidden');
+}
+
+function closeLoginModal() {
+    document.getElementById('login-modal').classList.add('hidden');
+}
+
+function submitLogin() {
+    const baseUrl = document.getElementById('api-base-url').value;
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+
+    fetch(`${baseUrl}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+    if (data.token) {
+        localStorage.setItem("authToken", data.token);
+        updateAuthButton();  // ✅ Add this!
+        alert("🎉 Logged in successfully!");
+        closeLoginModal();
+        loadPosts();
+    } else {
+        alert(data.error || "❌ Login failed.");
+    }
+})
+    .catch(err => {
+        console.error("Login error:", err);
+        alert("❌ Login request failed.");
+    });
+}
+
+function updateAuthButton() {
+    const token = localStorage.getItem("authToken");
+    const button = document.getElementById("auth-button");
+    if (token) {
+        button.textContent = "Logout";
+    } else {
+        button.textContent = "Login";
+    }
+}
+
+function handleAuthClick() {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+        // Logout
+        localStorage.removeItem("authToken");
+        alert("👋 Logged out successfully.");
+        updateAuthButton();
+        loadPosts(); // Refresh view
+    } else {
+        // Login
+        openLoginModal();
+    }
+}
+
+
+function openLogoutModal() {
+  document.getElementById('logout-modal').classList.remove('hidden');
+}
+
+function closeLogoutModal() {
+  document.getElementById('logout-modal').classList.add('hidden');
+}
+
+function confirmLogout() {
+  localStorage.removeItem('authToken');
+  closeLogoutModal();
+  updateLoginButton();
+  alert("👋 You have been logged out.");
+}
+
+
+function openSignupModal() {
+  document.getElementById('signup-modal').classList.remove('hidden');
+}
+
+function closeSignupModal() {
+  document.getElementById('signup-modal').classList.add('hidden');
+}
+
+function submitSignup() {
+  const baseUrl = document.getElementById('api-base-url').value;
+  const username = document.getElementById('signup-username').value;
+  const password = document.getElementById('signup-password').value;
+
+  fetch(`${baseUrl}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      alert(data.error);
+      return;
+    }
+
+    alert(data.message || "✅ Signup successful!");
+
+    // 👇 Immediately log the user in
+    return fetch(`${baseUrl}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+  })
+  .then(res => res?.json())
+  .then(loginData => {
+    if (!loginData || !loginData.token) return;
+
+    localStorage.setItem("authToken", loginData.token);
+    updateAuthButton();         // 👈 update login/logout state
+    closeSignupModal();
+    loadPosts();
+  })
+  .catch(err => {
+    console.error("Signup error:", err);
+    alert("❌ Signup or auto-login failed.");
+  });
+}
+
+function handleLoginToggle() {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    openLogoutModal();  // Ask for confirmation
+  } else {
+    openLoginModal();   // Show login modal
+  }
+}
+
+function updateLoginButton() {
+  const token = localStorage.getItem("authToken");
+  document.getElementById('login-toggle-btn').textContent = token ? "Logout" : "Login";
+}
+
+// Call this when DOM loads
+document.addEventListener("DOMContentLoaded", updateLoginButton);

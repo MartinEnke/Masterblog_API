@@ -19,8 +19,12 @@
         <div class="input-field">
             <input type="text" id="api-base-url" placeholder="Enter API Base URL" value="http://127.0.0.1:5021/api">
             <button onclick="loadPosts()">Load Posts</button>
+            <div class="input-field">
+              <button id="auth-button" onclick="handleAuthClick()">Login</button>
+              <button onclick="openSignupModal()">Signup</button>
+                <span id="auth-status" style="margin-left: 10px; font-style: italic; color: #666;"></span>
+            </div>
         </div>
-
 
         <!-- Filters & Sorting -->
         <div class="input-field">
@@ -46,6 +50,8 @@
             <input type="text" id="search-input" placeholder="Search title or content...">
 
             <button onclick="openAddModal()">Add Post</button>
+
+
 
         </div>
 
@@ -84,6 +90,41 @@
         </div>
       </div>
     </div>
+    <!-- 🔐 Modal for Login -->
+<div id="login-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2>🔐 Login</h2>
+    <input type="text" id="login-username" placeholder="Username">
+    <input type="password" id="login-password" placeholder="Password">
+    <div class="modal-buttons">
+      <button onclick="submitLogin()">Login</button>
+      <button onclick="closeLoginModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+    <!-- 🔐 Modal for Logout Confirmation -->
+<div id="logout-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2>🚪 Logout</h2>
+    <p>Are you sure you want to log out?</p>
+    <div class="modal-buttons">
+      <button onclick="confirmLogout()">Yes, Logout</button>
+      <button onclick="closeLogoutModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+    <!-- 🔐 Modal for Signup -->
+    <div id="signup-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2>📝 Signup</h2>
+    <input type="text" id="signup-username" placeholder="Username">
+    <input type="password" id="signup-password" placeholder="Password">
+    <div class="modal-buttons">
+      <button onclick="submitSignup()">Register</button>
+      <button onclick="closeSignupModal()">Cancel</button>
+    </div>
+  </div>
+</div>
  <script src="static/main.js"></script>
 </body>
     <footer>

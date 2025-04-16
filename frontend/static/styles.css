@@ -117,6 +117,7 @@ button:hover {
 }
 
 /* Style dropdowns to match buttons */
+/* Style dropdowns to match buttons */
 select {
   height: 40px;
   padding: 0 12px;
@@ -126,7 +127,14 @@ select {
   background-color: #fff;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  appearance: none; /* removes default arrow styling */
+  appearance: none;
+
+  /* ✅ Custom dropdown arrow */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='10'%3E%3Cpath fill='%23666' d='M7 10L0 0h14z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 36px; /* space for the arrow */
 }
 
 select:focus {
@@ -138,6 +146,7 @@ select:focus {
 .input-field select {
   margin-right: 10px;
 }
+
 
 /* Apply filters input layout cleanup */
 .input-field {
@@ -200,8 +209,7 @@ footer {
 }
 
 .modal-content input,
-.modal-content textarea,
-.modal-content select {
+.modal-content textarea {
   all: unset;
   display: block;
   background-color: #fff;
@@ -213,6 +221,31 @@ footer {
   font-size: 1rem;
   font-family: 'Poppins', sans-serif;
   box-sizing: border-box;
+}
+.modal-content select {
+  all: unset;
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  font-family: 'Poppins', sans-serif;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='10'%3E%3Cpath fill='%23666' d='M7 10L0 0h14z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 36px;
+}
+
+.modal-content select:focus {
+  border-color: #4466ee;
+  box-shadow: 0 0 0 3px rgba(68, 102, 238, 0.2);
+  outline: none;
 }
 
 .modal-content textarea {
