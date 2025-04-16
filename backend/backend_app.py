@@ -3,6 +3,7 @@ from flask_cors import CORS
 import json
 from datetime import datetime
 
+
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "http://127.0.0.1:5003"}})
 

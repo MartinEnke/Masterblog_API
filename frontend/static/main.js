@@ -1,5 +1,6 @@
 let categories = [];
 
+
 document.addEventListener('DOMContentLoaded', function () {
     const savedBaseUrl = localStorage.getItem('apiBaseUrl');
     if (savedBaseUrl) {
@@ -8,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadCategories(); // Always load categories after DOM is ready
     loadPosts();      // Load posts (optional if base URL is prefilled)
 });
+
 
 // Function to fetch all the posts from the API and display them on the page
 function loadPosts() {
@@ -143,6 +145,7 @@ function deletePost(postId) {
     .catch(error => console.error('Error:', error));  // If an error occurs, log it to the console
 }
 
+
 // Dynamically loads category options into the add and filter dropdowns from the API
 function loadCategories() {
     const baseUrl = document.getElementById('api-base-url').value;
@@ -150,14 +153,15 @@ function loadCategories() {
 
     fetch(baseUrl + '/categories')
         .then(response => response.json())
-        .then(categories => {
+        .then(fetchedCategories => {
+            categories = fetchedCategories; // ✅ store globally!
+
             console.log("✅ Categories received:", categories);
 
             const categorySelect = document.getElementById('post-category');
             const filterSelect = document.getElementById('filter-category');
             const editSelect = document.getElementById('edit-category');
 
-            // Check if elements exist
             if (!categorySelect) console.warn("⚠️ post-category not found");
             if (!filterSelect) console.warn("⚠️ filter-category not found");
             if (!editSelect) console.warn("⚠️ edit-category not found");
@@ -185,7 +189,6 @@ function loadCategories() {
 }
 
 
-
 //
 function likePost(postId) {
     const baseUrl = document.getElementById('api-base-url').value;
@@ -209,28 +212,50 @@ function likePost(postId) {
 
 let postToEditId = null;
 
+console.log("Categories loaded:", categories);
+
+
 function openEditModal(post) {
     postToEditId = post.id;
 
     document.getElementById('edit-title').value = post.title;
     document.getElementById('edit-content').value = post.content;
 
-    const categoryDropdown = document.getElementById('edit-category');
-    categoryDropdown.innerHTML = ''; // Clear first
+    const dropdown = document.getElementById('edit-category');
+    dropdown.innerHTML = ''; // Clear old options
+
+    let categoryFound = false;
 
     categories.forEach(cat => {
         const option = document.createElement('option');
-        option.value = option.textContent = cat;
-        if (cat === post.category) option.selected = true;
-        categoryDropdown.appendChild(option);
+        option.value = cat;
+        option.textContent = cat;
+
+        if (cat.trim().toLowerCase() === post.category.trim().toLowerCase()) {
+            option.selected = true;
+            categoryFound = true;
+        }
+
+        dropdown.appendChild(option);
     });
+
+    // Only add fallback if no matching category was found
+    if (!categoryFound) {
+        const fallbackOption = document.createElement('option');
+        fallbackOption.value = post.category;
+        fallbackOption.textContent = post.category;
+        fallbackOption.selected = true;
+        dropdown.appendChild(fallbackOption);
+    }
 
     document.getElementById('update-modal').classList.remove('hidden');
 }
 
+
 function closeModal() {
     document.getElementById('update-modal').classList.add('hidden');
 }
+
 
 function submitUpdate() {
     const baseUrl = document.getElementById('api-base-url').value;
