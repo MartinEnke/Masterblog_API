@@ -55,13 +55,16 @@ def get_posts():
         filtered_posts = [p for p in filtered_posts if p["category"].lower() in category_list]
 
     if sort_field:
-        if sort_field not in ["title", "content"]:
-            return jsonify({"error": "Invalid sort field. Use 'title' or 'content'."}), 400
+        valid_fields = ["title", "content", "likes", "date", "updated"]
+        if sort_field not in valid_fields:
+            return jsonify({"error": f"Invalid sort field. Use one of: {', '.join(valid_fields)}"}), 400
         if direction not in ["asc", "desc"]:
             return jsonify({"error": "Invalid direction. Use 'asc' or 'desc'."}), 400
 
         reverse = direction == "desc"
-        filtered_posts.sort(key=lambda post: post[sort_field].lower(), reverse=reverse)
+        filtered_posts.sort(
+            key=lambda post: post.get(sort_field, "").lower() if isinstance(post.get(sort_field), str) else post.get(
+                sort_field, ""), reverse=reverse)
 
     start = (page - 1) * limit
     end = start + limit

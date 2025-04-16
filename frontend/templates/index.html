@@ -38,6 +38,9 @@
                 <option value="">No Sorting</option>
                 <option value="title">Title</option>
                 <option value="content">Content</option>
+                <option value="likes">Likes</option>
+                <option value="date">Date</option>
+                <option value="updated">Last Updated</option>
             </select>
 
             <select id="sort-direction">
@@ -46,6 +49,12 @@
             </select>
 
             <button onclick="loadPosts()">Apply Filters</button>
+
+            <div class="input-field">
+                <input type="text" id="search-query" placeholder="Search posts...">
+                <button onclick="searchPosts()">🔍 Search</button>
+            </div>
+
         </div>
 
         <!-- Posts Display -->

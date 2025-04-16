@@ -210,6 +210,78 @@ function likePost(postId) {
     });
 }
 
+
+function searchPosts() {
+    const baseUrl = document.getElementById('api-base-url').value;
+    const query = document.getElementById('search-query').value.trim();
+
+    if (!query) return;
+
+    fetch(`${baseUrl}/posts/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            const postContainer = document.getElementById('post-container');
+            postContainer.innerHTML = '';
+
+            const posts = data.posts || data;
+
+            if (!posts.length) {
+                postContainer.innerHTML = "<p>No posts found matching your search.</p>";
+                return;
+            }
+
+            posts.forEach(renderPost); // You can abstract out the rendering to avoid repeating code
+        })
+        .catch(err => {
+            console.error("Search failed:", err);
+        });
+}
+
+
+function renderPost(post) {
+    const postContainer = document.getElementById('post-container');
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post';
+
+    const title = document.createElement('h2');
+    title.textContent = post.title;
+
+    const content = document.createElement('p');
+    content.textContent = post.content;
+
+    const date = document.createElement('p');
+    date.textContent = `${post.date || 'No date'}`;
+    date.style.fontStyle = 'italic';
+
+    const likeButton = document.createElement('button');
+    likeButton.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
+    likeButton.onclick = () => likePost(post.id);
+
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = '🗑️ Delete';
+    deleteButton.onclick = () => deletePost(post.id);
+
+    const editButton = document.createElement('button');
+    editButton.textContent = '✏️ Edit';
+    editButton.onclick = () => openEditModal(post);
+
+    const buttonWrapper = document.createElement('div');
+    buttonWrapper.style.display = 'flex';
+    buttonWrapper.style.gap = '10px';
+    buttonWrapper.appendChild(likeButton);
+    buttonWrapper.appendChild(editButton);
+    buttonWrapper.appendChild(deleteButton);
+
+    postDiv.appendChild(title);
+    postDiv.appendChild(content);
+    postDiv.appendChild(date);
+    postDiv.appendChild(buttonWrapper);
+
+    postContainer.appendChild(postDiv);
+}
+
+
+
 let postToEditId = null;
 
 console.log("Categories loaded:", categories);
