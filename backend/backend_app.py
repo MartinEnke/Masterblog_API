@@ -89,7 +89,7 @@ def get_posts():
 
 @app.route('/api/posts', methods=['POST'])
 @token_required
-def add_post():
+def add_post(current_user):
     POSTS = load_posts()
     data = request.get_json()
 
@@ -99,7 +99,7 @@ def add_post():
 
     new_post = {
         "id": max([post["id"] for post in POSTS], default=0) + 1,
-        "author": data["author"],
+        "author": current_user,  # 🧠 use username from token
         "title": data["title"],
         "content": data["content"],
         "category": data["category"],
@@ -115,25 +115,28 @@ def add_post():
 
 @app.route("/api/posts/<int:post_id>", methods=['DELETE'])
 @token_required
-def delete_post(post_id):
+def delete_post(current_user, post_id):
     POSTS = load_posts()
-    filtered_posts = [post for post in POSTS if post["id"] != post_id]
-
-    if len(filtered_posts) == len(POSTS):
-        return jsonify({"error": f"Post with ID {post_id} not found"}), 404
-
-    save_posts(filtered_posts)
-    return jsonify({"message": f"Post {post_id} deleted"}), 200
+    for post in POSTS:
+        if post['id'] == post_id:
+            if post['author'] != current_user:
+                return jsonify({"error": "Unauthorized to delete this post"}), 403
+            POSTS.remove(post)
+            save_posts(POSTS)
+            return jsonify({"message": f"Post {post_id} deleted"}), 200
+    return jsonify({"error": f"Post with ID {post_id} not found"}), 404
 
 
 @app.route("/api/posts/<int:post_id>", methods=['PUT'])
 @token_required
-def update_post(post_id):
+def update_post(current_user, post_id):
     POSTS = load_posts()
     for post in POSTS:
         if post['id'] == post_id:
-            new_data = request.get_json()
+            if post['author'] != current_user:
+                return jsonify({"error": "Unauthorized to edit this post"}), 403
 
+            new_data = request.get_json()
             error = validate_post_data(new_data)
             if error:
                 return jsonify(error), 400
@@ -146,6 +149,7 @@ def update_post(post_id):
             save_posts(POSTS)
             return jsonify(post), 200
     return jsonify({"error": f"Post with ID {post_id} not found"}), 404
+
 
 
 @app.route("/api/posts/search", methods=['GET'])

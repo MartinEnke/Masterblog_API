@@ -453,6 +453,17 @@ footer {
   background-color: #d1d5db;
 }
 
+#add-warning-modal h2 {
+  color: #20342f; /* golden tone */
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+#add-warning-modal p {
+  font-size: 1rem;
+  margin-bottom: 20px;
+  color: #444;
+}
 
 button:hover {
     background-color: #ddd;

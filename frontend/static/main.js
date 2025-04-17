@@ -91,8 +91,13 @@ function loadPosts() {
                 buttonWrapper.style.gap = '10px';
                 buttonWrapper.style.marginTop = '10px';
                 buttonWrapper.appendChild(likeButton);
-                buttonWrapper.appendChild(editButton);
-                buttonWrapper.appendChild(deleteButton);
+
+                // ✅ Only show edit/delete if user is author
+                const currentUser = localStorage.getItem("username");
+                if (post.author === currentUser) {
+                    buttonWrapper.appendChild(editButton);
+                    buttonWrapper.appendChild(deleteButton);
+                }
 
                 // Post styling
                 postDiv.style.padding = '15px';
@@ -252,7 +257,7 @@ function searchPosts() {
     const query = document.getElementById('search-input').value.trim();
 
     if (!query) {
-        loadPosts(); // fallback if empty
+        loadPosts(); // fallback
         return;
     }
 
@@ -268,6 +273,7 @@ function searchPosts() {
             }
 
             const posts = data.posts || data;
+            const currentUser = localStorage.getItem("username");
 
             posts.forEach(post => {
                 const postDiv = document.createElement('div');
@@ -286,16 +292,59 @@ function searchPosts() {
                 meta.className = 'post-meta';
                 meta.textContent = `${post.date || 'No date'} · by ${post.author || 'Unknown'}`;
 
-                // Append post elements
+                // Updated (optional)
+                const updated = document.createElement('p');
+                if (post.updated) {
+                    updated.textContent = `Updated: ${post.updated}`;
+                    updated.style.fontSize = '0.9em';
+                    updated.style.color = '#777';
+                    updated.style.marginBottom = '10px';
+                }
+
+                // Like Button
+                const likeButton = document.createElement('button');
+                likeButton.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
+                likeButton.onclick = () => likePost(post.id);
+
+                // Edit/Delete Buttons (conditionally shown)
+                const editButton = document.createElement('button');
+                editButton.textContent = '✏️ Edit';
+                editButton.onclick = () => openEditModal(post);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '🗑️ Delete';
+                deleteButton.onclick = () => deletePost(post.id);
+
+                const buttonWrapper = document.createElement('div');
+                buttonWrapper.style.display = 'flex';
+                buttonWrapper.style.justifyContent = 'space-between';
+                buttonWrapper.style.gap = '10px';
+                buttonWrapper.style.marginTop = '10px';
+                buttonWrapper.appendChild(likeButton);
+
+                if (post.author === currentUser) {
+                    buttonWrapper.appendChild(editButton);
+                    buttonWrapper.appendChild(deleteButton);
+                }
+
+                // Post styling
+                postDiv.style.padding = '15px';
+                postDiv.style.border = '1px solid #ccc';
+                postDiv.style.marginBottom = '20px';
+                postDiv.style.borderRadius = '8px';
+
                 postDiv.appendChild(title);
                 postDiv.appendChild(content);
                 postDiv.appendChild(meta);
+                if (post.updated) postDiv.appendChild(updated);
+                postDiv.appendChild(buttonWrapper);
 
                 postContainer.appendChild(postDiv);
             });
         })
         .catch(error => console.error('Search error:', error));
 }
+
 
 
 function renderPost(post) {
@@ -436,22 +485,39 @@ function submitUpdate() {
 }
 
 function openAddModal() {
-    // Clear previous values
-    document.getElementById('add-title').value = '';
-    document.getElementById('add-content').value = '';
+  const token = localStorage.getItem("authToken");
 
-    const dropdown = document.getElementById('add-category');
-    dropdown.innerHTML = '<option value="">Select Category</option>';
+  if (!token) {
+    document.getElementById('add-warning-modal').classList.remove('hidden');
+    return;
+  }
 
-    categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = cat;
-        dropdown.appendChild(option);
-    });
+  // Clear previous values
+  document.getElementById('add-title').value = '';
+  document.getElementById('add-content').value = '';
 
-    document.getElementById('add-modal').classList.remove('hidden');
+  const dropdown = document.getElementById('add-category');
+  dropdown.innerHTML = '<option value="">Select Category</option>';
+
+  categories.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat;
+    option.textContent = cat;
+    dropdown.appendChild(option);
+  });
+
+  document.getElementById('add-modal').classList.remove('hidden');
 }
+
+function closeAddWarningModal() {
+  document.getElementById('add-warning-modal').classList.add('hidden');
+}
+
+function handleLoginFromWarning() {
+  closeAddWarningModal();      // 👈 closes the warning modal
+  openLoginModal();            // 👈 opens the login modal
+}
+
 
 function closeAddModal() {
     document.getElementById('add-modal').classList.add('hidden');
