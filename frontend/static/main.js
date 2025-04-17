@@ -516,7 +516,7 @@ function submitLogin() {
         localStorage.setItem("username", username);  // store username and password
         updateUserInfo();
         updateAuthButton();
-        alert("🎉 Logged in successfully!");
+        // alert("🎉 Logged in successfully!");
         closeLoginModal();
         loadPosts();
     } else {
@@ -544,11 +544,12 @@ function handleAuthClick() {
     if (token) {
         // Logout
         localStorage.removeItem("authToken");
-        alert("👋 Logged out successfully.");
+        localStorage.removeItem("username");  // 👈 clear username
         updateAuthButton();
-        loadPosts(); // Refresh view
+        updateUserInfo();  // 👈 update the username display
+        // alert("👋 Logged out successfully.");
+        loadPosts();
     } else {
-        // Login
         openLoginModal();
     }
 }
@@ -564,9 +565,12 @@ function closeLogoutModal() {
 
 function confirmLogout() {
   localStorage.removeItem('authToken');
-  closeLogoutModal();
+  localStorage.removeItem('username'); // 👈 clear username here too
   updateLoginButton();
-  alert("👋 You have been logged out.");
+  updateUserInfo(); // 👈 make sure it's reflected in the UI
+  closeLogoutModal();
+  // alert("👋 You have been logged out.");
+  loadPosts();
 }
 
 
@@ -595,7 +599,7 @@ function submitSignup() {
       return;
     }
 
-    alert(data.message || "✅ Signup successful!");
+    // alert(data.message || "✅ Signup successful!");
 
     // 👇 Immediately log the user in
     return fetch(`${baseUrl}/login`, {
@@ -642,7 +646,7 @@ function updateUserInfo() {
   if (username) {
     userInfo.textContent = `👋 Welcome, ${username}`;
   } else {
-    userInfo.textContent = ""; // leer wenn ausgeloggt
+    userInfo.textContent = ""; // empty when logged out
   }
 }
 
