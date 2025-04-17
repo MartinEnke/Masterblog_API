@@ -16,50 +16,55 @@
     <div class="container">
 
         <!-- API URL Input -->
-        <div class="input-field">
-            <input type="text" id="api-base-url" placeholder="Enter API Base URL" value="http://127.0.0.1:5021/api">
-            <button onclick="loadPosts()">Load Posts</button>
-            <div class="input-field">
-              <button id="auth-button" onclick="handleAuthClick()">Login</button>
-              <button onclick="openSignupModal()">Signup</button>
-                <span id="auth-status" style="margin-left: 10px; font-style: italic; color: #666;"></span>
-            </div>
+        <div class="top-bar">
+          <input type="text" id="api-base-url" value="http://127.0.0.1:5021/api">
+            <a href="#" onclick="loadPosts()" class="nav-link">Load Posts</a>
+
+          <div class="top-bar-center">
+
+          </div>
+
+          <div class="top-bar-right">
+            <div id="user-info" class="user-info-pill">Welcome, ron</div>
+            <a href="#" onclick="handleAuthClick()" id="auth-button" class="nav-link">Login</a>
+            <a href="#" onclick="openSignupModal()" class="nav-link">Signup</a>
+          </div>
         </div>
-        <div id="user-info"></div>
+
+
         <!-- Filters & Sorting -->
-        <div class="input-field">
-            <select id="filter-category" class="styled-select">
-              <option value="">All Categories</option>
-            </select>
+<div class="filter-bar">
+  <select id="filter-category">
+    <option value="">All Categories</option>
+  </select>
 
-            <select id="sort-field">
-                <option value="">No Sorting</option>
-                <option value="title">Title</option>
-                <option value="likes">Likes</option>
-                <option value="date">Date</option>
-                <option value="updated">Last Updated</option>
-            </select>
+  <select id="sort-field">
+    <option value="">No Sorting</option>
+    <option value="title">Title</option>
+    <option value="likes">Likes</option>
+    <option value="date">Date</option>
+    <option value="updated">Last Updated</option>
+  </select>
 
-            <select id="sort-direction">
-                <option value="asc">Ascending</option>
-                <option value="desc">Descending</option>
-            </select>
+  <select id="sort-direction">
+    <option value="asc">Ascending</option>
+    <option value="desc">Descending</option>
+  </select>
 
-            <button onclick="loadPosts()">Apply Filters</button>
+  <span class="text-button" onclick="loadPosts()">Apply Filters</span>
+    <span class="text-button" onclick="openAddModal()">Add Post</span>
+  <input type="text" id="search-input" placeholder="Search title or content...">
 
-            <input type="text" id="search-input" placeholder="Search title or content...">
+</div>
+<div></div>
 
-            <button onclick="openAddModal()">Add Post</button>
-
-
-
-        </div>
 
         <!-- Posts Display -->
         <div id="post-container">
             <!-- Posts will be rendered here -->
         </div>
     </div>
+
 
 
 

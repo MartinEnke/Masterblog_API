@@ -33,6 +33,166 @@ body {
     margin: auto;
 }
 
+/* New Style for menu start */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+#api-base-url {
+  width: 300px;
+  height: 36px;
+  padding: 6px 12px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Welcome centered */
+.top-bar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+
+/* Right side login/signup */
+.top-bar-right {
+  margin-left: auto;
+  display: flex;
+  gap: 14px;
+}
+
+.nav-link {
+  font-size: 18px;
+  text-decoration: none;
+  color: #20342f;
+  cursor: pointer;
+  transition: color 0.3s;
+  padding: 5px;
+}
+
+.nav-link:hover {
+  color: #20342f;
+  text-decoration: underline;
+}
+
+#user-info {
+  font-size: 18px;
+  font-weight: 430;
+  text-align: center;
+  background: #5d9f8d;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-top: 6px;
+  transition: all 0.3s ease;
+}
+
+/* Base layout */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Category dropdown (wider) */
+#filter-category {
+  flex: 1 1 200px;
+  min-width: 180px;
+  max-width: 240px;
+}
+
+/* Sort fields (more compact) */
+#sort-field,
+#sort-direction {
+  flex: 0 1 140px;
+  min-width: 120px;
+  max-width: 160px;
+}
+
+/* All dropdowns */
+.filter-bar select {
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+/* Search input: fills remaining space */
+#search-input {
+  flex: 1 1 200px;
+  min-width: 180px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+/* Text-style buttons */
+.text-button {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1f2937;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.text-button:hover {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
+
+#search-input {
+  flex-grow: 1;
+  min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-bar button,
+  .filter-bar input,
+  .filter-bar select {
+    width: 100%;
+  }
+}
+.text-button {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1f2937; /* dark gray or adjust as needed */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.text-button:hover {
+  color: #4d7b70;
+  background-color: #eaf3f1;
+}
+
+/* New Style for menu end */
+
 .input-field {
     display: flex;
     align-items: center;
@@ -43,7 +203,7 @@ body {
 .input-field button {
     height: 40px;
     padding: 10px;
-    font-size: 16px;
+    font-size: 18px;
     border: none;
     border-radius: 8px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
@@ -79,7 +239,7 @@ body {
 
 .post h2 {
     margin: 0;
-    color: #4466ee;
+    color: #4d7b70;
     font-weight: 700;
 }
 
@@ -116,7 +276,7 @@ button:hover {
     background-color: #ddd;
 }
 
-/* Style dropdowns to match buttons */
+
 /* Style dropdowns to match buttons */
 select {
   height: 40px;

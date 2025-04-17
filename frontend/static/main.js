@@ -644,7 +644,7 @@ function updateUserInfo() {
   const userInfo = document.getElementById("user-info");
 
   if (username) {
-    userInfo.textContent = `👋 Welcome, ${username}`;
+    userInfo.textContent = `Welcome, ${username}!`;
   } else {
     userInfo.textContent = ""; // empty when logged out
   }
