@@ -60,7 +60,7 @@ def get_posts():
         filtered_posts = [p for p in filtered_posts if p["category"].lower() in category_list]
 
     if sort_field:
-        valid_fields = ["title", "content", "likes", "date", "updated"]
+        valid_fields = ["title", "content", "likes", "date", "updated", "author"]  # ✅ include "author"
         if sort_field not in valid_fields:
             return jsonify({"error": f"Invalid sort field. Use one of: {', '.join(valid_fields)}"}), 400
         if direction not in ["asc", "desc"]:
@@ -68,8 +68,12 @@ def get_posts():
 
         reverse = direction == "desc"
         filtered_posts.sort(
-            key=lambda post: post.get(sort_field, "").lower() if isinstance(post.get(sort_field), str) else post.get(
-                sort_field, ""), reverse=reverse)
+            key=lambda post: (
+                post.get(sort_field, "").lower() if isinstance(post.get(sort_field), str)
+                else post.get(sort_field, "")
+            ),
+            reverse=reverse
+        )
 
     start = (page - 1) * limit
     end = start + limit
@@ -148,12 +152,15 @@ def update_post(post_id):
 def search_post():
     POSTS = load_posts()
     search_text = request.args.get("q", "").lower()
+
     if not search_text:
         return jsonify({"error": "Please provide a search term using '?q=your_query'"}), 400
 
     results = [
         post for post in POSTS
-        if search_text in post['title'].lower() or search_text in post['content'].lower()
+        if search_text in post.get('title', '').lower()
+        or search_text in post.get('content', '').lower()
+        or search_text in post.get('author', '').lower()
     ]
 
     if not results:

@@ -248,6 +248,14 @@ body {
     color: #333;
 }
 
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  color: #444;
+  margin: 10px 0;
+  opacity: 0.85;
+}
+
 button {
     padding: 5px 12px;
     margin: 5px;
@@ -325,11 +333,22 @@ select:focus {
   flex: 1;
 }
 
+.post p.author {
+  font-style: italic;
+  font-size: 1.4em;
+  color: #777;
+  margin: 10px 0;
+}
+
+.post p {
+  font-size: 1.05rem;  /* Slightly larger than default */
+  line-height: 1.4;
+}
 
 /* Footer */
 footer {
 
-    color: #aaa;
+    color: #c2cdc6;
     text-align: center;
     padding: 10px;
     font-size: 0.9em;

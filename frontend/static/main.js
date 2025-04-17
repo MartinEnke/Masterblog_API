@@ -41,24 +41,24 @@ function loadPosts() {
             const postContainer = document.getElementById('post-container');
             postContainer.innerHTML = '';
 
-            const posts = data.posts || data; // handle paginated or raw list
+            const posts = data.posts || data; // Handle paginated or raw list
 
             posts.forEach(post => {
                 const postDiv = document.createElement('div');
                 postDiv.className = 'post';
 
+                // Title
                 const title = document.createElement('h2');
                 title.textContent = post.title;
 
+                // Content
                 const content = document.createElement('p');
                 content.textContent = post.content;
 
-                // Date
-                const date = document.createElement('p');
-                date.textContent = `${post.date || 'No date'}`;
-                date.style.fontStyle = 'italic';
-                date.style.marginTop = '10px';
-                date.style.marginBottom = '2px';
+                // Meta (date + author)
+                const meta = document.createElement('p');
+                meta.className = 'post-meta';
+                meta.textContent = `${post.date || 'No date'} · by ${post.author || 'Unknown'}`;
 
                 // Updated (optional)
                 const updated = document.createElement('p');
@@ -94,16 +94,16 @@ function loadPosts() {
                 buttonWrapper.appendChild(editButton);
                 buttonWrapper.appendChild(deleteButton);
 
-                // Styling container
+                // Post styling
                 postDiv.style.padding = '15px';
                 postDiv.style.border = '1px solid #ccc';
                 postDiv.style.marginBottom = '20px';
                 postDiv.style.borderRadius = '8px';
 
-                // Build the post card
+                // Append all elements
                 postDiv.appendChild(title);
                 postDiv.appendChild(content);
-                postDiv.appendChild(date);
+                postDiv.appendChild(meta);
                 if (post.updated) postDiv.appendChild(updated);
                 postDiv.appendChild(buttonWrapper);
 
@@ -112,6 +112,7 @@ function loadPosts() {
         })
         .catch(error => console.error('Error loading posts:', error));
 }
+
 
 
 // Function to send a POST request to the API to add a new post
@@ -251,7 +252,7 @@ function searchPosts() {
     const query = document.getElementById('search-input').value.trim();
 
     if (!query) {
-        loadPosts(); // fallback
+        loadPosts(); // fallback if empty
         return;
     }
 
@@ -272,26 +273,29 @@ function searchPosts() {
                 const postDiv = document.createElement('div');
                 postDiv.className = 'post';
 
+                // Title
                 const title = document.createElement('h2');
                 title.textContent = post.title;
 
+                // Content
                 const content = document.createElement('p');
                 content.textContent = post.content;
 
-                const date = document.createElement('p');
-                date.textContent = `${post.date || 'No date'}`;
-                date.style.fontStyle = 'italic';
+                // Meta (date + author)
+                const meta = document.createElement('p');
+                meta.className = 'post-meta';
+                meta.textContent = `${post.date || 'No date'} · by ${post.author || 'Unknown'}`;
 
+                // Append post elements
                 postDiv.appendChild(title);
                 postDiv.appendChild(content);
-                postDiv.appendChild(date);
+                postDiv.appendChild(meta);
 
                 postContainer.appendChild(postDiv);
             });
         })
         .catch(error => console.error('Search error:', error));
 }
-
 
 
 function renderPost(post) {
