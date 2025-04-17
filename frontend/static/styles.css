@@ -139,21 +139,34 @@ body {
 }
 
 /* Text-style buttons */
+/* Base minimalist button */
 .text-button {
-  font-size: 15px;
-  font-weight: 500;
-  color: #1f2937;
   background: none;
   border: none;
+  color: #4466ee;
+  font-weight: 500;
   cursor: pointer;
   padding: 6px 12px;
-  border-radius: 4px;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  font-size: 1rem;
+  border-radius: 6px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.text-button.large {
+  font-size: 1.05rem;
+  padding: 8px 16px;
 }
 
 .text-button:hover {
-  color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.08);
+  background-color: rgba(68, 102, 238, 0.1); /* subtle hover background */
+  color: #2c4ccf;
+}
+
+/* Modal-specific tweaks (optional) */
+.modal-buttons .text-button {
+  padding: 8px 14px;
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
 
@@ -219,6 +232,15 @@ body {
     color: #aaa;
 }
 
+.input-field,
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+
 .input-field button {
     background-color: #4466ee;
     color: #fff;
@@ -280,9 +302,6 @@ button {
 }
 
 
-button:hover {
-    background-color: #ddd;
-}
 
 
 /* Style dropdowns to match buttons */
@@ -435,9 +454,11 @@ footer {
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
   margin-top: 10px;
 }
+
+
 
 .modal-buttons button {
   padding: 10px 16px;

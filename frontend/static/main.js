@@ -485,20 +485,17 @@ function submitUpdate() {
 }
 
 function openAddModal() {
-  const token = localStorage.getItem("authToken");
-
+  const token = localStorage.getItem('authToken');
   if (!token) {
-    document.getElementById('add-warning-modal').classList.remove('hidden');
+    showAlertModal("You need to login to add a post.");
     return;
   }
 
-  // Clear previous values
+  // Clear form & open modal
   document.getElementById('add-title').value = '';
   document.getElementById('add-content').value = '';
-
   const dropdown = document.getElementById('add-category');
   dropdown.innerHTML = '<option value="">Select Category</option>';
-
   categories.forEach(cat => {
     const option = document.createElement('option');
     option.value = cat;
@@ -718,6 +715,22 @@ function updateUserInfo() {
   } else {
     userInfo.textContent = ""; // empty when logged out
   }
+}
+
+function showAlertModal(message) {
+  const alertBox = document.getElementById("alert-modal");
+  const messageText = document.getElementById("alert-message");
+  messageText.textContent = message;
+  alertBox.classList.remove("hidden");
+}
+
+function closeAlertModal() {
+  document.getElementById("alert-modal").classList.add("hidden");
+}
+
+function handleAlertLogin() {
+  closeAlertModal();
+  openLoginModal(); // Already exists in your code
 }
 
 // Call this when DOM loads

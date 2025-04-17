@@ -18,16 +18,14 @@
         <!-- API URL Input -->
         <div class="top-bar">
           <input type="text" id="api-base-url" value="http://127.0.0.1:5021/api">
-            <a href="#" onclick="loadPosts()" class="nav-link">Load Posts</a>
-
+            <span class="text-button large" onclick="loadPosts()">Load Posts</span>
           <div class="top-bar-center">
-
           </div>
 
           <div class="top-bar-right">
             <div id="user-info" class="user-info-pill">Welcome, ron</div>
-            <a href="#" onclick="handleAuthClick()" id="auth-button" class="nav-link">Login</a>
-            <a href="#" onclick="openSignupModal()" class="nav-link">Signup</a>
+                <span class="text-button large" id="auth-button" onclick="handleAuthClick()">Login</span>
+                <span class="text-button large" onclick="openSignupModal()">Signup</span>
           </div>
         </div>
 
@@ -54,6 +52,7 @@
 
   <span class="text-button" onclick="loadPosts()">Apply Filters</span>
     <span class="text-button" onclick="openAddModal()">Add Post</span>
+
   <input type="text" id="search-input" placeholder="Search title or content...">
 
 </div>
@@ -77,8 +76,10 @@
         <textarea id="edit-content" placeholder="Content"></textarea>
         <select id="edit-category"></select>
         <div class="modal-buttons">
-          <button onclick="submitUpdate()">Save</button>
-          <button onclick="closeModal()">Cancel</button>
+          <div class="modal-buttons">
+              <span class="text-button" onclick="submitUpdate()">Save</span>
+              <span class="text-button" onclick="closeModal()">Cancel</span>
+          </div>
         </div>
       </div>
     </div>
@@ -91,8 +92,10 @@
         <textarea id="add-content" placeholder="Content"></textarea>
         <select id="add-category"></select>
         <div class="modal-buttons">
-          <button onclick="submitAdd()">Save</button>
-          <button onclick="closeAddModal()">Cancel</button>
+          <div class="modal-buttons">
+              <span class="text-button" onclick="submitAdd()">Save</span>
+              <span class="text-button" onclick="closeAddModal()">Cancel</span>
+          </div>
         </div>
       </div>
     </div>
@@ -103,8 +106,8 @@
     <input type="text" id="login-username" placeholder="Username">
     <input type="password" id="login-password" placeholder="Password">
     <div class="modal-buttons">
-      <button onclick="submitLogin()">Login</button>
-      <button onclick="closeLoginModal()">Cancel</button>
+      <span class="text-button" onclick="submitLogin()">Login</span>
+      <span class="text-button" onclick="closeLoginModal()">Cancel</span>
     </div>
   </div>
 </div>
@@ -137,11 +140,22 @@
     <h2>⚠️ Login Required</h2>
     <p>You need to be logged in to add a post.</p>
     <div class="modal-buttons">
-      <button onclick="handleLoginFromWarning()">Login</button>
-      <button onclick="closeAddWarningModal()">Cancel</button>
+  <span class="text-button" onclick="submitLogin()">Login</span>
+  <span class="text-button" onclick="closeLoginModal()">Cancel</span>
+</div>
+  </div>
+</div>
+    <!-- 🌟 Custom Alert Modal -->
+<div id="alert-modal" class="modal hidden">
+  <div class="modal-content">
+    <p id="alert-message">You must be logged in to add a post.</p>
+    <div class="modal-buttons">
+      <span class="text-button" onclick="handleAlertLogin()">Login</span>
+      <span class="text-button" onclick="closeAlertModal()">Cancel</span>
     </div>
   </div>
 </div>
+
  <script src="static/main.js"></script>
 </body>
     <footer>
