@@ -1,0 +1,131 @@
+ENGLISH:
+1. Explicit Change in Code
+In practice, the client’s code is manually updated:
+
+// Originally:
+const baseUrl = "https://my-api.com/api/v1";
+
+// Switched to:
+const baseUrl = "https://my-api.com/api/v2";
+This change is made by a developer – not the end user, but someone using the API (e.g. your team, external users, or another system).
+
+
+2. Feature Announcement via Changelog or Docs
+The API provider (i.e. you) announces a new version:
+
+“In v2, there are new features, like tags, pagination via headers, etc.”
+
+Developers who want those features can upgrade.
+
+
+🔁 How do you revert to v1 if something goes wrong?
+Very simple: just change the baseUrl back to v1.
+
+That’s the big advantage of URL versioning – it's stable, visible, and reversible:
+
+// Switch back:
+const baseUrl = "https://my-api.com/api/v1";
+That’s why you should never delete old versions immediately. Typically, v1 stays active for months or even years, until no one needs it anymore.
+
+
+🧪 Real-World Example: Stripe
+Stripe (a major payment provider) does exactly this:
+
+Their URLs look like: https://api.stripe.com/v1/...
+
+When a new version is released, clients must explicitly set a new version date or change the URL.
+
+Older versions stay active for years – Stripe guarantees backward compatibility.
+
+
+⚠️ Important Best Practice Tip
+When you release a v2, always include proper documentation or release notes:
+
+What's new?
+
+What has changed?
+
+Which fields were removed or added?
+
+Are there breaking changes?
+
+You can also offer a version info route, for example:
+
+GET /api/version
+→ { "current": "v2", "supported": ["v1", "v2"] }
+
+
+✅ Summary
+Question	                  Answer
+How is v2 used?	              Manually by changing the URL in code
+How to return to v1?	      Simply by switching the URL back
+Who decides?	              The client developer
+How is it communicated?	      Via changelog, docs, README, or API portal
+What to do if issues occur?	  Quickly revert to the stable v1 (if still maintained)
+
+
+DEUTSCH:
+
+1. Explizite Umstellung im Code
+
+In der Praxis wird der Code des Clients angepasst:
+
+// Ursprünglich:
+const baseUrl = "https://my-api.com/api/v1";
+
+// Umgestellt auf:
+const baseUrl = "https://my-api.com/api/v2";
+Diese Änderung macht ein Developer – nicht der Endnutzer, sondern jemand, der die API verwendet (z. B. dein Team, externe Nutzer oder ein anderes System).
+
+
+2. Feature-Ankündigung per Changelog oder Docs
+Der API-Anbieter (also du) kündigt eine neue Version an:
+
+"In v2 gibt es neue Features, z. B. Tags, Pagination per Header, etc."
+
+Entwickler, die davon profitieren wollen, steigen um.
+
+🔁 Wie kehrt man bei Problemen zurück zu v1?
+Ganz einfach: den baseUrl wieder auf v1 ändern.
+
+Das ist das große Argument für URL-Versionierung – sie ist stabil, sichtbar und reversibel:
+
+// Wechsel zurück:
+const baseUrl = "https://my-api.com/api/v1";
+Daher solltest du alte Versionen nie sofort löschen. In der Regel bleibt v1 monatelang oder jahrelang aktiv, bis niemand sie mehr braucht.
+
+
+🧪 Beispiel aus der echten Welt: Stripe
+Stripe (großer Zahlungsanbieter) macht’s genauso:
+
+Ihre URLs sehen so aus: https://api.stripe.com/v1/...
+
+Wenn eine neue Version kommt, müssen Clients explizit ein neues Datum setzen oder die URL ändern.
+
+Alte Versionen laufen jahrelang weiter – sie garantieren Stabilität.
+
+
+⚠️ Wichtiger Best Practice-Tipp
+Wenn du ein v2 veröffentlichst, schreib unbedingt Doku oder Release Notes:
+
+Was ist neu?
+
+Was hat sich verändert?
+
+Welche Felder fehlen oder sind hinzugekommen?
+
+Gibt es Breaking Changes?
+
+Und du kannst z.B. eine Info-Route anbieten:
+
+GET /api/version
+→ { "current": "v2", "supported": ["v1", "v2"] }
+
+
+✅ Fazit
+Frage	                        Antwort
+Wie wird v2 verwendet?	        Manuell über geänderte URL im Code
+Wie kehrt man zu v1 zurück?	    Indem man den URL einfach zurückstellt
+Wer entscheidet?	            Der Entwickler des Clients
+Wie wird informiert?	        Über Changelog, Docs, README, API-Portal
+Was tun bei Problemen?	        Schnell zurück auf stabile v1 – solange sie gepflegt wird
