@@ -7,6 +7,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import os
 from v2_routes import v2
+from flasgger import Swagger
 
 
 # 👇 Function for Identification (user or IP)
@@ -15,8 +16,16 @@ def get_token_or_ip():
     return request.headers.get("Authorization") or get_remote_address()
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
 app.register_blueprint(v2)  # v2_routes
+app.config['SWAGGER'] = {
+    "title": "The Quiet Almanac API",
+    "uiversion": 3,
+    "description": "📚 A beautiful blog API with versioning, rate limiting, and user-auth.",
+    "version": "2.0",
+    "favicon": "/static/images/almanac-logo.png"
+}
+Swagger(app)
 # 👇 Enables Cross-Origin Resource Sharing for *all* routes and *all* methods
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 # 👇 Activate Rate Limiting (works on all functions and routes below)
@@ -263,6 +272,21 @@ def login():
 def secret(current_user):
     """Protected test route to verify token authentication."""
     return jsonify({'message': f'Welcome, {current_user}!'}), 200
+
+
+@app.route('/swagger-ui/custom.css')
+def swagger_custom_css():
+    """
+        Serve the custom Swagger UI stylesheet.
+
+        This route provides a custom CSS file to override or enhance the default
+        styling of the Swagger UI. It's typically referenced in the Swagger config
+        via the `swagger_ui_css` key to apply branding, layout changes, or visual improvements.
+
+        Returns:
+            Response: The static CSS file 'swagger_custom.css' from the Flask static folder.
+        """
+    return app.send_static_file('swagger_custom.css')
 
 
 if __name__ == '__main__':

@@ -733,5 +733,7 @@ function handleAlertLogin() {
   openLoginModal(); // Already exists in your code
 }
 
+
+
 // Call this when DOM loads
 document.addEventListener("DOMContentLoaded", updateLoginButton);
