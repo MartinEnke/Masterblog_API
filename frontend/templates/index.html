@@ -17,7 +17,8 @@
 
         <!-- API URL Input -->
         <div class="top-bar">
-          <input type="text" id="api-base-url" value="http://127.0.0.1:5021/api">
+          <input type="text" id="api-base-url" value="http://127.0.0.1:5021/api/v1">
+            <small style="color: #888;">api/v1</small>
             <span class="text-button large" onclick="loadPosts()">Load Posts</span>
           <div class="top-bar-center">
           </div>
@@ -53,7 +54,7 @@
   <span class="text-button" onclick="loadPosts()">Apply Filters</span>
     <span class="text-button" onclick="openAddModal()">Add Post</span>
 
-  <input type="text" id="search-input" placeholder="Search title or content...">
+  <input type="text" id="search-input" placeholder="Search author, title or content...">
 
 </div>
 <div></div>
