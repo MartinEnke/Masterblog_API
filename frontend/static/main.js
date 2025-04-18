@@ -48,26 +48,22 @@ function loadPosts() {
             const postContainer = document.getElementById('post-container');
             postContainer.innerHTML = '';
 
-            const posts = data.posts || data; // Handle paginated or raw list
+            const posts = data.posts || data;
 
             posts.forEach(post => {
                 const postDiv = document.createElement('div');
                 postDiv.className = 'post';
 
-                // Title
                 const title = document.createElement('h2');
                 title.textContent = post.title;
 
-                // Content
                 const content = document.createElement('p');
                 content.textContent = post.content;
 
-                // Meta (date + author)
                 const meta = document.createElement('p');
                 meta.className = 'post-meta';
                 meta.textContent = `${post.date || 'No date'} · by ${post.author || 'Unknown'}`;
 
-                // Updated (optional)
                 const updated = document.createElement('p');
                 if (post.updated) {
                     updated.textContent = `Updated: ${post.updated}`;
@@ -76,22 +72,18 @@ function loadPosts() {
                     updated.style.marginBottom = '10px';
                 }
 
-                // Like Button
                 const likeButton = document.createElement('button');
                 likeButton.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
                 likeButton.onclick = () => likePost(post.id);
 
-                // Delete Button
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = '🗑️ Delete';
                 deleteButton.onclick = () => deletePost(post.id);
 
-                // Edit Button
                 const editButton = document.createElement('button');
                 editButton.textContent = '✏️ Edit';
                 editButton.onclick = () => openEditModal(post);
 
-                // Button container
                 const buttonWrapper = document.createElement('div');
                 buttonWrapper.style.display = 'flex';
                 buttonWrapper.style.justifyContent = 'space-between';
@@ -99,31 +91,83 @@ function loadPosts() {
                 buttonWrapper.style.marginTop = '10px';
                 buttonWrapper.appendChild(likeButton);
 
-                // ✅ Only show edit/delete if user is author
                 const currentUser = localStorage.getItem("username");
                 if (post.author === currentUser) {
                     buttonWrapper.appendChild(editButton);
                     buttonWrapper.appendChild(deleteButton);
                 }
 
-                // Post styling
                 postDiv.style.padding = '15px';
                 postDiv.style.border = '1px solid #ccc';
                 postDiv.style.marginBottom = '20px';
                 postDiv.style.borderRadius = '8px';
 
-                // Append all elements
                 postDiv.appendChild(title);
                 postDiv.appendChild(content);
                 postDiv.appendChild(meta);
                 if (post.updated) postDiv.appendChild(updated);
                 postDiv.appendChild(buttonWrapper);
 
+                // 🗨️ Comment Section
+                const commentsContainer = document.createElement('div');
+                commentsContainer.className = 'comments-section';
+
+                const commentList = document.createElement('div');
+                commentList.className = 'comment-list';
+
+                if (post.comments && post.comments.length > 0) {
+                    post.comments.forEach(comment => {
+                        const c = document.createElement('p');
+                        c.innerHTML = `<strong>${comment.author}</strong>: ${comment.text}`;
+                        commentList.appendChild(c);
+                    });
+                } else {
+                    commentList.innerHTML = "<em>No comments yet.</em>";
+                }
+
+                const commentInput = document.createElement('textarea');
+                commentInput.placeholder = "Write a comment...";
+                commentInput.className = 'comment-input';
+
+                const commentBtn = document.createElement('button');
+                commentBtn.textContent = "Submit";
+                commentBtn.className = 'comment-submit';
+                commentBtn.onclick = () => {
+                    const text = commentInput.value.trim();
+                    if (!text) return alert("Comment can't be empty!");
+
+                    fetch(`${baseUrl}/posts/${post.id}/comments`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            author: localStorage.getItem("username") || "Anonymous",
+                            text: text
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log("✅ Comment added:", data);
+                        loadPosts(); // reload to show the comment
+                    })
+                    .catch(err => {
+                        console.error("❌ Comment error:", err);
+                        alert("Failed to add comment.");
+                    });
+                };
+
+                commentsContainer.appendChild(commentList);
+                commentsContainer.appendChild(commentInput);
+                commentsContainer.appendChild(commentBtn);
+                postDiv.appendChild(commentsContainer);
+
                 postContainer.appendChild(postDiv);
             });
         })
         .catch(error => console.error('Error loading posts:', error));
 }
+
 
 
 

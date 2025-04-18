@@ -489,6 +489,33 @@ def like_post_v2(post_id):
 
 from auth import register_user, login_user
 
+
+@v2.route("/posts/<int:post_id>/comments", methods=["POST"])
+def add_comment_v2(post_id):
+    posts = load_posts()
+    if isinstance(posts, tuple):
+        return posts
+
+    data = request.get_json()
+    if not data or not data.get("text"):
+        return jsonify({"error": "Comment text required"}), 400
+
+    comment = {
+        "author": data.get("author", "Anonymous"),
+        "text": data["text"],
+        "date": datetime.now().strftime("%B %d, %Y")
+    }
+
+    for post in posts:
+        if post["id"] == post_id:
+            post.setdefault("comments", []).append(comment)
+            save_posts(posts)
+            return jsonify({"message": "Comment added", "comment": comment}), 201
+
+    return jsonify({"error": "Post not found"}), 404
+
+
+
 # -------------------------
 # 🔐 POST /register
 # -------------------------

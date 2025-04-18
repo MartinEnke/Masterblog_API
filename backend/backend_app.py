@@ -10,7 +10,7 @@ from utils import load_posts, validate_post_data
 from rate_limit import limiter
 
 
-# 👇 Function for Identification (user or IP)
+# 👇 Function for Identification (user or IP) managing separate limiting
 def get_token_or_ip():
     """Returns either the Authorization token or the IP address as a fallback."""
     return request.headers.get("Authorization") or get_remote_address()
@@ -264,20 +264,20 @@ def secret(current_user):
     return jsonify({'message': f'Welcome, {current_user}!'}), 200
 
 
-@app.route('/swagger-ui/custom.css')
-def swagger_custom_css():
-    """
-        NOT USED YET
-        Serves the custom Swagger UI stylesheet.
-
-        This route provides a custom CSS file to override or enhance the default
-        styling of the Swagger UI. It's typically referenced in the Swagger config
-        via the `swagger_ui_css` key to apply branding, layout changes, or visual improvements.
-
-        Returns:
-            Response: The static CSS file 'swagger_custom.css' from the Flask static folder.
-        """
-    return app.send_static_file('swagger_custom.css')
+# @app.route('/swagger-ui/custom.css')
+# def swagger_custom_css():
+#     """
+#         NOT USED YET
+#         Serves the custom Swagger UI stylesheet.
+#
+#         This route provides a custom CSS file to override or enhance the default
+#         styling of the Swagger UI. It's typically referenced in the Swagger config
+#         via the `swagger_ui_css` key to apply branding, layout changes, or visual improvements.
+#
+#         Returns:
+#             Response: The static CSS file 'swagger_custom.css' from the Flask static folder.
+#         """
+#     return app.send_static_file('swagger_custom.css')
 
 
 if __name__ == '__main__':
