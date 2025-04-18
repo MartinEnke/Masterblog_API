@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, request
 from flasgger import swag_from
 import json
-import os
 from datetime import datetime
+from utils import load_posts
 
 from Masterblog_API.backend.auth import token_required
 
@@ -30,12 +30,6 @@ Feature	                        Flasgger                    swagger_ui setup
 # -------------------------
 # 🔧 Utility functions
 # -------------------------
-
-def load_posts():
-    if not os.path.exists("blog_posts.json"):
-        return []
-    with open("blog_posts.json", "r") as file:
-        return json.load(file)
 
 def save_posts(posts):
     with open("blog_posts.json", "w") as file:
@@ -93,6 +87,9 @@ post_schema = {
 })
 def get_posts_v2():
     posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
     sort_field = request.args.get("sort")
     direction = request.args.get("direction", "asc")
     category = request.args.get("category")
@@ -171,6 +168,8 @@ def add_post_v2():
         return jsonify({"error": "Please provide title, content, and category"}), 400
 
     posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
     new_post = {
         "id": max((post["id"] for post in posts), default=0) + 1,
         "author": "SwaggerUser",  # For demo. Replace with actual user in full auth version.
@@ -223,6 +222,9 @@ def add_post_v2():
 def update_post_v2(post_id):
     # (basic version without auth for now)
     posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
     for post in posts:
         if post['id'] == post_id:
             data = request.get_json()
@@ -262,6 +264,9 @@ def update_post_v2(post_id):
 })
 def delete_post_v2(post_id):
     posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
     for post in posts:
         if post["id"] == post_id:
             posts.remove(post)
@@ -287,6 +292,9 @@ def delete_post_v2(post_id):
 })
 def get_categories_v2():
     posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
     categories = sorted({p["category"] for p in posts if p.get("category")})
     return jsonify(categories)
 
@@ -320,6 +328,9 @@ def get_categories_v2():
 })
 def search_posts_v2():
     posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
     query = request.args.get("q", "").strip().lower()
 
     if not query:
@@ -368,6 +379,9 @@ def search_posts_v2():
 })
 def like_post_v2(post_id):
     posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
     for post in posts:
         if post["id"] == post_id:
             post["likes"] = post.get("likes", 0) + 1

@@ -5,9 +5,9 @@ from flask import Flask, request, jsonify
 from auth import register_user, login_user, token_required
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import os
 from v2_routes import v2
 from flasgger import Swagger
+from utils import load_posts
 
 
 # 👇 Function for Identification (user or IP)
@@ -41,14 +41,6 @@ limiter = Limiter(
 # )
 
 
-def load_posts():
-    """Loads all blog posts from a JSON file. Returns an empty list if file doesn't exist."""
-    if not os.path.exists("blog_posts.json"): # fall back if json doesn't exist
-        return []
-    with open("blog_posts.json", "r") as file:
-        return json.load(file)
-
-
 def save_posts(posts):
     """Saves the current list of blog posts to a JSON file."""
     with open("blog_posts.json", "w") as file:
@@ -79,7 +71,10 @@ def validate_post_data(data):
 @limiter.exempt # Define Stop Limiting (maybe for all GET requests)
 def get_posts():
     """Returns a paginated and optionally filtered/sorted list of blog posts."""
-    POSTS = load_posts()
+    posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption
+        return posts
+
     sort_field = request.args.get("sort")
     direction = request.args.get("direction", "asc")
     category = request.args.get("category")
@@ -88,7 +83,7 @@ def get_posts():
     page = int(request.args.get("page", 1))
     limit = int(request.args.get("limit", 5))
 
-    filtered_posts = POSTS.copy()
+    filtered_posts = posts.copy()
 
     if category:
         filtered_posts = [p for p in filtered_posts if p["category"].lower() == category.lower()]
@@ -129,7 +124,10 @@ def get_posts():
 @limiter.limit("5 per minute") # Allows productive work but prevents Spam
 def add_post(current_user):
     """Creates a new blog post for the logged-in user."""
-    POSTS = load_posts()
+    posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
     data = request.get_json()
 
     error = validate_post_data(data)
@@ -137,7 +135,7 @@ def add_post(current_user):
         return jsonify(error), 400
 
     new_post = {
-        "id": max([post["id"] for post in POSTS], default=0) + 1,
+        "id": max([post["id"] for post in posts], default=0) + 1,
         "author": current_user,  # 🧠 use username from token
         "title": data["title"],
         "content": data["content"],
@@ -146,8 +144,8 @@ def add_post(current_user):
         "likes": 0
     }
 
-    POSTS.append(new_post)
-    save_posts(POSTS)
+    posts.append(new_post)
+    save_posts(posts)
 
     return jsonify(new_post), 201
 
@@ -157,13 +155,16 @@ def add_post(current_user):
 @limiter.limit("5 per minute") # Allows productive work but prevents Spam
 def delete_post(current_user, post_id):
     """Deletes a blog post if it belongs to the current user."""
-    POSTS = load_posts()
-    for post in POSTS:
+    posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
+    for post in posts:
         if post['id'] == post_id:
             if post['author'] != current_user:
                 return jsonify({"error": "Unauthorized to delete this post"}), 403
-            POSTS.remove(post)
-            save_posts(POSTS)
+            posts.remove(post)
+            save_posts(posts)
             return jsonify({"message": f"Post {post_id} deleted"}), 200
     return jsonify({"error": f"Post with ID {post_id} not found"}), 404
 
@@ -173,8 +174,11 @@ def delete_post(current_user, post_id):
 @token_required
 def update_post(current_user, post_id):
     """Updates a blog post's title, content, or category if user owns the post."""
-    POSTS = load_posts()
-    for post in POSTS:
+    posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
+    for post in posts:
         if post['id'] == post_id:
             if post['author'] != current_user:
                 return jsonify({"error": "Unauthorized to edit this post"}), 403
@@ -189,7 +193,7 @@ def update_post(current_user, post_id):
             post['category'] = new_data['category']
             post["updated"] = datetime.now().strftime("%B %d, %Y")
 
-            save_posts(POSTS)
+            save_posts(posts)
             return jsonify(post), 200
     return jsonify({"error": f"Post with ID {post_id} not found"}), 404
 
@@ -198,14 +202,17 @@ def update_post(current_user, post_id):
 @limiter.limit("10 per minute")
 def search_post():
     """Searches posts by title, content, or author."""
-    POSTS = load_posts()
+    posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
     search_text = request.args.get("q", "").lower()
 
     if not search_text:
         return jsonify({"error": "Please provide a search term using '?q=your_query'"}), 400
 
     results = [
-        post for post in POSTS
+        post for post in posts
         if search_text in post.get('title', '').lower()
         or search_text in post.get('content', '').lower()
         or search_text in post.get('author', '').lower()
@@ -222,6 +229,8 @@ def search_post():
 def get_categories():
     """Returns a unique sorted list of all categories in blog posts."""
     posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
     categories_set = set()
 
     for post in posts:
@@ -240,6 +249,8 @@ def get_categories():
 def like_post(post_id):
     """Increments the like count of a post by its ID."""
     posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
 
     for post in posts:
         if post["id"] == post_id:
@@ -277,7 +288,8 @@ def secret(current_user):
 @app.route('/swagger-ui/custom.css')
 def swagger_custom_css():
     """
-        Serve the custom Swagger UI stylesheet.
+        NOT USED YET
+        Serves the custom Swagger UI stylesheet.
 
         This route provides a custom CSS file to override or enhance the default
         styling of the Swagger UI. It's typically referenced in the Swagger config
