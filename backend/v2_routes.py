@@ -4,8 +4,7 @@ import json
 from datetime import datetime
 from utils import load_posts, validate_post_data
 from rate_limit import limiter
-
-from Masterblog_API.backend.auth import token_required
+from auth import token_required
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 

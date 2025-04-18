@@ -30,10 +30,14 @@ def validate_registration(username, password):
     save_users(users)
     return True, {"message": "User registered successfully"}, 201
 
-# Flask route wrappers
+
 def login_user():
     data = request.get_json()
-    return validate_login(data.get("username"), data.get("password"))[1:]
+    success, response, status = validate_login(data.get("username"), data.get("password"))
+    if success:
+        # ✅ Store the token (username) so @token_required can find it later
+        TOKENS[response["token"]] = data.get("username")
+    return response, status
 
 def register_user():
     data = request.get_json()
@@ -42,7 +46,7 @@ def register_user():
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = request.headers.get("Authorization")
+        token = request.headers.get("Authorization", "").replace("Bearer ", "")
         if not token or token not in TOKENS:
             return jsonify({"error": "Authentication required"}), 401
         return f(*args, **kwargs)
