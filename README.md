@@ -32,8 +32,24 @@
 
 ## 📁 Folder Structure
 
-project-root/ │ ├── static/ # All frontend assets │ ├── main.js # Frontend logic (JS) │ ├── styles.css # All styles │ └── images/ # Optional images like logo/banner │ ├── blog_posts.json # Main data file for blog posts ├── users.json # JSON-based user auth ├── backend_app.py # Flask app with v1 routes ├── v2_routes.py # Modular blueprint for /api/v2 ├── auth.py # Token auth + user system ├── utils.py # Shared helpers (validation, load/save, etc.) ├── rate_limit.py # Flask-Limiter instance ├── templates/ # (optional) Flask HTML templates └── README.md # This file
----
+- `backend/`
+  - `auth.py` — Token auth + user system  
+  - `backend_app.py` — Flask app with v1 routes  
+  - `blog_posts.json` — Main data file for blog posts 
+  - `rate_limit.py` — Flask-Limiter instance 
+  - `users.json` — JSON-based user auth 
+  - `utils.py` — Shared helpers (validation, load/save)  
+  - `v2_routes.py` — Modular blueprint for /api/v2  
+- `frontend/`
+  - `frontend_app.py`
+  - `static/` — All frontend assets  
+    - `main.js` — Frontend logic (JS)  
+    - `styles.css` — All styles  
+    - `images/` — Optional images like logo/banner
+    - `templates/` — Optional Flask HTML templates
+- `README.md` — This file  
+- `requirements.txt`
+
 
 ## 🔐 Authentication
 
@@ -95,6 +111,9 @@ By default, the app runs at: http://127.0.0.1:5021
 Just open index.html in your browser (from /static folder) or serve via Flask if preferred.
 
 
+---
+
+
 ### 💡 Ideas to Extend
 JWT-based auth or OAuth login
 
@@ -105,6 +124,9 @@ Upload cover images for posts
 Use SQLite or PostgreSQL instead of JSON
 
 Add email validation & password hashing
+
+
+---
 
 
 #### Author

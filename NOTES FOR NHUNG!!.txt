@@ -1,0 +1,10 @@
+Hi Nhung,
+at some point it worked just fine to log in, and as logged in user to add, edit or delete
+your own posts. Unfortunately, there is some authentication issue, with this token system
+which I couldn't figure out. :(
+It would be so great if you know what the problem is ;)
+It tool me ages to do all this, but the main functionality doesn't work anymore. :/
+
+Thanks in advance!
+
+Best Martin

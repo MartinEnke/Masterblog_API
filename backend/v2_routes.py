@@ -8,25 +8,6 @@ from auth import token_required
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
-
-'''
-This Swagger doc uses "Flasgger" instead of "flask_swagger_ui setup".
-Flasgger is more tightly integrated into Flask apps and more maintainable and powerful long term.
-It follows the OpenAPI 2.0 spec but integrates Swagger directly via decorators. 
-It avoids manual maintenance of a separate JSON file like masterblog.json.
-Instead of a static json file it uses Python decorators + @swag_from({...}):.
-This is dynamic documentation, written next to the actual route logic, and will stay up to date.
-
-Flasgger vs. swagger_ui setup 
-
-Feature	                        Flasgger                    swagger_ui setup 
-🔄 Auto sync with routes	    ✅ Yes (@swag_from)	        ❌ No
-🧩 Blueprint-based API design	✅ Modular (v2 blueprint)	❌ Monolithic
-✍️ Detailed field schema	    ✅ JSON schema for posts	❌ Very basic
-📈 Pagination, sorting, etc.	✅ Documented in Swagger	❌ Missing
-🔐 Auth-based logic	            🚧 Partial (planned)	    ❌ None
-'''
-
 # -------------------------
 # 🔧 Utility functions
 # -------------------------

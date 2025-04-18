@@ -1,6 +1,13 @@
+/* ==========================================================================
+   GLOBAL VARIABLES
+   ========================================================================== */
 let categories = [];
+let postToEditId = null;
 
 
+/* ==========================================================================
+   INITIALIZATION
+   ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const savedBaseUrl = localStorage.getItem('apiBaseUrl');
     if (savedBaseUrl) {
@@ -9,17 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadCategories();
     loadPosts();
-    updateAuthButton();  // Add this line
+    updateAuthButton();
     updateUserInfo();
 });
 
 
+/* ==========================================================================
+   BASE URL & SEARCH INPUT
+   ========================================================================== */
 function storeBaseUrl() {
-  const url = document.getElementById("api-base-url").value;
-  localStorage.setItem("apiBaseUrl", url);
-  loadPosts(); // Optional: refresh right after switching
+    const url = document.getElementById("api-base-url").value;
+    localStorage.setItem("apiBaseUrl", url);
+    loadPosts();
 }
-
 
 document.getElementById('search-input').addEventListener('keydown', function (event) {
     if (event.key === 'Enter') {
@@ -28,7 +37,9 @@ document.getElementById('search-input').addEventListener('keydown', function (ev
 });
 
 
-// Function to fetch all the posts from the API and display them on the page
+/* ==========================================================================
+   POSTS: LOAD / RENDER / SEARCH / COMMENT
+   ========================================================================== */
 function loadPosts() {
     const baseUrl = document.getElementById('api-base-url').value;
     localStorage.setItem('apiBaseUrl', baseUrl);
@@ -189,140 +200,47 @@ function loadPosts() {
         .catch(error => console.error('Error loading posts:', error));
 }
 
+function renderPost(post) {
+    const postContainer = document.getElementById('post-container');
+    const postDiv = document.createElement('div');
+    postDiv.className = 'post';
 
+    const title = document.createElement('h2');
+    title.textContent = post.title;
 
+    const content = document.createElement('p');
+    content.textContent = post.content;
 
-// Function to send a POST request to the API to add a new post
-function addPost() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const token = localStorage.getItem('authToken');
+    const date = document.createElement('p');
+    date.textContent = `${post.date || 'No date'}`;
+    date.style.fontStyle = 'italic';
 
-    fetch(`${baseUrl}/posts`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token || ""
-        },
-        body: JSON.stringify({
-            title: document.getElementById('add-title').value,
-            content: document.getElementById('add-content').value,
-            category: document.getElementById('add-category').value,
-            author: "Anonymous"  // Replace later if needed
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('✅ Post added:', data);
-        loadPosts();
-    })
-    .catch(error => {
-        console.error('❌ Failed to add post:', error);
-        alert("You need to be logged in to add a post.");
-    });
+    const likeButton = document.createElement('button');
+    likeButton.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
+    likeButton.onclick = () => likePost(post.id);
+
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = '🗑️ Delete';
+    deleteButton.onclick = () => deletePost(post.id);
+
+    const editButton = document.createElement('button');
+    editButton.textContent = '✏️ Edit';
+    editButton.onclick = () => openEditModal(post);
+
+    const buttonWrapper = document.createElement('div');
+    buttonWrapper.style.display = 'flex';
+    buttonWrapper.style.gap = '10px';
+    buttonWrapper.appendChild(likeButton);
+    buttonWrapper.appendChild(editButton);
+    buttonWrapper.appendChild(deleteButton);
+
+    postDiv.appendChild(title);
+    postDiv.appendChild(content);
+    postDiv.appendChild(date);
+    postDiv.appendChild(buttonWrapper);
+
+    postContainer.appendChild(postDiv);
 }
-
-// Function to send a DELETE request to the API to delete a post
-function deletePost(postId) {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const token = localStorage.getItem('authToken');
-
-    if (!confirm("🛑 Are you sure you want to delete this post?")) return;
-
-    fetch(`${baseUrl}/posts/${postId}`, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': token || ""
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || "Failed to delete post");
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("✅ Deleted:", data);
-        loadPosts();
-    })
-    .catch(error => {
-        console.error("❌ Delete failed:", error.message);
-        alert("Error: " + error.message);
-    });
-}
-
-
-// Dynamically loads category options into the add and filter dropdowns from the API
-function loadCategories() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    console.log("🌍 Fetching categories from:", baseUrl + '/categories');
-
-    fetch(baseUrl + '/categories')
-        .then(response => response.json())
-        .then(fetchedCategories => {
-            console.log("✅ Categories received:", fetchedCategories);
-            categories = fetchedCategories; // update global list
-
-            // Get dropdowns
-            const filterSelect = document.getElementById('filter-category');
-            const addSelect = document.getElementById('add-category');
-            const editSelect = document.getElementById('edit-category');
-
-            // 🧼 Clear & repopulate Filter dropdown
-            if (filterSelect) {
-                filterSelect.innerHTML = '<option value="">All Categories</option>';
-                categories.forEach(cat => {
-                    const opt = new Option(cat, cat);
-                    filterSelect.appendChild(opt);
-                });
-            }
-
-            // 🧼 Clear & repopulate Add dropdown
-            if (addSelect) {
-                addSelect.innerHTML = '<option value="">Select Category</option>';
-                categories.forEach(cat => {
-                    const opt = new Option(cat, cat);
-                    addSelect.appendChild(opt);
-                });
-            }
-
-            // 🧼 Clear & repopulate Edit dropdown (leave selection logic to `openEditModal`)
-            if (editSelect) {
-                editSelect.innerHTML = '<option value="">Select Category</option>';
-                categories.forEach(cat => {
-                    const opt = new Option(cat, cat);
-                    editSelect.appendChild(opt);
-                });
-            }
-        })
-        .catch(error => {
-            console.error("❌ Failed to load categories:", error);
-        });
-}
-
-
-//
-function likePost(postId) {
-    const baseUrl = document.getElementById('api-base-url').value;
-
-    fetch(`${baseUrl}/posts/${postId}/like`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.likes !== undefined) {
-            // Update the like count on the page
-            document.getElementById(`like-count-${postId}`).textContent = data.likes;
-        } else {
-            console.error("No 'likes' value returned:", data);
-        }
-    })
-    .catch(error => {
-        console.error("Error liking the post:", error);
-    });
-}
-
 
 function searchPosts() {
     const baseUrl = document.getElementById('api-base-url').value;
@@ -417,52 +335,145 @@ function searchPosts() {
         .catch(error => console.error('Search error:', error));
 }
 
+/* ==========================================================================
+   POSTS: ADD / DELETE
+   ========================================================================== */
+function addPost() {
+    const baseUrl = document.getElementById('api-base-url').value;
+    const token = localStorage.getItem('authToken');
 
+    fetch(`${baseUrl}/posts`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token || ""
+        },
+        body: JSON.stringify({
+            title: document.getElementById('add-title').value,
+            content: document.getElementById('add-content').value,
+            category: document.getElementById('add-category').value,
+            author: "Anonymous"  // Replace later if needed
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('✅ Post added:', data);
+        loadPosts();
+    })
+    .catch(error => {
+        console.error('❌ Failed to add post:', error);
+        alert("You need to be logged in to add a post.");
+    });
+}
 
-function renderPost(post) {
-    const postContainer = document.getElementById('post-container');
-    const postDiv = document.createElement('div');
-    postDiv.className = 'post';
+function deletePost(postId) {
+    const baseUrl = document.getElementById('api-base-url').value;
+    const token = localStorage.getItem('authToken');
 
-    const title = document.createElement('h2');
-    title.textContent = post.title;
+    if (!confirm("🛑 Are you sure you want to delete this post?")) return;
 
-    const content = document.createElement('p');
-    content.textContent = post.content;
-
-    const date = document.createElement('p');
-    date.textContent = `${post.date || 'No date'}`;
-    date.style.fontStyle = 'italic';
-
-    const likeButton = document.createElement('button');
-    likeButton.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
-    likeButton.onclick = () => likePost(post.id);
-
-    const deleteButton = document.createElement('button');
-    deleteButton.textContent = '🗑️ Delete';
-    deleteButton.onclick = () => deletePost(post.id);
-
-    const editButton = document.createElement('button');
-    editButton.textContent = '✏️ Edit';
-    editButton.onclick = () => openEditModal(post);
-
-    const buttonWrapper = document.createElement('div');
-    buttonWrapper.style.display = 'flex';
-    buttonWrapper.style.gap = '10px';
-    buttonWrapper.appendChild(likeButton);
-    buttonWrapper.appendChild(editButton);
-    buttonWrapper.appendChild(deleteButton);
-
-    postDiv.appendChild(title);
-    postDiv.appendChild(content);
-    postDiv.appendChild(date);
-    postDiv.appendChild(buttonWrapper);
-
-    postContainer.appendChild(postDiv);
+    fetch(`${baseUrl}/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': token || ""
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || "Failed to delete post");
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("✅ Deleted:", data);
+        loadPosts();
+    })
+    .catch(error => {
+        console.error("❌ Delete failed:", error.message);
+        alert("Error: " + error.message);
+    });
 }
 
 
-// Registration Part //
+/* ==========================================================================
+   POSTS: LIKE
+   ========================================================================== */
+function likePost(postId) {
+    const baseUrl = document.getElementById('api-base-url').value;
+
+    fetch(`${baseUrl}/posts/${postId}/like`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.likes !== undefined) {
+            // Update the like count on the page
+            document.getElementById(`like-count-${postId}`).textContent = data.likes;
+        } else {
+            console.error("No 'likes' value returned:", data);
+        }
+    })
+    .catch(error => {
+        console.error("Error liking the post:", error);
+    });
+}
+
+
+/* ==========================================================================
+   CATEGORIES
+   ========================================================================== */
+function loadCategories() {
+    const baseUrl = document.getElementById('api-base-url').value;
+    console.log("🌍 Fetching categories from:", baseUrl + '/categories');
+
+    fetch(baseUrl + '/categories')
+        .then(response => response.json())
+        .then(fetchedCategories => {
+            console.log("✅ Categories received:", fetchedCategories);
+            categories = fetchedCategories; // update global list
+
+            // Get dropdowns
+            const filterSelect = document.getElementById('filter-category');
+            const addSelect = document.getElementById('add-category');
+            const editSelect = document.getElementById('edit-category');
+
+            // 🧼 Clear & repopulate Filter dropdown
+            if (filterSelect) {
+                filterSelect.innerHTML = '<option value="">All Categories</option>';
+                categories.forEach(cat => {
+                    const opt = new Option(cat, cat);
+                    filterSelect.appendChild(opt);
+                });
+            }
+
+            // 🧼 Clear & repopulate Add dropdown
+            if (addSelect) {
+                addSelect.innerHTML = '<option value="">Select Category</option>';
+                categories.forEach(cat => {
+                    const opt = new Option(cat, cat);
+                    addSelect.appendChild(opt);
+                });
+            }
+
+            // 🧼 Clear & repopulate Edit dropdown (leave selection logic to `openEditModal`)
+            if (editSelect) {
+                editSelect.innerHTML = '<option value="">Select Category</option>';
+                categories.forEach(cat => {
+                    const opt = new Option(cat, cat);
+                    editSelect.appendChild(opt);
+                });
+            }
+        })
+        .catch(error => {
+            console.error("❌ Failed to load categories:", error);
+        });
+}
+
+/* ==========================================================================
+   AUTHENTICATION: LOGIN / LOGOUT / REGISTER / MODALS
+   ========================================================================== */
 function loginUser(username, password) {
     const baseUrl = document.getElementById('api-base-url').value;
 
@@ -485,149 +496,11 @@ function loginUser(username, password) {
         alert("❌ Login request failed");
     });
 }
-
-let postToEditId = null;
-
 console.log("Categories loaded:", categories);
-
-
-function openEditModal(post) {
-    postToEditId = post.id;
-
-    document.getElementById('edit-title').value = post.title;
-    document.getElementById('edit-content').value = post.content;
-
-    const dropdown = document.getElementById('edit-category');
-    dropdown.innerHTML = '';
-
-    categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = cat;
-        if (cat.trim().toLowerCase() === post.category.trim().toLowerCase()) {
-            option.selected = true;
-        }
-        dropdown.appendChild(option);
-    });
-
-    document.getElementById('update-modal').classList.remove('hidden');
-}
-
-
-function closeModal() {
-    document.getElementById('update-modal').classList.add('hidden');
-}
-
-
-function submitUpdate() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const token = localStorage.getItem('authToken');
-
-    const updatedPost = {
-        title: document.getElementById('edit-title').value,
-        content: document.getElementById('edit-content').value,
-        category: document.getElementById('edit-category').value,
-        author: "Anonymous" // Optional, adjust as needed
-    };
-
-    fetch(`${baseUrl}/posts/${postToEditId}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token || ""
-        },
-        body: JSON.stringify(updatedPost)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || "Update failed");
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        closeModal();
-        loadPosts();
-    })
-    .catch(err => {
-        console.error("❌ Failed to update post:", err.message);
-        alert("Error: " + err.message);
-    });
-}
-
-function openAddModal() {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    showAlertModal("You need to login to add a post.");
-    return;
-  }
-
-  // Clear form & open modal
-  document.getElementById('add-title').value = '';
-  document.getElementById('add-content').value = '';
-  const dropdown = document.getElementById('add-category');
-  dropdown.innerHTML = '<option value="">Select Category</option>';
-  categories.forEach(cat => {
-    const option = document.createElement('option');
-    option.value = cat;
-    option.textContent = cat;
-    dropdown.appendChild(option);
-  });
-
-  document.getElementById('add-modal').classList.remove('hidden');
-}
-
-function closeAddWarningModal() {
-  document.getElementById('add-warning-modal').classList.add('hidden');
-}
 
 function handleLoginFromWarning() {
   closeAddWarningModal();      // 👈 closes the warning modal
   openLoginModal();            // 👈 opens the login modal
-}
-
-
-function closeAddModal() {
-    document.getElementById('add-modal').classList.add('hidden');
-}
-
-
-function submitAdd() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const token = localStorage.getItem('authToken');
-
-    const newPost = {
-        title: document.getElementById('add-title').value,
-        content: document.getElementById('add-content').value,
-        category: document.getElementById('add-category').value,
-        author: "Anonymous" // Optional: use logged-in username if available
-    };
-
-    fetch(`${baseUrl}/posts`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token || ""
-        },
-        body: JSON.stringify(newPost)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || "Add post failed");
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        closeModal();
-        loadPosts();
-    })
-    .catch(err => {
-        console.error("❌ Failed to add post:", err.message);
-        alert("Error: " + err.message);
-    });
 }
 
 function openLoginModal() {
@@ -668,32 +541,6 @@ function submitLogin() {
     });
 }
 
-function updateAuthButton() {
-    const token = localStorage.getItem("authToken");
-    const button = document.getElementById("auth-button");
-    if (token) {
-        button.textContent = "Logout";
-    } else {
-        button.textContent = "Login";
-    }
-}
-
-function handleAuthClick() {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-        // Logout
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("username");  // 👈 clear username
-        updateAuthButton();
-        updateUserInfo();  // 👈 update the username display
-        // alert("👋 Logged out successfully.");
-        loadPosts();
-    } else {
-        openLoginModal();
-    }
-}
-
-
 function openLogoutModal() {
   document.getElementById('logout-modal').classList.remove('hidden');
 }
@@ -711,7 +558,6 @@ function confirmLogout() {
   // alert("👋 You have been logged out.");
   loadPosts();
 }
-
 
 function openSignupModal() {
   document.getElementById('signup-modal').classList.remove('hidden');
@@ -789,6 +635,161 @@ function updateUserInfo() {
   }
 }
 
+function closeAddModal() {
+    document.getElementById('add-modal').classList.add('hidden');
+}
+
+function submitAdd() {
+    const baseUrl = document.getElementById('api-base-url').value;
+    const token = localStorage.getItem('authToken');
+
+    const newPost = {
+        title: document.getElementById('add-title').value,
+        content: document.getElementById('add-content').value,
+        category: document.getElementById('add-category').value,
+        author: "Anonymous" // Optional: use logged-in username if available
+    };
+
+    fetch(`${baseUrl}/posts`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token || ""
+        },
+        body: JSON.stringify(newPost)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || "Add post failed");
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        closeModal();
+        loadPosts();
+    })
+    .catch(err => {
+        console.error("❌ Failed to add post:", err.message);
+        alert("Error: " + err.message);
+    });
+}
+
+function openEditModal(post) {
+    postToEditId = post.id;
+
+    document.getElementById('edit-title').value = post.title;
+    document.getElementById('edit-content').value = post.content;
+
+    const dropdown = document.getElementById('edit-category');
+    dropdown.innerHTML = '';
+
+    categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        if (cat.trim().toLowerCase() === post.category.trim().toLowerCase()) {
+            option.selected = true;
+        }
+        dropdown.appendChild(option);
+    });
+
+    document.getElementById('update-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('update-modal').classList.add('hidden');
+}
+
+function submitUpdate() {
+    const baseUrl = document.getElementById('api-base-url').value;
+    const token = localStorage.getItem('authToken');
+
+    const updatedPost = {
+        title: document.getElementById('edit-title').value,
+        content: document.getElementById('edit-content').value,
+        category: document.getElementById('edit-category').value,
+        author: "Anonymous" // Optional, adjust as needed
+    };
+
+    fetch(`${baseUrl}/posts/${postToEditId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token || ""
+        },
+        body: JSON.stringify(updatedPost)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || "Update failed");
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        closeModal();
+        loadPosts();
+    })
+    .catch(err => {
+        console.error("❌ Failed to update post:", err.message);
+        alert("Error: " + err.message);
+    });
+}
+
+function openAddModal() {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    showAlertModal("You need to login to add a post.");
+    return;
+  }
+
+  // Clear form & open modal
+  document.getElementById('add-title').value = '';
+  document.getElementById('add-content').value = '';
+  const dropdown = document.getElementById('add-category');
+  dropdown.innerHTML = '<option value="">Select Category</option>';
+  categories.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat;
+    option.textContent = cat;
+    dropdown.appendChild(option);
+  });
+
+  document.getElementById('add-modal').classList.remove('hidden');
+}
+
+function closeAddWarningModal() {
+  document.getElementById('add-warning-modal').classList.add('hidden');
+}
+
+function updateAuthButton() {
+    const token = localStorage.getItem("authToken");
+    const button = document.getElementById("auth-button");
+    if (token) {
+        button.textContent = "Logout";
+    } else {
+        button.textContent = "Login";
+    }
+}
+
+function handleAuthClick() {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+        // Logout
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("username");  // 👈 clear username
+        updateAuthButton();
+        updateUserInfo();  // 👈 update the username display
+        // alert("👋 Logged out successfully.");
+        loadPosts();
+    } else {
+        openLoginModal();
+    }
+}
+
 function showAlertModal(message) {
   const alertBox = document.getElementById("alert-modal");
   const messageText = document.getElementById("alert-message");
@@ -804,8 +805,6 @@ function handleAlertLogin() {
   closeAlertModal();
   openLoginModal(); // Already exists in your code
 }
-
-
 
 // Call this when DOM loads
 document.addEventListener("DOMContentLoaded", updateLoginButton);

@@ -1,3 +1,6 @@
+/* ==========================================================================
+   GLOBAL BASE STYLES
+   ========================================================================== */
 * {
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
@@ -10,6 +13,9 @@ body {
     height: 100vh;
 }
 
+/* ==========================================================================
+   HEADER / BANNER
+   ========================================================================== */
 .banner {
   display: flex;
   justify-content: center;
@@ -24,6 +30,9 @@ body {
   box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.15);
 }
 
+/* ==========================================================================
+   MAIN CONTAINER
+   ========================================================================== */
 .container {
     background-color: #fff;
     width: 80%;
@@ -33,7 +42,9 @@ body {
     margin: auto;
 }
 
-/* New Style for menu start */
+/* ==========================================================================
+   TOP NAVIGATION / MENU BAR
+   ========================================================================== */
 .top-bar {
   display: flex;
   align-items: center;
@@ -54,7 +65,7 @@ body {
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Welcome centered */
+/* Centered welcome text */
 .top-bar-center {
   position: absolute;
   left: 50%;
@@ -62,8 +73,7 @@ body {
   text-align: center;
 }
 
-
-/* Right side login/signup */
+/* Login/Signup right section */
 .top-bar-right {
   margin-left: auto;
   display: flex;
@@ -95,7 +105,9 @@ body {
   transition: all 0.3s ease;
 }
 
-/* Base layout */
+/* ==========================================================================
+   FILTER & SORT BAR
+   ========================================================================== */
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
@@ -104,14 +116,12 @@ body {
   margin-bottom: 20px;
 }
 
-/* Category dropdown (wider) */
 #filter-category {
   flex: 1 1 200px;
   min-width: 180px;
   max-width: 240px;
 }
 
-/* Sort fields (more compact) */
 #sort-field,
 #sort-direction {
   flex: 0 1 140px;
@@ -119,7 +129,6 @@ body {
   max-width: 160px;
 }
 
-/* All dropdowns */
 .filter-bar select {
   padding: 8px 10px;
   font-size: 14px;
@@ -128,7 +137,6 @@ body {
   background-color: #fff;
 }
 
-/* Search input: fills remaining space */
 #search-input {
   flex: 1 1 200px;
   min-width: 180px;
@@ -138,8 +146,9 @@ body {
   border-radius: 8px;
 }
 
-/* Text-style buttons */
-/* Base minimalist button */
+/* ==========================================================================
+   BUTTON STYLES
+   ========================================================================== */
 .text-button {
   background: none;
   border: none;
@@ -158,39 +167,21 @@ body {
 }
 
 .text-button:hover {
-  background-color: rgba(68, 102, 238, 0.1); /* subtle hover background */
+  background-color: rgba(68, 102, 238, 0.1);
   color: #2c4ccf;
 }
 
-/* Modal-specific tweaks (optional) */
+/* Modal-specific text buttons */
 .modal-buttons .text-button {
   padding: 8px 14px;
   font-weight: 500;
   text-transform: uppercase;
 }
 
-
-#search-input {
-  flex-grow: 1;
-  min-width: 200px;
-}
-
-@media (max-width: 768px) {
-  .filter-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-bar button,
-  .filter-bar input,
-  .filter-bar select {
-    width: 100%;
-  }
-}
 .text-button {
   font-size: 16px;
   font-weight: 500;
-  color: #1f2937; /* dark gray or adjust as needed */
+  color: #1f2937;
   background: none;
   border: none;
   cursor: pointer;
@@ -204,8 +195,9 @@ body {
   background-color: #eaf3f1;
 }
 
-/* New Style for menu end */
-
+/* ==========================================================================
+   INPUT FIELD LAYOUTS
+   ========================================================================== */
 .input-field {
     display: flex;
     align-items: center;
@@ -240,7 +232,6 @@ body {
   flex-wrap: wrap;
 }
 
-
 .input-field button {
     background-color: #4466ee;
     color: #fff;
@@ -251,6 +242,22 @@ body {
     background-color: #3355dd;
 }
 
+.input-field select {
+  margin-right: 10px;
+}
+
+.input-field input[type="text"]#search-input {
+  height: 40px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  flex: 1;
+}
+
+/* ==========================================================================
+   POST STYLING
+   ========================================================================== */
 .post {
     border-radius: 8px;
     background-color: #f5f5f5;
@@ -268,6 +275,15 @@ body {
 .post p {
     margin: 10px 0 0;
     color: #333;
+    font-size: 1.05rem;
+    line-height: 1.4;
+}
+
+.post p.author {
+  font-style: italic;
+  font-size: 1.4em;
+  color: #777;
+  margin: 10px 0;
 }
 
 .post-meta {
@@ -278,31 +294,27 @@ body {
   opacity: 0.85;
 }
 
-button {
-    padding: 5px 12px;
-    margin: 5px;
-    border: none;
-    border-radius: 5px;
-    background-color: #f0f0f0;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s ease;
-
-}
-
+/* ==========================================================================
+   DEFAULT BUTTON STYLING
+   ========================================================================== */
 button {
   font-size: 16px;
   padding: 6px 12px;
-  background-color: #f5f5f5;
+  margin: 5px;
   border: 1px solid #ccc;
-  cursor: pointer;
-  margin-right: 10px;
   border-radius: 5px;
+  background-color: #f5f5f5;
+  cursor: pointer;
   transition: background-color 0.3s;
 }
 
+button:hover {
+    background-color: #ddd;
+}
 
-/* Style dropdowns to match buttons */
+/* ==========================================================================
+   SELECT DROPDOWNS
+   ========================================================================== */
 select {
   height: 40px;
   padding: 0 12px;
@@ -311,15 +323,12 @@ select {
   border-radius: 8px;
   background-color: #fff;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
   appearance: none;
-
-  /* ✅ Custom dropdown arrow */
   background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='10'%3E%3Cpath fill='%23666' d='M7 10L0 0h14z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 12px;
-  padding-right: 36px; /* space for the arrow */
+  padding-right: 36px;
 }
 
 select:focus {
@@ -328,40 +337,9 @@ select:focus {
   outline: none;
 }
 
-.input-field select {
-  margin-right: 10px;
-}
-
-
-/* Apply filters input layout cleanup */
-.input-field {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.input-field input[type="text"]#search-input {
-  height: 40px;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  flex: 1;
-}
-
-.post p.author {
-  font-style: italic;
-  font-size: 1.4em;
-  color: #777;
-  margin: 10px 0;
-}
-
-.post p {
-  font-size: 1.05rem;  /* Slightly larger than default */
-  line-height: 1.4;
-}
-
+/* ==========================================================================
+   COMMENTS SECTION
+   ========================================================================== */
 .comments-section {
   margin-top: 15px;
   padding-top: 10px;
@@ -370,34 +348,6 @@ select:focus {
 
 .comment-list p {
   margin: 4px 0;
-}
-
-.comment-input {
-  width: 100%;
-  height: 60px;
-  margin-top: 10px;
-  padding: 8px;
-  resize: vertical;
-}
-
-.comment-submit {
-  margin-top: 5px;
-  padding: 6px 10px;
-  font-weight: bold;
-}
-
-.toggle-comments-link {
-  display: inline-block;
-  margin-top: 8px;
-  color: #555;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.toggle-comments-link:hover {
-  color: #000;
-  text-decoration: underline;
 }
 
 .comment-block {
@@ -416,19 +366,20 @@ select:focus {
 
 .comment-input {
   width: 100%;
+  height: 60px;
   margin-top: 10px;
   padding: 8px;
+  resize: vertical;
   border: none;
   border-radius: 6px;
   background-color: #f0f0f0;
   font-size: 0.95rem;
-  resize: vertical;
 }
 
 .comment-submit {
   background: none;
   border: none;
-  color: #1f2937; /* same dark tone as your nav-link */
+  color: #1f2937;
   font-family: 'Poppins', sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
@@ -436,27 +387,31 @@ select:focus {
   padding: 6px 10px;
   border-radius: 6px;
   transition: background-color 0.2s ease, color 0.2s ease;
+  margin-top: 5px;
 }
 
 .comment-submit:hover {
-  background-color: #eaf3f1; /* light green hover like .text-button */
-  color: #20342f; /* richer dark for hover */
+  background-color: #eaf3f1;
+  color: #20342f;
 }
 
-
-
-/* Footer */
-footer {
-
-    color: #c2cdc6;
-    text-align: center;
-    padding: 10px;
-    font-size: 0.9em;
-    margin-top: 90px;
+.toggle-comments-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: #555;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
+.toggle-comments-link:hover {
+  color: #000;
+  text-decoration: underline;
+}
 
-/* Modal form for Editing posts */
+/* ==========================================================================
+   MODAL STYLES
+   ========================================================================== */
 .modal {
   position: fixed;
   top: 0; left: 0;
@@ -479,7 +434,6 @@ footer {
   font-family: 'Poppins', sans-serif;
 }
 
-
 .modal-content h2 {
   margin-top: 0;
   font-size: 1.5rem;
@@ -501,6 +455,10 @@ footer {
   box-sizing: border-box;
 }
 
+.modal-content textarea {
+  min-height: 350px;
+  resize: vertical;
+}
 
 .modal-content select {
   all: unset;
@@ -528,18 +486,12 @@ footer {
   outline: none;
 }
 
-.modal-content textarea {
-  min-height: 350px;
-  resize: vertical;
-}
-
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 10px;
 }
-
 
 .modal-buttons button {
   padding: 10px 16px;
@@ -555,8 +507,11 @@ footer {
   background-color: #d1d5db;
 }
 
+/* ==========================================================================
+   WARNING MODAL
+   ========================================================================== */
 #add-warning-modal h2 {
-  color: #20342f; /* golden tone */
+  color: #20342f;
   font-weight: bold;
   margin-bottom: 10px;
 }
@@ -567,17 +522,36 @@ footer {
   color: #444;
 }
 
-button:hover {
-    background-color: #ddd;
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+footer {
+  color: #c2cdc6;
+  text-align: center;
+  padding: 10px;
+  font-size: 0.9em;
+  margin-top: 90px;
 }
 
+/* ==========================================================================
+   RESPONSIVE STYLES
+   ========================================================================== */
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
+  .filter-bar button,
+  .filter-bar input,
+  .filter-bar select {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
 .hidden {
   display: none;
 }
-
-
-.hidden {
-  display: none;
-}
-
