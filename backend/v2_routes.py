@@ -2,7 +2,8 @@ from flask import Blueprint, jsonify, request
 from flasgger import swag_from
 import json
 from datetime import datetime
-from utils import load_posts
+from utils import load_posts, validate_post_data
+from rate_limit import limiter
 
 from Masterblog_API.backend.auth import token_required
 
@@ -64,7 +65,7 @@ post_schema = {
     "description": "Returns all blog posts with optional filtering, sorting, and pagination.",
     "parameters": [
         {"name": "category", "in": "query", "type": "string", "description": "Filter by a single category"},
-        {"name": "categories", "in": "query", "type": "string", "description": "Filter by multiple categories, comma-separated"},
+        {"name": "categories", "in": "query", "type": "string", "description": "Filter by multiple categories, comma-separated (e.g., Technology,Science)"},
         {"name": "sort", "in": "query", "type": "string", "enum": ["title", "author", "likes", "date", "updated"], "description": "Sort by field"},
         {"name": "direction", "in": "query", "type": "string", "enum": ["asc", "desc"], "default": "asc", "description": "Sort direction"},
         {"name": "page", "in": "query", "type": "integer", "default": 1, "description": "Page number"},
@@ -81,10 +82,27 @@ post_schema = {
                         "items": post_schema
                     }
                 }
+            },
+            "examples": {
+                "application/json": {
+                    "posts": [
+                        {
+                            "id": 1,
+                            "author": "SwaggerUser",
+                            "title": "Intro to APIs",
+                            "content": "Let's build a cool API.",
+                            "category": "Technology",
+                            "date": "April 18, 2025",
+                            "likes": 12
+                        }
+                    ]
+                }
             }
         }
     }
 })
+
+@limiter.exempt # Define Stop Limiting (maybe for all GET requests)
 def get_posts_v2():
     posts = load_posts()
     if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
@@ -136,22 +154,27 @@ def get_posts_v2():
     "tags": ["Posts"],
     "summary": "Create a new post",
     "description": "Adds a new blog post (requires authentication).",
-    "parameters": [
-        {
-            "name": "body",
-            "in": "body",
-            "required": True,
-            "schema": {
-                "type": "object",
-                "required": ["title", "content", "category"],
-                "properties": {
-                    "title": {"type": "string"},
-                    "content": {"type": "string"},
-                    "category": {"type": "string"}
+    "requestBody": {
+        "required": True,
+        "content": {
+            "application/json": {
+                "schema": {
+                    "type": "object",
+                    "required": ["title", "content", "category"],
+                    "properties": {
+                        "title": {"type": "string"},
+                        "content": {"type": "string"},
+                        "category": {"type": "string"}
+                    },
+                    "example": {
+                        "title": "My first post",
+                        "content": "This is a great post",
+                        "category": "General"
+                    }
                 }
             }
         }
-    ],
+    },
     "responses": {
         201: {
             "description": "Post successfully created",
@@ -162,10 +185,13 @@ def get_posts_v2():
         }
     }
 })
-def add_post_v2():
+@token_required
+@limiter.limit("5 per minute") # Allows productive work but prevents Spam
+def add_post_v2(current_user):
     data = request.get_json()
-    if not data or not all(data.get(k) for k in ["title", "content", "category"]):
-        return jsonify({"error": "Please provide title, content, and category"}), 400
+    error = validate_post_data(data)
+    if error:
+        return jsonify(error), 400
 
     posts = load_posts()
     if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
@@ -196,30 +222,54 @@ def add_post_v2():
             "type": "integer",
             "required": True,
             "description": "The ID of the post to update"
-        },
-        {
-            "name": "body",
-            "in": "body",
-            "required": True,
-            "schema": {
-                "type": "object",
-                "required": ["title", "content", "category"],
-                "properties": {
-                    "title": {"type": "string"},
-                    "content": {"type": "string"},
-                    "category": {"type": "string"}
+        }
+    ],
+    "requestBody": {
+        "required": True,
+        "content": {
+            "application/json": {
+                "schema": {
+                    "type": "object",
+                    "required": ["title", "content", "category"],
+                    "properties": {
+                        "title": {"type": "string"},
+                        "content": {"type": "string"},
+                        "category": {"type": "string"}
+                    },
+                    "example": {
+                        "title": "Updated Post Title",
+                        "content": "This is the updated content of the blog post.",
+                        "category": "UpdatedCategory"
+                    }
                 }
             }
         }
-    ],
+    },
     "responses": {
-        200: {"description": "Post updated successfully", "schema": post_schema},
+        200: {
+            "description": "Post updated successfully",
+            "schema": post_schema,
+            "examples": {
+                "application/json": {
+                    "id": 1,
+                    "author": "SwaggerUser",
+                    "title": "Updated Post Title",
+                    "content": "This is the updated content of the blog post.",
+                    "category": "UpdatedCategory",
+                    "date": "April 17, 2025",
+                    "likes": 14,
+                    "updated": "April 18, 2025"
+                }
+            }
+        },
         400: {"description": "Invalid request"},
         403: {"description": "Not authorized"},
         404: {"description": "Post not found"}
     }
 })
-def update_post_v2(post_id):
+@token_required
+@limiter.limit("5 per minute") # Allows productive work but prevents Spam
+def update_post_v2(current_user, post_id):
     # (basic version without auth for now)
     posts = load_posts()
     if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
@@ -227,14 +277,15 @@ def update_post_v2(post_id):
 
     for post in posts:
         if post['id'] == post_id:
-            data = request.get_json()
-            if not data or not all(data.get(k) for k in ["title", "content", "category"]):
-                return jsonify({"error": "Missing fields"}), 400
+            new_data = request.get_json()
+            error = validate_post_data(new_data)
+            if error:
+                return jsonify(error), 400
 
             post.update({
-                "title": data["title"],
-                "content": data["content"],
-                "category": data["category"],
+                "title": new_data["title"],
+                "content": new_data["content"],
+                "category": new_data["category"],
                 "updated": datetime.now().strftime("%B %d, %Y")
             })
             save_posts(posts)
@@ -257,12 +308,22 @@ def update_post_v2(post_id):
         }
     ],
     "responses": {
-        200: {"description": "Post deleted successfully"},
+        200: {
+            "description": "Post deleted successfully",
+            "examples": {
+                "application/json": {
+                    "message": "Post 3 deleted"
+                }
+            }
+        },
         403: {"description": "Not authorized to delete this post"},
         404: {"description": "Post not found"}
     }
 })
-def delete_post_v2(post_id):
+
+@token_required
+@limiter.limit("5 per minute") # Allows productive work but prevents Spam
+def delete_post_v2(current_user, post_id):
     posts = load_posts()
     if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
         return posts
@@ -271,7 +332,7 @@ def delete_post_v2(post_id):
         if post["id"] == post_id:
             posts.remove(post)
             save_posts(posts)
-            return jsonify({"message": f"Post {post_id} deleted"}), 200
+            return jsonify({"message": f"Post {post_id} deleted successfully"}), 200
     return jsonify({"error": "Post not found"}), 404
 
 
@@ -286,10 +347,15 @@ def delete_post_v2(post_id):
             "schema": {
                 "type": "array",
                 "items": {"type": "string"}
+            },
+            "examples": {
+                "application/json": ["Technology", "Science", "Philosophy", "Travel"]
             }
         }
     }
 })
+
+@limiter.exempt
 def get_categories_v2():
     posts = load_posts()
     if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
@@ -310,7 +376,7 @@ def get_categories_v2():
             "in": "query",
             "type": "string",
             "required": True,
-            "description": "Keyword to search in title, content or author"
+            "description": "Keyword to search in title, content, or author (e.g., 'AI')"
         }
     ],
     "responses": {
@@ -319,13 +385,32 @@ def get_categories_v2():
             "schema": {
                 "type": "array",
                 "items": post_schema
+            },
+            "examples": {
+                "application/json": [
+                    {
+                        "id": 5,
+                        "author": "Lee",
+                        "title": "Understanding AI",
+                        "content": "This post explores the basics of artificial intelligence...",
+                        "category": "Technology",
+                        "date": "April 10, 2025",
+                        "likes": 42
+                    }
+                ]
             }
         },
         404: {
-            "description": "No matching posts found"
+            "description": "No matching posts found",
+            "examples": {
+                "application/json": {
+                    "error": "No posts matched your search"
+                }
+            }
         }
     }
 })
+@limiter.limit("10 per minute")
 def search_posts_v2():
     posts = load_posts()
     if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
@@ -370,13 +455,25 @@ def search_posts_v2():
                     "message": {"type": "string"},
                     "likes": {"type": "integer"}
                 }
+            },
+            "examples": {
+                "application/json": {
+                    "message": "Post 5 liked successfully",
+                    "likes": 13
+                }
             }
         },
         404: {
-            "description": "Post not found"
+            "description": "Post not found",
+            "examples": {
+                "application/json": {
+                    "error": "Post with ID 999 not found"
+                }
+            }
         }
     }
 })
+@limiter.limit("20 per minute") # Potential abuse, limiting required, as well
 def like_post_v2(post_id):
     posts = load_posts()
     if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
@@ -391,11 +488,18 @@ def like_post_v2(post_id):
     return jsonify({"error": f"Post with ID {post_id} not found"}), 404
 
 
-@v2.route("/login", methods=["POST"])
+from auth import register_user, login_user
+
+# -------------------------
+# 🔐 POST /register
+# -------------------------
+
+@v2.route("/register", methods=["POST"])
+@limiter.limit("3 per minute") # Vulnerable for Brute-Force-Attacks
 @swag_from({
     "tags": ["Auth"],
-    "summary": "Login a user",
-    "description": "Authenticates a user and returns a token for future requests.",
+    "summary": "Register a new user",
+    "description": "Creates a new user account with a username and password.",
     "parameters": [
         {
             "name": "body",
@@ -407,56 +511,125 @@ def like_post_v2(post_id):
                 "properties": {
                     "username": {"type": "string"},
                     "password": {"type": "string"}
+                },
+                "example": {
+                    "username": "new_user",
+                    "password": "securepassword123"
                 }
             }
         }
     ],
     "responses": {
         200: {
-            "description": "Login successful",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "token": {"type": "string"},
-                    "message": {"type": "string"}
+            "description": "User registered successfully",
+            "examples": {
+                "application/json": {
+                    "message": "User registered successfully"
+                }
+            }
+        },
+        400: {
+            "description": "Validation error or username taken",
+            "examples": {
+                "application/json": {
+                    "error": "Username already exists"
+                }
+            }
+        }
+    }
+})
+def register_v2():
+    return register_user()
+
+
+# -------------------------
+# 🔐 POST /login
+# -------------------------
+
+@v2.route("/login", methods=["POST"])
+@limiter.limit("5 per minute") # Vulnerable for Brute-Force-Attacks
+@swag_from({
+    "tags": ["Auth"],
+    "summary": "User login",
+    "description": "Authenticates a user and returns a token.",
+    "requestBody": {
+        "required": True,
+        "content": {
+            "application/json": {
+                "schema": {
+                    "type": "object",
+                    "required": ["username", "password"],
+                    "properties": {
+                        "username": {"type": "string"},
+                        "password": {"type": "string"}
+                    },
+                    "example": {
+                        "username": "existing_user",
+                        "password": "mypassword123"
+                    }
+                }
+            }
+        }
+    },
+    "responses": {
+        200: {
+            "description": "Login successful, token returned",
+            "examples": {
+                "application/json": {
+                    "message": "Login successful",
+                    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
                 }
             }
         },
         401: {
-            "description": "Invalid username or password"
+            "description": "Unauthorized – invalid credentials",
+            "examples": {
+                "application/json": {
+                    "error": "Invalid username or password"
+                }
+            }
         }
     }
 })
-def login_user_v2():
-    from auth import login_user
+def login_v2():
     return login_user()
 
 
 @v2.route("/secret", methods=["GET"])
+@token_required
+@limiter.limit("3 per minute")
 @swag_from({
     "tags": ["Auth"],
-    "summary": "Get a protected welcome message",
-    "description": "Returns a message only if the request includes a valid token.",
-    "security": [
+    "summary": "Test token authentication",
+    "description": "Returns a welcome message if token is valid. Requires a valid Bearer token.",
+    "parameters": [
         {
-            "BearerAuth": []
+            "name": "Authorization",
+            "in": "header",
+            "type": "string",
+            "required": True,
+            "description": "Bearer token (e.g., Bearer YOUR_TOKEN_HERE)"
         }
     ],
     "responses": {
         200: {
-            "description": "Authenticated user message",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "message": {"type": "string"}
+            "description": "Token is valid",
+            "examples": {
+                "application/json": {
+                    "message": "Welcome, authenticated user!"
                 }
             }
         },
         401: {
-            "description": "Missing or invalid token"
+            "description": "Invalid or missing token",
+            "examples": {
+                "application/json": {
+                    "error": "Token is missing or invalid"
+                }
+            }
         }
     }
 })
-@token_required
 def secret_v2(current_user):
+    """Protected route to test token-based authentication."""
     return jsonify({"message": f"Welcome, {current_user}!"}), 200

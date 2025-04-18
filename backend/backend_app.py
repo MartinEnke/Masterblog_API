@@ -3,11 +3,11 @@ import json
 from datetime import datetime
 from flask import Flask, request, jsonify
 from auth import register_user, login_user, token_required
-from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from v2_routes import v2
 from flasgger import Swagger
-from utils import load_posts
+from utils import load_posts, validate_post_data
+from rate_limit import limiter
 
 
 # 👇 Function for Identification (user or IP)
@@ -21,7 +21,9 @@ app.register_blueprint(v2)  # v2_routes
 app.config['SWAGGER'] = {
     "title": "The Quiet Almanac API",
     "uiversion": 3,
-    "description": "📚 A blog API with versioning, rate limiting, and user-auth.",
+    "description": "A versioned Flask-based blog API with token authentication, "
+                   "rate limiting, and Swagger docs. Supports creating, updating, "
+                   "deleting, and searching blog posts.",
     "version": "2.0",
     "swagger_ui": True,
 }
@@ -29,16 +31,7 @@ Swagger(app)
 # 👇 Enables Cross-Origin Resource Sharing for *all* routes and *all* methods
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 # 👇 Activate Rate Limiting (works on all functions and routes below)
-limiter = Limiter(
-    key_func=get_token_or_ip,  # avoids blocking of users sharing an IP-address (f.e. in Cafés)
-    app=app,                   # if logged in - token is used, logged out - ip is used
-    default_limits=["100 per hour"]
-)
-# limiter = Limiter(
-#     get_remote_address,
-#     app=app,
-#     default_limits=["100 per hour"]
-# )
+limiter.init_app(app)
 
 
 def save_posts(posts):
@@ -52,19 +45,6 @@ def save_posts(posts):
 def home():
     """Health check route for testing the API server."""
     return "Hello, FLASK API"
-
-
-def validate_post_data(data):
-    """Validates required fields in a post dictionary."""
-    if not data:
-        return {"error": "Enter a title, content, and category"}
-    if not data.get("title"):
-        return {"error": "Enter a title"}
-    if not data.get("content"):
-        return {"error": "Enter content"}
-    if not data.get("category"):
-        return {"error": "Enter a category"}
-    return None
 
 
 @app.route("/api/v1/posts", methods=["GET"])
@@ -124,15 +104,14 @@ def get_posts():
 @limiter.limit("5 per minute") # Allows productive work but prevents Spam
 def add_post(current_user):
     """Creates a new blog post for the logged-in user."""
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
-
     data = request.get_json()
-
     error = validate_post_data(data)
     if error:
         return jsonify(error), 400
+
+    posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
 
     new_post = {
         "id": max([post["id"] for post in posts], default=0) + 1,

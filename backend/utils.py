@@ -2,6 +2,20 @@ from flask import jsonify
 import os
 import json
 
+
+def validate_post_data(data):
+    """Validates required fields in a post dictionary."""
+    if not data:
+        return {"error": "Enter a title, content, and category"}
+    if not data.get("title"):
+        return {"error": "Enter a title"}
+    if not data.get("content"):
+        return {"error": "Enter content"}
+    if not data.get("category"):
+        return {"error": "Enter a category"}
+    return None
+
+
 def load_posts():
     """
     Loads blog posts from blog_posts.json.
