@@ -61,5 +61,17 @@
                 "date": "April 18, 2025"
             }
         ]
+    },
+    {
+        "id": 5,
+        "author": "Martin",
+        "title": "test for delete",
+        "content": "testestest",
+        "date": "April 18, 2025",
+        "category": "Quantum Physics",
+        "likes": 0,
+        "updated": "April 16, 2025",
+        "comments": [
+        ]
     }
 ]

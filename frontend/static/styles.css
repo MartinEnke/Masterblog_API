@@ -302,8 +302,6 @@ button {
 }
 
 
-
-
 /* Style dropdowns to match buttons */
 select {
   height: 40px;
@@ -388,6 +386,64 @@ select:focus {
   font-weight: bold;
 }
 
+.toggle-comments-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: #555;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.toggle-comments-link:hover {
+  color: #000;
+  text-decoration: underline;
+}
+
+.comment-block {
+  margin-top: 10px;
+  padding-left: 10px;
+  border-left: 2px solid #ddd;
+  background-color: #fafafa;
+  border-radius: 6px;
+  padding: 10px;
+  transition: all 0.3s ease;
+}
+
+.comment-block.hidden {
+  display: none;
+}
+
+.comment-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background-color: #f0f0f0;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.comment-submit {
+  background: none;
+  border: none;
+  color: #1f2937; /* same dark tone as your nav-link */
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.comment-submit:hover {
+  background-color: #eaf3f1; /* light green hover like .text-button */
+  color: #20342f; /* richer dark for hover */
+}
+
+
 
 /* Footer */
 footer {
@@ -424,7 +480,6 @@ footer {
 }
 
 
-
 .modal-content h2 {
   margin-top: 0;
   font-size: 1.5rem;
@@ -445,6 +500,8 @@ footer {
   font-family: 'Poppins', sans-serif;
   box-sizing: border-box;
 }
+
+
 .modal-content select {
   all: unset;
   display: block;
@@ -482,7 +539,6 @@ footer {
   gap: 12px;
   margin-top: 10px;
 }
-
 
 
 .modal-buttons button {

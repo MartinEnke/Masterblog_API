@@ -109,9 +109,24 @@ function loadPosts() {
                 postDiv.appendChild(buttonWrapper);
 
                 // 🗨️ Comment Section
+                // 🗨️ Comments Section Container
                 const commentsContainer = document.createElement('div');
                 commentsContainer.className = 'comments-section';
 
+                // 🔘 Toggle Button
+                const toggleButton = document.createElement('button');
+                toggleButton.textContent = "Comments";
+                toggleButton.className = 'toggle-comments';
+
+                const commentBlock = document.createElement('div');
+                commentBlock.className = 'comment-block';
+                commentBlock.style.display = 'none';  // hidden by default
+
+                toggleButton.onclick = () => {
+                    commentBlock.style.display = commentBlock.style.display === 'none' ? 'block' : 'none';
+                };
+
+                // 💬 Existing Comments
                 const commentList = document.createElement('div');
                 commentList.className = 'comment-list';
 
@@ -125,6 +140,7 @@ function loadPosts() {
                     commentList.innerHTML = "<em>No comments yet.</em>";
                 }
 
+                // ✍️ Comment Form
                 const commentInput = document.createElement('textarea');
                 commentInput.placeholder = "Write a comment...";
                 commentInput.className = 'comment-input';
@@ -132,6 +148,7 @@ function loadPosts() {
                 const commentBtn = document.createElement('button');
                 commentBtn.textContent = "Submit";
                 commentBtn.className = 'comment-submit';
+
                 commentBtn.onclick = () => {
                     const text = commentInput.value.trim();
                     if (!text) return alert("Comment can't be empty!");
@@ -149,7 +166,7 @@ function loadPosts() {
                     .then(res => res.json())
                     .then(data => {
                         console.log("✅ Comment added:", data);
-                        loadPosts(); // reload to show the comment
+                        loadPosts();  // reloads with new comment
                     })
                     .catch(err => {
                         console.error("❌ Comment error:", err);
@@ -157,9 +174,13 @@ function loadPosts() {
                     });
                 };
 
-                commentsContainer.appendChild(commentList);
-                commentsContainer.appendChild(commentInput);
-                commentsContainer.appendChild(commentBtn);
+                // 🧩 Assemble comments block
+                commentBlock.appendChild(commentList);
+                commentBlock.appendChild(commentInput);
+                commentBlock.appendChild(commentBtn);
+
+                commentsContainer.appendChild(toggleButton);
+                commentsContainer.appendChild(commentBlock);
                 postDiv.appendChild(commentsContainer);
 
                 postContainer.appendChild(postDiv);
