@@ -21,9 +21,9 @@ app.register_blueprint(v2)  # v2_routes
 app.config['SWAGGER'] = {
     "title": "The Quiet Almanac API",
     "uiversion": 3,
-    "description": "📚 A beautiful blog API with versioning, rate limiting, and user-auth.",
+    "description": "📚 A blog API with versioning, rate limiting, and user-auth.",
     "version": "2.0",
-    "favicon": "/static/images/almanac-logo.png"
+    "swagger_ui": True,
 }
 Swagger(app)
 # 👇 Enables Cross-Origin Resource Sharing for *all* routes and *all* methods

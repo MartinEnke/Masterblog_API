@@ -17,8 +17,11 @@
 
         <!-- API URL Input -->
         <div class="top-bar">
-          <input type="text" id="api-base-url" value="http://127.0.0.1:5021/api/v1">
-            <small style="color: #888;">api/v1</small>
+          <select id="api-base-url" onchange="storeBaseUrl()" class="styled-select">
+              <option value="http://127.0.0.1:5021/api/v1">http://127.0.0.1:5021/api/v1</option>
+              <option value="http://127.0.0.1:5021/api/v2">http://127.0.0.1:5021/api/v2</option>
+            </select>
+            <small style="color: #888;">api/v2</small>
             <span class="text-button large" onclick="loadPosts()">Load Posts</span>
           <div class="top-bar-center">
           </div>

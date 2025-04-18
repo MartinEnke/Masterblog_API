@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+function storeBaseUrl() {
+  const url = document.getElementById("api-base-url").value;
+  localStorage.setItem("apiBaseUrl", url);
+  loadPosts(); // Optional: refresh right after switching
+}
+
+
 document.getElementById('search-input').addEventListener('keydown', function (event) {
     if (event.key === 'Enter') {
         searchPosts(); // your custom function

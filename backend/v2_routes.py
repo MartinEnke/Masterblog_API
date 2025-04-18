@@ -4,7 +4,28 @@ import json
 import os
 from datetime import datetime
 
+from Masterblog_API.backend.auth import token_required
+
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
+
+
+'''
+This Swagger doc uses "Flasgger" instead of "flask_swagger_ui setup".
+Flasgger is more tightly integrated into Flask apps and more maintainable and powerful long term.
+It follows the OpenAPI 2.0 spec but integrates Swagger directly via decorators. 
+It avoids manual maintenance of a separate JSON file like masterblog.json.
+Instead of a static json file it uses Python decorators + @swag_from({...}):.
+This is dynamic documentation, written next to the actual route logic, and will stay up to date.
+
+Flasgger vs. swagger_ui setup 
+
+Feature	                        Flasgger                    swagger_ui setup 
+🔄 Auto sync with routes	    ✅ Yes (@swag_from)	        ❌ No
+🧩 Blueprint-based API design	✅ Modular (v2 blueprint)	❌ Monolithic
+✍️ Detailed field schema	    ✅ JSON schema for posts	❌ Very basic
+📈 Pagination, sorting, etc.	✅ Documented in Swagger	❌ Missing
+🔐 Auth-based logic	            🚧 Partial (planned)	    ❌ None
+'''
 
 # -------------------------
 # 🔧 Utility functions
@@ -162,3 +183,266 @@ def add_post_v2():
     posts.append(new_post)
     save_posts(posts)
     return jsonify(new_post), 201
+
+
+@v2.route("/posts/<int:post_id>", methods=["PUT"])
+@swag_from({
+    "tags": ["Posts"],
+    "summary": "Update a blog post",
+    "description": "Updates the content of an existing blog post. Requires authentication and ownership.",
+    "parameters": [
+        {
+            "name": "post_id",
+            "in": "path",
+            "type": "integer",
+            "required": True,
+            "description": "The ID of the post to update"
+        },
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "required": ["title", "content", "category"],
+                "properties": {
+                    "title": {"type": "string"},
+                    "content": {"type": "string"},
+                    "category": {"type": "string"}
+                }
+            }
+        }
+    ],
+    "responses": {
+        200: {"description": "Post updated successfully", "schema": post_schema},
+        400: {"description": "Invalid request"},
+        403: {"description": "Not authorized"},
+        404: {"description": "Post not found"}
+    }
+})
+def update_post_v2(post_id):
+    # (basic version without auth for now)
+    posts = load_posts()
+    for post in posts:
+        if post['id'] == post_id:
+            data = request.get_json()
+            if not data or not all(data.get(k) for k in ["title", "content", "category"]):
+                return jsonify({"error": "Missing fields"}), 400
+
+            post.update({
+                "title": data["title"],
+                "content": data["content"],
+                "category": data["category"],
+                "updated": datetime.now().strftime("%B %d, %Y")
+            })
+            save_posts(posts)
+            return jsonify(post), 200
+    return jsonify({"error": "Post not found"}), 404
+
+
+@v2.route("/posts/<int:post_id>", methods=["DELETE"])
+@swag_from({
+    "tags": ["Posts"],
+    "summary": "Delete a blog post",
+    "description": "Deletes a blog post. Requires authentication and ownership.",
+    "parameters": [
+        {
+            "name": "post_id",
+            "in": "path",
+            "type": "integer",
+            "required": True,
+            "description": "ID of the post to delete"
+        }
+    ],
+    "responses": {
+        200: {"description": "Post deleted successfully"},
+        403: {"description": "Not authorized to delete this post"},
+        404: {"description": "Post not found"}
+    }
+})
+def delete_post_v2(post_id):
+    posts = load_posts()
+    for post in posts:
+        if post["id"] == post_id:
+            posts.remove(post)
+            save_posts(posts)
+            return jsonify({"message": f"Post {post_id} deleted"}), 200
+    return jsonify({"error": "Post not found"}), 404
+
+
+@v2.route("/categories", methods=["GET"])
+@swag_from({
+    "tags": ["Categories"],
+    "summary": "Get all blog post categories",
+    "description": "Returns a list of all categories currently used by blog posts.",
+    "responses": {
+        200: {
+            "description": "List of unique categories",
+            "schema": {
+                "type": "array",
+                "items": {"type": "string"}
+            }
+        }
+    }
+})
+def get_categories_v2():
+    posts = load_posts()
+    categories = sorted({p["category"] for p in posts if p.get("category")})
+    return jsonify(categories)
+
+
+@v2.route("/posts/search", methods=["GET"])
+@swag_from({
+    "tags": ["Posts"],
+    "summary": "Search posts by keyword",
+    "description": "Searches for blog posts by matching text in title, content, or author.",
+    "parameters": [
+        {
+            "name": "q",
+            "in": "query",
+            "type": "string",
+            "required": True,
+            "description": "Keyword to search in title, content or author"
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "List of matching posts",
+            "schema": {
+                "type": "array",
+                "items": post_schema
+            }
+        },
+        404: {
+            "description": "No matching posts found"
+        }
+    }
+})
+def search_posts_v2():
+    posts = load_posts()
+    query = request.args.get("q", "").strip().lower()
+
+    if not query:
+        return jsonify({"error": "Missing query parameter `q`"}), 400
+
+    results = [p for p in posts if
+               query in p.get("title", "").lower() or
+               query in p.get("content", "").lower() or
+               query in p.get("author", "").lower()]
+
+    if not results:
+        return jsonify({"error": f"No posts found matching '{query}'"}), 404
+
+    return jsonify(results)
+
+
+@v2.route("/posts/<int:post_id>/like", methods=["POST"])
+@swag_from({
+    "tags": ["Posts"],
+    "summary": "Like a post",
+    "description": "Increments the like count for a post.",
+    "parameters": [
+        {
+            "name": "post_id",
+            "in": "path",
+            "type": "integer",
+            "required": True,
+            "description": "ID of the post to like"
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "Post liked successfully",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "message": {"type": "string"},
+                    "likes": {"type": "integer"}
+                }
+            }
+        },
+        404: {
+            "description": "Post not found"
+        }
+    }
+})
+def like_post_v2(post_id):
+    posts = load_posts()
+    for post in posts:
+        if post["id"] == post_id:
+            post["likes"] = post.get("likes", 0) + 1
+            save_posts(posts)
+            return jsonify({"message": f"Post {post_id} liked", "likes": post["likes"]}), 200
+
+    return jsonify({"error": f"Post with ID {post_id} not found"}), 404
+
+
+@v2.route("/login", methods=["POST"])
+@swag_from({
+    "tags": ["Auth"],
+    "summary": "Login a user",
+    "description": "Authenticates a user and returns a token for future requests.",
+    "parameters": [
+        {
+            "name": "body",
+            "in": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                    "username": {"type": "string"},
+                    "password": {"type": "string"}
+                }
+            }
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "Login successful",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "token": {"type": "string"},
+                    "message": {"type": "string"}
+                }
+            }
+        },
+        401: {
+            "description": "Invalid username or password"
+        }
+    }
+})
+def login_user_v2():
+    from auth import login_user
+    return login_user()
+
+
+@v2.route("/secret", methods=["GET"])
+@swag_from({
+    "tags": ["Auth"],
+    "summary": "Get a protected welcome message",
+    "description": "Returns a message only if the request includes a valid token.",
+    "security": [
+        {
+            "BearerAuth": []
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "Authenticated user message",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "message": {"type": "string"}
+                }
+            }
+        },
+        401: {
+            "description": "Missing or invalid token"
+        }
+    }
+})
+@token_required
+def secret_v2(current_user):
+    return jsonify({"message": f"Welcome, {current_user}!"}), 200

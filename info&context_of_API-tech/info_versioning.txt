@@ -1,4 +1,20 @@
-ENGLISH:
+Short explanation:
+As long as v2 is incomplete:
+Keep using http://127.0.0.1:5021/api/v1 in your HTML and JavaScript (e.g. in api-base-url).
+Use v2 in parallel for development, testing, Swagger UI, and future planning.
+You can manually test new v2 routes by pasting their paths or using Swagger (/api/docs).
+
+🔄 Once v2 is complete and tested:
+Switch api-base-url in the HTML to /api/v2
+Make sure your frontend JS functions (like loadPosts(), addPost(), etc.)
+still work with the updated version
+
+⚠️ Delete or deprecate v1 only if no clients still rely on it
+
+
+
+
+English:
 1. Explicit Change in Code
 In practice, the client’s code is manually updated:
 
@@ -7,7 +23,8 @@ const baseUrl = "https://my-api.com/api/v1";
 
 // Switched to:
 const baseUrl = "https://my-api.com/api/v2";
-This change is made by a developer – not the end user, but someone using the API (e.g. your team, external users, or another system).
+This change is made by a developer – not the end user,
+but someone using the API (e.g. your team, external users, or another system).
 
 
 2. Feature Announcement via Changelog or Docs
@@ -62,6 +79,27 @@ How to return to v1?	      Simply by switching the URL back
 Who decides?	              The client developer
 How is it communicated?	      Via changelog, docs, README, or API portal
 What to do if issues occur?	  Quickly revert to the stable v1 (if still maintained)
+
+
+✅ Why both /api/v1 and /api/v2 seem to work — even when only /api/v1 is set in the HTML:
+
+<input type="text" id="api-base-url" value="http://127.0.0.1:5021/api/v1">
+
+In JavaScript (e.g. in loadPosts()), sth. like this:
+
+const baseUrl = document.getElementById("api-base-url").value;
+fetch(`${baseUrl}/posts`)
+
+That means:
+If the input field says http://127.0.0.1:5021/api/v1 → you'll call /api/v1/posts.
+If the user manually changes that input to http://127.0.0.1:5021/api/v2 → you’ll call /api/v2/posts.
+
+So if you load /api/v2/posts once (manually changed the field), it works. But by default,
+it's loading /api/v1/posts, because that's what's in the input field.
+
+🧪 Want to confirm it?
+Try adding a console.log(baseUrl) inside your loadPosts() function.
+You’ll see whether it’s using /v1 or /v2.
 
 
 DEUTSCH:
