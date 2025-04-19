@@ -1,10 +1,14 @@
 Hi Nhung,
-at some point it worked just fine to log in, and as logged in user to add, edit or delete
-your own posts. Unfortunately, there is some authentication issue, with this token system
-which I couldn't figure out. :(
-It would be so great if you know what the problem is ;)
-It tool me ages to do all this, but the main functionality doesn't work anymore. :/
+unfortunately i ran into some problems.
+First of all, I don't get the program to work within codio.
+I disabled the limiters because codio had problems with them, i believe.
+But still it doesn't open in the Open API Applictaion, only brings a 502.
+Besides that my program has a bug. Logged in users can't add, edit and delete their own posts.
+I tried hours with DevTools, Inspect and ChatGPT, but ended up going in circles.
+Sometimes the problem is fetching, according to error-messages, sometimes its authentication.
+I still learned a lot while trying to debug it but would have wished to find it out. ;)
+Would be great if you know what's going on.
 
-Thanks in advance!
 
 Best Martin
+
