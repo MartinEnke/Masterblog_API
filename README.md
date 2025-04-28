@@ -2,6 +2,8 @@
 
 **The Quiet Almanac** is a minimal, versioned blog platform built with Flask, allowing users to create, edit, delete, search, and like blog posts. Users can also leave comments — even anonymously — and enjoy a clean, responsive UI built with vanilla HTML, CSS, and JavaScript.
 
+![Banner](frontend/static/images/almanac.png)
+
 ---
 
 ## 🚀 Features
