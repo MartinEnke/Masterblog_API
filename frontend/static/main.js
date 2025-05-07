@@ -1,810 +1,382 @@
+/* static/main.js */
+
 /* ==========================================================================
    GLOBAL VARIABLES
    ========================================================================== */
+const API_URL_KEY = 'apiBaseUrl';
 let categories = [];
 let postToEditId = null;
 
+/* ==========================================================================
+   UTILITIES: BASE URL (public v1 API)
+   ========================================================================== */
+function getDefaultBaseUrl() {
+  const { protocol, hostname } = window.location;
+  const backendPort = '5021';
+  const apiVersion  = '/api/v1';
+  return `${protocol}//${hostname}:${backendPort}${apiVersion}`;
+}
+
+function getBaseUrl() {
+  return (localStorage.getItem(API_URL_KEY) || getDefaultBaseUrl())
+    .replace(/\/+$/, '');
+}
+
+function storeBaseUrl() {
+  localStorage.setItem(API_URL_KEY,
+    document.getElementById("api-base-url").value.trim()
+  );
+  loadPosts();
+}
+
+/* ==========================================================================
+   AUTH HELPERS
+   ========================================================================== */
+function saveToken(token) {
+  localStorage.setItem('authToken', token);
+}
+function getToken() {
+  return localStorage.getItem('authToken') || '';
+}
+function clearToken() {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('username');
+}
 
 /* ==========================================================================
    INITIALIZATION
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
-    const savedBaseUrl = localStorage.getItem('apiBaseUrl');
-    if (savedBaseUrl) {
-        document.getElementById('api-base-url').value = savedBaseUrl;
-    }
+  // Base-URL textbox
+  document.getElementById('api-base-url').value = getBaseUrl();
+  document.getElementById('api-base-url')
+    .addEventListener('change', storeBaseUrl);
 
-    loadCategories();
-    loadPosts();
-    updateAuthButton();
-    updateUserInfo();
+  loadCategories();
+  loadPosts();
+  updateAuthButton();
+  updateUserInfo();
+
+  // Search on Enter
+  document.getElementById('search-input')
+    .addEventListener('keydown', e => {
+      if (e.key === 'Enter') searchPosts();
+    });
 });
 
-
 /* ==========================================================================
-   BASE URL & SEARCH INPUT
-   ========================================================================== */
-function storeBaseUrl() {
-    const url = document.getElementById("api-base-url").value;
-    localStorage.setItem("apiBaseUrl", url);
-    loadPosts();
-}
-
-document.getElementById('search-input').addEventListener('keydown', function (event) {
-    if (event.key === 'Enter') {
-        searchPosts(); // your custom function
-    }
-});
-
-
-/* ==========================================================================
-   POSTS: LOAD / RENDER / SEARCH / COMMENT
+   POSTS: LOAD / RENDER / SEARCH
    ========================================================================== */
 function loadPosts() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    localStorage.setItem('apiBaseUrl', baseUrl);
-
-    const category = document.getElementById('filter-category')?.value;
-    const sort = document.getElementById('sort-field')?.value;
-    const direction = document.getElementById('sort-direction')?.value;
-
-    const params = new URLSearchParams();
-    if (category) params.append("category", category);
-    if (sort) params.append("sort", sort);
-    if (direction) params.append("direction", direction);
-
-    fetch(baseUrl + '/posts?' + params.toString())
-        .then(response => response.json())
-        .then(data => {
-            const postContainer = document.getElementById('post-container');
-            postContainer.innerHTML = '';
-
-            const posts = data.posts || data;
-
-            posts.forEach(post => {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-
-                const title = document.createElement('h2');
-                title.textContent = post.title;
-
-                const content = document.createElement('p');
-                content.textContent = post.content;
-
-                const meta = document.createElement('p');
-                meta.className = 'post-meta';
-                meta.textContent = `${post.date || 'No date'} · by ${post.author || 'Unknown'}`;
-
-                const updated = document.createElement('p');
-                if (post.updated) {
-                    updated.textContent = `Updated: ${post.updated}`;
-                    updated.style.fontSize = '0.9em';
-                    updated.style.color = '#777';
-                    updated.style.marginBottom = '10px';
-                }
-
-                const likeButton = document.createElement('button');
-                likeButton.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
-                likeButton.onclick = () => likePost(post.id);
-
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = '🗑️ Delete';
-                deleteButton.onclick = () => deletePost(post.id);
-
-                const editButton = document.createElement('button');
-                editButton.textContent = '✏️ Edit';
-                editButton.onclick = () => openEditModal(post);
-
-                const buttonWrapper = document.createElement('div');
-                buttonWrapper.style.display = 'flex';
-                buttonWrapper.style.justifyContent = 'space-between';
-                buttonWrapper.style.gap = '10px';
-                buttonWrapper.style.marginTop = '10px';
-                buttonWrapper.appendChild(likeButton);
-
-                const currentUser = localStorage.getItem("username");
-                if (post.author === currentUser) {
-                    buttonWrapper.appendChild(editButton);
-                    buttonWrapper.appendChild(deleteButton);
-                }
-
-                postDiv.style.padding = '15px';
-                postDiv.style.border = '1px solid #ccc';
-                postDiv.style.marginBottom = '20px';
-                postDiv.style.borderRadius = '8px';
-
-                postDiv.appendChild(title);
-                postDiv.appendChild(content);
-                postDiv.appendChild(meta);
-                if (post.updated) postDiv.appendChild(updated);
-                postDiv.appendChild(buttonWrapper);
-
-                // 🗨️ Comment Section
-                // 🗨️ Comments Section Container
-                const commentsContainer = document.createElement('div');
-                commentsContainer.className = 'comments-section';
-
-                // 🔘 Toggle Button
-                const toggleButton = document.createElement('button');
-                toggleButton.textContent = "Comments";
-                toggleButton.className = 'toggle-comments';
-
-                const commentBlock = document.createElement('div');
-                commentBlock.className = 'comment-block';
-                commentBlock.style.display = 'none';  // hidden by default
-
-                toggleButton.onclick = () => {
-                    commentBlock.style.display = commentBlock.style.display === 'none' ? 'block' : 'none';
-                };
-
-                // 💬 Existing Comments
-                const commentList = document.createElement('div');
-                commentList.className = 'comment-list';
-
-                if (post.comments && post.comments.length > 0) {
-                    post.comments.forEach(comment => {
-                        const c = document.createElement('p');
-                        c.innerHTML = `<strong>${comment.author}</strong>: ${comment.text}`;
-                        commentList.appendChild(c);
-                    });
-                } else {
-                    commentList.innerHTML = "<em>No comments yet.</em>";
-                }
-
-                // ✍️ Comment Form
-                const commentInput = document.createElement('textarea');
-                commentInput.placeholder = "Write a comment...";
-                commentInput.className = 'comment-input';
-
-                const commentBtn = document.createElement('button');
-                commentBtn.textContent = "Submit";
-                commentBtn.className = 'comment-submit';
-
-                commentBtn.onclick = () => {
-                    const text = commentInput.value.trim();
-                    if (!text) return alert("Comment can't be empty!");
-
-                    fetch(`${baseUrl}/posts/${post.id}/comments`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            author: localStorage.getItem("username") || "Anonymous",
-                            text: text
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        console.log("✅ Comment added:", data);
-                        loadPosts();  // reloads with new comment
-                    })
-                    .catch(err => {
-                        console.error("❌ Comment error:", err);
-                        alert("Failed to add comment.");
-                    });
-                };
-
-                // 🧩 Assemble comments block
-                commentBlock.appendChild(commentList);
-                commentBlock.appendChild(commentInput);
-                commentBlock.appendChild(commentBtn);
-
-                commentsContainer.appendChild(toggleButton);
-                commentsContainer.appendChild(commentBlock);
-                postDiv.appendChild(commentsContainer);
-
-                postContainer.appendChild(postDiv);
-            });
-        })
-        .catch(error => console.error('Error loading posts:', error));
+  const base = getBaseUrl();
+  const qs = new URLSearchParams({
+    category: document.getElementById('filter-category').value,
+    sort:     document.getElementById('sort-field').value,
+    direction:document.getElementById('sort-direction').value
+  });
+  fetch(`${base}/posts?${qs}`)
+    .then(r => r.json())
+    .then(data => {
+      const posts = data.posts || data;
+      const c = document.getElementById('post-container');
+      c.innerHTML = '';
+      posts.forEach(renderSinglePost);
+    })
+    .catch(err => console.error('Error loading posts:', err));
 }
 
-function renderPost(post) {
-    const postContainer = document.getElementById('post-container');
-    const postDiv = document.createElement('div');
-    postDiv.className = 'post';
+/**
+ * Renders a single post card, showing Edit/Delete only to the author.
+ */
+function renderSinglePost(post) {
+  const container = document.getElementById('post-container');
+  const div = document.createElement('div');
+  div.className = 'post';
+  Object.assign(div.style, {
+    padding: '15px',
+    border: '1px solid #ccc',
+    marginBottom: '20px',
+    borderRadius: '8px'
+  });
 
-    const title = document.createElement('h2');
-    title.textContent = post.title;
+  div.innerHTML = `
+    <h2>${post.title}</h2>
+    <p>${post.content}</p>
+    <p class="post-meta">${post.date || 'No date'} · by ${post.author || 'Unknown'}</p>
+    ${post.updated
+      ? `<p style="font-size:.9em;color:#777;margin-bottom:10px">
+          Updated: ${post.updated}
+        </p>`
+      : ''}
+  `;
 
-    const content = document.createElement('p');
-    content.textContent = post.content;
+  const btnWrap = document.createElement('div');
+  Object.assign(btnWrap.style, {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: '10px',
+    marginTop: '10px'
+  });
 
-    const date = document.createElement('p');
-    date.textContent = `${post.date || 'No date'}`;
-    date.style.fontStyle = 'italic';
+  // Like button
+  const likeBtn = document.createElement('button');
+  likeBtn.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
+  likeBtn.onclick = () => likePost(post.id);
+  btnWrap.appendChild(likeBtn);
 
-    const likeButton = document.createElement('button');
-    likeButton.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
-    likeButton.onclick = () => likePost(post.id);
+  // Only show Edit/Delete to the post's author
+  const currentUser = localStorage.getItem('username');
+  if (post.author === currentUser) {
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️ Edit';
+    editBtn.onclick = () => openEditModal(post);
+    btnWrap.appendChild(editBtn);
 
-    const deleteButton = document.createElement('button');
-    deleteButton.textContent = '🗑️ Delete';
-    deleteButton.onclick = () => deletePost(post.id);
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️ Delete';
+    delBtn.onclick = () => deletePost(post.id);
+    btnWrap.appendChild(delBtn);
+  }
 
-    const editButton = document.createElement('button');
-    editButton.textContent = '✏️ Edit';
-    editButton.onclick = () => openEditModal(post);
-
-    const buttonWrapper = document.createElement('div');
-    buttonWrapper.style.display = 'flex';
-    buttonWrapper.style.gap = '10px';
-    buttonWrapper.appendChild(likeButton);
-    buttonWrapper.appendChild(editButton);
-    buttonWrapper.appendChild(deleteButton);
-
-    postDiv.appendChild(title);
-    postDiv.appendChild(content);
-    postDiv.appendChild(date);
-    postDiv.appendChild(buttonWrapper);
-
-    postContainer.appendChild(postDiv);
+  div.appendChild(btnWrap);
+  container.appendChild(div);
 }
 
 function searchPosts() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const query = document.getElementById('search-input').value.trim();
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return loadPosts();
+  fetch(`${getBaseUrl()}/posts/search?q=${encodeURIComponent(q)}`)
+    .then(r => r.json())
+    .then(data => {
+      const c = document.getElementById('post-container');
+      c.innerHTML = data.error?`<p>${data.error}</p>`:'';
+      (data.posts||data).forEach(renderSinglePost);
+    })
+    .catch(err => console.error('Search error:', err));
+}
 
-    if (!query) {
-        loadPosts(); // fallback
-        return;
+/* ==========================================================================
+   POSTS: ADD / EDIT / DELETE
+   ========================================================================== */
+function submitAdd() {
+  const base = getBaseUrl();
+  const payload = {
+    title:   document.getElementById('add-title').value,
+    content: document.getElementById('add-content').value,
+    category:document.getElementById('add-category').value
+  };
+  fetch(`${base}/posts`, {
+    method: 'POST',
+    headers: {
+      'Content-Type':'application/json',
+      'Authorization': `Bearer ${getToken()}`
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(r => {
+    if (!r.ok) return r.json().then(e=>Promise.reject(e.error));
+    return r.json();
+  })
+  .then(() => { closeAddModal(); loadPosts(); })
+  .catch(e => alert("Error: "+e));
+}
+
+function submitUpdate() {
+  const base = getBaseUrl();
+  const payload = {
+    title:   document.getElementById('edit-title').value,
+    content: document.getElementById('edit-content').value,
+    category:document.getElementById('edit-category').value
+  };
+  fetch(`${base}/posts/${postToEditId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type':'application/json',
+      'Authorization': `Bearer ${getToken()}`
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(r => {
+    if (!r.ok) return r.json().then(e=>Promise.reject(e.error));
+    return r.json();
+  })
+  .then(() => { closeModal(); loadPosts(); })
+  .catch(e => alert("Error: "+e));
+}
+
+function deletePost(id) {
+  if (!confirm("Delete this post?")) return;
+  fetch(`${getBaseUrl()}/posts/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${getToken()}`
     }
-
-    fetch(`${baseUrl}/posts/search?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-            const postContainer = document.getElementById('post-container');
-            postContainer.innerHTML = '';
-
-            if (data.error) {
-                postContainer.innerHTML = `<p>${data.error}</p>`;
-                return;
-            }
-
-            const posts = data.posts || data;
-            const currentUser = localStorage.getItem("username");
-
-            posts.forEach(post => {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-
-                // Title
-                const title = document.createElement('h2');
-                title.textContent = post.title;
-
-                // Content
-                const content = document.createElement('p');
-                content.textContent = post.content;
-
-                // Meta (date + author)
-                const meta = document.createElement('p');
-                meta.className = 'post-meta';
-                meta.textContent = `${post.date || 'No date'} · by ${post.author || 'Unknown'}`;
-
-                // Updated (optional)
-                const updated = document.createElement('p');
-                if (post.updated) {
-                    updated.textContent = `Updated: ${post.updated}`;
-                    updated.style.fontSize = '0.9em';
-                    updated.style.color = '#777';
-                    updated.style.marginBottom = '10px';
-                }
-
-                // Like Button
-                const likeButton = document.createElement('button');
-                likeButton.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
-                likeButton.onclick = () => likePost(post.id);
-
-                // Edit/Delete Buttons (conditionally shown)
-                const editButton = document.createElement('button');
-                editButton.textContent = '✏️ Edit';
-                editButton.onclick = () => openEditModal(post);
-
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = '🗑️ Delete';
-                deleteButton.onclick = () => deletePost(post.id);
-
-                const buttonWrapper = document.createElement('div');
-                buttonWrapper.style.display = 'flex';
-                buttonWrapper.style.justifyContent = 'space-between';
-                buttonWrapper.style.gap = '10px';
-                buttonWrapper.style.marginTop = '10px';
-                buttonWrapper.appendChild(likeButton);
-
-                if (post.author === currentUser) {
-                    buttonWrapper.appendChild(editButton);
-                    buttonWrapper.appendChild(deleteButton);
-                }
-
-                // Post styling
-                postDiv.style.padding = '15px';
-                postDiv.style.border = '1px solid #ccc';
-                postDiv.style.marginBottom = '20px';
-                postDiv.style.borderRadius = '8px';
-
-                postDiv.appendChild(title);
-                postDiv.appendChild(content);
-                postDiv.appendChild(meta);
-                if (post.updated) postDiv.appendChild(updated);
-                postDiv.appendChild(buttonWrapper);
-
-                postContainer.appendChild(postDiv);
-            });
-        })
-        .catch(error => console.error('Search error:', error));
+  })
+  .then(r => {
+    if (!r.ok) return r.json().then(e=>Promise.reject(e.error));
+    return r.json();
+  })
+  .then(() => loadPosts())
+  .catch(e => alert("Error: "+e));
 }
 
-/* ==========================================================================
-   POSTS: ADD / DELETE
-   ========================================================================== */
-function addPost() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const token = localStorage.getItem('authToken');
-
-    fetch(`${baseUrl}/posts`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token || ""
-        },
-        body: JSON.stringify({
-            title: document.getElementById('add-title').value,
-            content: document.getElementById('add-content').value,
-            category: document.getElementById('add-category').value,
-            author: "Anonymous"  // Replace later if needed
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('✅ Post added:', data);
-        loadPosts();
-    })
-    .catch(error => {
-        console.error('❌ Failed to add post:', error);
-        alert("You need to be logged in to add a post.");
-    });
+function likePost(id) {
+  fetch(`${getBaseUrl()}/posts/${id}/like`, {
+    method:'POST',
+    headers:{ 'Authorization': `Bearer ${getToken()}` }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.likes!==undefined) {
+      document.getElementById(`like-count-${id}`).textContent = d.likes;
+    }
+  })
+  .catch(console.error);
 }
-
-function deletePost(postId) {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const token = localStorage.getItem('authToken');
-
-    if (!confirm("🛑 Are you sure you want to delete this post?")) return;
-
-    fetch(`${baseUrl}/posts/${postId}`, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': token || ""
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || "Failed to delete post");
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("✅ Deleted:", data);
-        loadPosts();
-    })
-    .catch(error => {
-        console.error("❌ Delete failed:", error.message);
-        alert("Error: " + error.message);
-    });
-}
-
-
-/* ==========================================================================
-   POSTS: LIKE
-   ========================================================================== */
-function likePost(postId) {
-    const baseUrl = document.getElementById('api-base-url').value;
-
-    fetch(`${baseUrl}/posts/${postId}/like`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.likes !== undefined) {
-            // Update the like count on the page
-            document.getElementById(`like-count-${postId}`).textContent = data.likes;
-        } else {
-            console.error("No 'likes' value returned:", data);
-        }
-    })
-    .catch(error => {
-        console.error("Error liking the post:", error);
-    });
-}
-
 
 /* ==========================================================================
    CATEGORIES
    ========================================================================== */
 function loadCategories() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    console.log("🌍 Fetching categories from:", baseUrl + '/categories');
-
-    fetch(baseUrl + '/categories')
-        .then(response => response.json())
-        .then(fetchedCategories => {
-            console.log("✅ Categories received:", fetchedCategories);
-            categories = fetchedCategories; // update global list
-
-            // Get dropdowns
-            const filterSelect = document.getElementById('filter-category');
-            const addSelect = document.getElementById('add-category');
-            const editSelect = document.getElementById('edit-category');
-
-            // 🧼 Clear & repopulate Filter dropdown
-            if (filterSelect) {
-                filterSelect.innerHTML = '<option value="">All Categories</option>';
-                categories.forEach(cat => {
-                    const opt = new Option(cat, cat);
-                    filterSelect.appendChild(opt);
-                });
-            }
-
-            // 🧼 Clear & repopulate Add dropdown
-            if (addSelect) {
-                addSelect.innerHTML = '<option value="">Select Category</option>';
-                categories.forEach(cat => {
-                    const opt = new Option(cat, cat);
-                    addSelect.appendChild(opt);
-                });
-            }
-
-            // 🧼 Clear & repopulate Edit dropdown (leave selection logic to `openEditModal`)
-            if (editSelect) {
-                editSelect.innerHTML = '<option value="">Select Category</option>';
-                categories.forEach(cat => {
-                    const opt = new Option(cat, cat);
-                    editSelect.appendChild(opt);
-                });
-            }
-        })
-        .catch(error => {
-            console.error("❌ Failed to load categories:", error);
-        });
+  fetch(`${getBaseUrl()}/categories`)
+    .then(r => r.json())
+    .then(fetched => {
+      categories = fetched;
+      ['filter-category','add-category','edit-category'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        sel.innerHTML = `<option value="">${
+          id==='filter-category'?'All Categories':'Select Category'
+        }</option>`;
+        categories.forEach(cat => sel.appendChild(new Option(cat, cat)));
+      });
+    })
+    .catch(console.error);
 }
 
 /* ==========================================================================
-   AUTHENTICATION: LOGIN / LOGOUT / REGISTER / MODALS
+   AUTH: LOGIN / SIGNUP / UI
    ========================================================================== */
-function loginUser(username, password) {
-    const baseUrl = document.getElementById('api-base-url').value;
-
-    fetch(`${baseUrl.replace(/\/api$/, '')}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.token) {
-            localStorage.setItem('authToken', data.token);
-            alert("✅ Logged in successfully");
-        } else {
-            alert("❌ Login failed: " + (data.error || "Unknown error"));
-        }
-    })
-    .catch(err => {
-        console.error("Login error:", err);
-        alert("❌ Login request failed");
-    });
-}
-console.log("Categories loaded:", categories);
-
-function handleLoginFromWarning() {
-  closeAddWarningModal();      // 👈 closes the warning modal
-  openLoginModal();            // 👈 opens the login modal
-}
-
-function openLoginModal() {
-    document.getElementById('login-modal').classList.remove('hidden');
-}
-
-function closeLoginModal() {
-    document.getElementById('login-modal').classList.add('hidden');
-}
-
 function submitLogin() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
-
-    fetch(`${baseUrl}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-    if (data.token) {
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("username", username);  // store username and password
-        updateUserInfo();
-        updateAuthButton();
-        // alert("🎉 Logged in successfully!");
-        closeLoginModal();
-        loadPosts();
+  const base = getBaseUrl().split('/api/')[0];
+  const u = document.getElementById('login-username').value;
+  const p = document.getElementById('login-password').value;
+  fetch(`${base}/api/v1/login`, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ username:u, password:p })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.token) {
+      saveToken(d.token);
+      localStorage.setItem('username', u);
+      updateAuthButton();
+      updateUserInfo();
+      closeLoginModal();
+      loadPosts();
     } else {
-        alert(data.error || "❌ Login failed.");
+      alert('Login failed: '+(d.error||''));
     }
-})
-    .catch(err => {
-        console.error("Login error:", err);
-        alert("❌ Login request failed.");
-    });
-}
-
-function openLogoutModal() {
-  document.getElementById('logout-modal').classList.remove('hidden');
-}
-
-function closeLogoutModal() {
-  document.getElementById('logout-modal').classList.add('hidden');
-}
-
-function confirmLogout() {
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('username'); // 👈 clear username here too
-  updateLoginButton();
-  updateUserInfo(); // 👈 make sure it's reflected in the UI
-  closeLogoutModal();
-  // alert("👋 You have been logged out.");
-  loadPosts();
-}
-
-function openSignupModal() {
-  document.getElementById('signup-modal').classList.remove('hidden');
-}
-
-function closeSignupModal() {
-  document.getElementById('signup-modal').classList.add('hidden');
+  })
+  .catch(() => alert('Login request failed'));
 }
 
 function submitSignup() {
-  const baseUrl = document.getElementById('api-base-url').value;
-  const username = document.getElementById('signup-username').value;
-  const password = document.getElementById('signup-password').value;
-
-  fetch(`${baseUrl}/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
+  const base = getBaseUrl().split('/api/')[0];
+  const u = document.getElementById('signup-username').value;
+  const p = document.getElementById('signup-password').value;
+  fetch(`${base}/api/v1/register`, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ username:u, password:p })
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.error) {
-      alert(data.error);
-      return;
-    }
-
-    // alert(data.message || "✅ Signup successful!");
-
-    // 👇 Immediately log the user in
-    return fetch(`${baseUrl}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
+  .then(r => r.json())
+  .then(d => {
+    if (d.error) throw d.error;
+    return fetch(`${base}/api/v1/login`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ username:u, password:p })
     });
   })
-  .then(res => res?.json())
-  .then(loginData => {
-    if (!loginData || !loginData.token) return;
-
-    localStorage.setItem("authToken", loginData.token);
-    localStorage.setItem("username", username);
-    updateUserInfo();     // 👈 To show the username on the page
-    updateAuthButton();         // 👈 update login/logout state
+  .then(r => r.json())
+  .then(d => {
+    saveToken(d.token);
+    localStorage.setItem('username', u);
+    updateAuthButton();
+    updateUserInfo();
     closeSignupModal();
     loadPosts();
   })
-  .catch(err => {
-    console.error("Signup error:", err);
-    alert("❌ Signup or auto-login failed.");
-  });
+  .catch(e => alert('Signup/Login error: '+e));
 }
 
-function handleLoginToggle() {
-  const token = localStorage.getItem("authToken");
-  if (token) {
-    openLogoutModal();  // Ask for confirmation
-  } else {
-    openLoginModal();   // Show login modal
-  }
+function updateAuthButton() {
+  document.getElementById('auth-button').textContent =
+    getToken() ? 'Logout' : 'Login';
 }
-
-function updateLoginButton() {
-  const token = localStorage.getItem("authToken");
-  document.getElementById('login-toggle-btn').textContent = token ? "Logout" : "Login";
+function handleAuthClick() {
+  if (getToken()) {
+    clearToken();
+    updateAuthButton();
+    updateUserInfo();
+    loadPosts();
+  } else openLoginModal();
 }
-
 function updateUserInfo() {
-  const username = localStorage.getItem("username");
-  const userInfo = document.getElementById("user-info");
-
-  if (username) {
-    userInfo.textContent = `Welcome, ${username}!`;
-  } else {
-    userInfo.textContent = ""; // empty when logged out
-  }
+  const u = localStorage.getItem('username');
+  document.getElementById('user-info')
+    .textContent = u?`Welcome, ${u}!`:'';
 }
 
-function closeAddModal() {
-    document.getElementById('add-modal').classList.add('hidden');
-}
-
-function submitAdd() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const token = localStorage.getItem('authToken');
-
-    const newPost = {
-        title: document.getElementById('add-title').value,
-        content: document.getElementById('add-content').value,
-        category: document.getElementById('add-category').value,
-        author: "Anonymous" // Optional: use logged-in username if available
-    };
-
-    fetch(`${baseUrl}/posts`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token || ""
-        },
-        body: JSON.stringify(newPost)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || "Add post failed");
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        closeModal();
-        loadPosts();
-    })
-    .catch(err => {
-        console.error("❌ Failed to add post:", err.message);
-        alert("Error: " + err.message);
-    });
-}
-
-function openEditModal(post) {
-    postToEditId = post.id;
-
-    document.getElementById('edit-title').value = post.title;
-    document.getElementById('edit-content').value = post.content;
-
-    const dropdown = document.getElementById('edit-category');
-    dropdown.innerHTML = '';
-
-    categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = cat;
-        if (cat.trim().toLowerCase() === post.category.trim().toLowerCase()) {
-            option.selected = true;
-        }
-        dropdown.appendChild(option);
-    });
-
-    document.getElementById('update-modal').classList.remove('hidden');
-}
-
-function closeModal() {
-    document.getElementById('update-modal').classList.add('hidden');
-}
-
-function submitUpdate() {
-    const baseUrl = document.getElementById('api-base-url').value;
-    const token = localStorage.getItem('authToken');
-
-    const updatedPost = {
-        title: document.getElementById('edit-title').value,
-        content: document.getElementById('edit-content').value,
-        category: document.getElementById('edit-category').value,
-        author: "Anonymous" // Optional, adjust as needed
-    };
-
-    fetch(`${baseUrl}/posts/${postToEditId}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token || ""
-        },
-        body: JSON.stringify(updatedPost)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || "Update failed");
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        closeModal();
-        loadPosts();
-    })
-    .catch(err => {
-        console.error("❌ Failed to update post:", err.message);
-        alert("Error: " + err.message);
-    });
-}
-
+/* ==========================================================================
+   MODAL HELPERS
+   ========================================================================== */
+function openLoginModal()  { document.getElementById('login-modal').classList.remove('hidden'); }
+function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+function openSignupModal(){ document.getElementById('signup-modal').classList.remove('hidden'); }
+function closeSignupModal(){ document.getElementById('signup-modal').classList.add('hidden'); }
+/**
+ * Opens the Add Post modal, or the Login modal if no user is signed in.
+ */
 function openAddModal() {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    showAlertModal("You need to login to add a post.");
+  // If not logged in, prompt login instead
+  if (!localStorage.getItem('authToken')) {
+    openLoginModal();
     return;
   }
 
-  // Clear form & open modal
+  // Clear the form fields
   document.getElementById('add-title').value = '';
   document.getElementById('add-content').value = '';
   const dropdown = document.getElementById('add-category');
   dropdown.innerHTML = '<option value="">Select Category</option>';
   categories.forEach(cat => {
-    const option = document.createElement('option');
-    option.value = cat;
-    option.textContent = cat;
+    const option = new Option(cat, cat);
     dropdown.appendChild(option);
   });
 
+  // Show the Add Post modal
   document.getElementById('add-modal').classList.remove('hidden');
 }
-
-function closeAddWarningModal() {
-  document.getElementById('add-warning-modal').classList.add('hidden');
+function closeAddModal()  { document.getElementById('add-modal').classList.add('hidden'); }
+function openEditModal(post){
+  postToEditId=post.id;
+  document.getElementById('edit-title').value=post.title;
+  document.getElementById('edit-content').value=post.content;
+  const dd=document.getElementById('edit-category');
+  dd.innerHTML='<option value="">Select Category</option>';
+  categories.forEach(cat=>{
+    const o=new Option(cat,cat);
+    if(cat.toLowerCase()===post.category.toLowerCase())o.selected=true;
+    dd.appendChild(o);
+  });
+  document.getElementById('update-modal').classList.remove('hidden');
 }
+function closeModal(){ document.getElementById('update-modal').classList.add('hidden'); }
 
-function updateAuthButton() {
-    const token = localStorage.getItem("authToken");
-    const button = document.getElementById("auth-button");
-    if (token) {
-        button.textContent = "Logout";
-    } else {
-        button.textContent = "Login";
-    }
-}
-
-function handleAuthClick() {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-        // Logout
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("username");  // 👈 clear username
-        updateAuthButton();
-        updateUserInfo();  // 👈 update the username display
-        // alert("👋 Logged out successfully.");
-        loadPosts();
-    } else {
-        openLoginModal();
-    }
-}
-
-function showAlertModal(message) {
-  const alertBox = document.getElementById("alert-modal");
-  const messageText = document.getElementById("alert-message");
-  messageText.textContent = message;
-  alertBox.classList.remove("hidden");
-}
-
-function closeAlertModal() {
-  document.getElementById("alert-modal").classList.add("hidden");
-}
-
-function handleAlertLogin() {
-  closeAlertModal();
-  openLoginModal(); // Already exists in your code
-}
-
-// Call this when DOM loads
-document.addEventListener("DOMContentLoaded", updateLoginButton);
+// wire up buttons
+document.getElementById('auth-button').onclick = handleAuthClick;
+document.getElementById('add-save-btn')?.addEventListener('click', submitAdd);
+document.getElementById('edit-save-btn')?.addEventListener('click', submitUpdate);

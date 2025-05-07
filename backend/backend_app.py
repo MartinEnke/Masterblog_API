@@ -8,6 +8,7 @@ from v2_routes import v2
 from flasgger import Swagger
 from utils import load_posts, validate_post_data
 from rate_limit import limiter
+import os
 
 
 # 👇 Function for Identification (user or IP) managing separate limiting
@@ -17,6 +18,8 @@ def get_token_or_ip():
 
 
 app = Flask(__name__, static_folder="static")
+# Use a real secret in production—e.g. from env var.
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.register_blueprint(v2)  # v2_routes
 app.config['SWAGGER'] = {
     "title": "The Quiet Almanac API",
@@ -29,7 +32,10 @@ app.config['SWAGGER'] = {
 }
 Swagger(app)
 # 👇 Enables Cross-Origin Resource Sharing for *all* routes and *all* methods
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app,
+     origins="*",
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"])
 # 👇 Activate Rate Limiting (works on all functions and routes below)
 limiter.init_app(app)
 
@@ -61,7 +67,7 @@ def get_posts():
     categories = request.args.get("categories")
 
     page = int(request.args.get("page", 1))
-    limit = int(request.args.get("limit", 5))
+    limit = int(request.args.get("limit", 1000))
 
     filtered_posts = posts.copy()
 

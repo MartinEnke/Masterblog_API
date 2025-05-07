@@ -24,9 +24,7 @@
         "date": "April 11, 2025",
         "category": "Astronomy",
         "likes": 9,
-        "comments": [
-
-        ]
+        "comments": []
     },
     {
         "id": 3,
@@ -60,18 +58,6 @@
                 "text": "sicksick",
                 "date": "April 18, 2025"
             }
-        ]
-    },
-    {
-        "id": 5,
-        "author": "Martin",
-        "title": "test for delete",
-        "content": "testestest",
-        "date": "April 18, 2025",
-        "category": "Quantum Physics",
-        "likes": 0,
-        "updated": "April 16, 2025",
-        "comments": [
         ]
     }
 ]
