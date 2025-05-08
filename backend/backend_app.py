@@ -1,7 +1,7 @@
 from flask_cors import CORS
 import json
 from datetime import datetime
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from auth import register_user, login_user, token_required
 from flask_limiter.util import get_remote_address
 from v2_routes import v2
@@ -16,8 +16,15 @@ def get_token_or_ip():
     """Returns either the Authorization token or the IP address as a fallback."""
     return request.headers.get("Authorization") or get_remote_address()
 
+# locate backend and frontend dirs
+HERE     = os.path.dirname(os.path.abspath(__file__))
+FRONTEND = os.path.abspath(os.path.join(HERE, "..", "frontend"))
 
-app = Flask(__name__, static_folder="static")
+app = Flask(
+    __name__,
+    static_folder=os.path.join(FRONTEND, "static"),
+    template_folder=FRONTEND          # ← look for index.html here now
+)
 # Use a real secret in production—e.g. from env var.
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.register_blueprint(v2)  # v2_routes
@@ -46,11 +53,15 @@ def save_posts(posts):
         json.dump(posts, file, indent=4)
 
 
-@app.route("/", methods=['GET'])
-@limiter.exempt
-def home():
-    """Health check route for testing the API server."""
-    return "Hello, FLASK API"
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_frontend(path):
+    # serve static assets first
+    static_path = os.path.join(app.static_folder, path)
+    if path and os.path.exists(static_path):
+        return app.send_static_file(path)
+    # otherwise index.html lives in FRONTEND/
+    return render_template("index.html")
 
 
 @app.route("/api/v1/posts", methods=["GET"])
@@ -287,4 +298,7 @@ def secret(current_user):
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5021, debug=True)
+    # In Codio this will be set automatically to 5002
+    port = int(os.environ.get("PORT", 5021))
+    # Listen on all interfaces so Codio can route in
+    app.run(host="0.0.0.0", port=port, debug=True)

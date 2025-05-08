@@ -178,7 +178,7 @@ def add_post_v2(current_user):
         return posts
     new_post = {
         "id": max((post["id"] for post in posts), default=0) + 1,
-        "author": "SwaggerUser",  # For demo. Replace with actual user in full auth version.
+        "author": current_user,
         "title": data["title"],
         "content": data["content"],
         "category": data["category"],
