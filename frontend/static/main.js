@@ -11,10 +11,9 @@ let postToEditId = null;
    UTILITIES: BASE URL (public v1 API)
    ========================================================================== */
 function getDefaultBaseUrl() {
-  const { protocol, hostname } = window.location;
-  const backendPort = '5021';
-  const apiVersion  = '/api/v1';
-  return `${protocol}//${hostname}:${backendPort}${apiVersion}`;
+  return window.location.hostname === "localhost"
+    ? "http://localhost:5021/api/v1"
+    : "https://your-production-backend-url.com/api/v1";
 }
 
 function getBaseUrl() {
@@ -47,6 +46,8 @@ function clearToken() {
    INITIALIZATION
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+  checkBackendConnection(); // Backend Ping Check
+
   // Base-URL textbox
   document.getElementById('api-base-url').value = getBaseUrl();
   document.getElementById('api-base-url')
@@ -143,17 +144,25 @@ function renderSinglePost(post) {
 }
 
 function searchPosts() {
-  const q = document.getElementById('search-input').value.trim();
-  if (!q) return loadPosts();
-  fetch(`${getBaseUrl()}/posts/search?q=${encodeURIComponent(q)}`)
+  const query = document.getElementById('search-input').value.trim();
+  if (!query) return loadPosts();
+
+  // Send the same query as both title and content for now
+  const qs = new URLSearchParams({
+    title: query,
+    content: query
+  });
+
+  fetch(`${getBaseUrl()}/posts/search?${qs}`)
     .then(r => r.json())
     .then(data => {
-      const c = document.getElementById('post-container');
-      c.innerHTML = data.error?`<p>${data.error}</p>`:'';
-      (data.posts||data).forEach(renderSinglePost);
+      const container = document.getElementById('post-container');
+      container.innerHTML = data.error ? `<p>${data.error}</p>` : '';
+      (data.posts || data).forEach(renderSinglePost);
     })
     .catch(err => console.error('Search error:', err));
 }
+
 
 /* ==========================================================================
    POSTS: ADD / EDIT / DELETE

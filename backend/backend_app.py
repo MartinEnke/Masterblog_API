@@ -20,11 +20,11 @@ def get_token_or_ip():
 HERE     = os.path.dirname(os.path.abspath(__file__))
 FRONTEND = os.path.abspath(os.path.join(HERE, "..", "frontend"))
 
-app = Flask(
-    __name__,
-    static_folder=os.path.join(FRONTEND, "static"),
-    template_folder=FRONTEND          # ← look for index.html here now
-)
+TEMPLATE_DIR = os.path.join(FRONTEND, "templates")
+
+app = Flask(__name__)
+
+
 # Use a real secret in production—e.g. from env var.
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.register_blueprint(v2)  # v2_routes
@@ -52,16 +52,16 @@ def save_posts(posts):
     with open("blog_posts.json", "w") as file:
         json.dump(posts, file, indent=4)
 
-
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve_frontend(path):
-    # serve static assets first
-    static_path = os.path.join(app.static_folder, path)
-    if path and os.path.exists(static_path):
-        return app.send_static_file(path)
-    # otherwise index.html lives in FRONTEND/
-    return render_template("index.html")
+#
+# @app.route("/", defaults={"path": ""})
+# @app.route("/<path:path>")
+# def serve_frontend(path):
+#     # serve static assets first
+#     static_path = os.path.join(app.static_folder, path)
+#     if path and os.path.exists(static_path):
+#         return app.send_static_file(path)
+#     # otherwise index.html lives in FRONTEND/
+#     return render_template("index.html")
 
 
 @app.route("/api/v1/posts", methods=["GET"])
@@ -194,30 +194,31 @@ def update_post(current_user, post_id):
     return jsonify({"error": f"Post with ID {post_id} not found"}), 404
 
 
-@app.route("/api/v1/posts/search", methods=['GET'])
+@app.route("/api/v1/posts/search", methods=["GET"])
 @limiter.limit("10 per minute")
 def search_post():
-    """Searches posts by title, content, or author."""
+    """Searches posts by title and/or content."""
     posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+    if isinstance(posts, tuple):
         return posts
 
-    search_text = request.args.get("q", "").lower()
+    title_query = request.args.get("title", "").lower()
+    content_query = request.args.get("content", "").lower()
 
-    if not search_text:
-        return jsonify({"error": "Please provide a search term using '?q=your_query'"}), 400
+    if not title_query and not content_query:
+        return jsonify({"error": "Please provide 'title' and/or 'content' as query params."}), 400
 
     results = [
         post for post in posts
-        if search_text in post.get('title', '').lower()
-        or search_text in post.get('content', '').lower()
-        or search_text in post.get('author', '').lower()
+        if (title_query in post.get("title", "").lower() if title_query else True)
+        and (content_query in post.get("content", "").lower() if content_query else True)
     ]
 
     if not results:
-        return jsonify({"error": f"No posts found matching '{search_text}'"}), 404
+        return jsonify({"error": "No posts found matching your criteria."}), 404
 
     return jsonify(results), 200
+
 
 
 @app.route("/api/v1/categories", methods=["GET"])

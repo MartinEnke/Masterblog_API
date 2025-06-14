@@ -348,15 +348,22 @@ def get_categories_v2():
 @v2.route("/posts/search", methods=["GET"])
 @swag_from({
     "tags": ["Posts"],
-    "summary": "Search posts by keyword",
-    "description": "Searches for blog posts by matching text in title, content, or author.",
+    "summary": "Search posts by title and/or content",
+    "description": "Searches blog posts by matching text in the title and/or content fields.",
     "parameters": [
         {
-            "name": "q",
+            "name": "title",
             "in": "query",
             "type": "string",
-            "required": True,
-            "description": "Keyword to search in title, content, or author (e.g., 'AI')"
+            "required": False,
+            "description": "Text to search for in the post title"
+        },
+        {
+            "name": "content",
+            "in": "query",
+            "type": "string",
+            "required": False,
+            "description": "Text to search for in the post content"
         }
     ],
     "responses": {
@@ -380,36 +387,47 @@ def get_categories_v2():
                 ]
             }
         },
+        400: {
+            "description": "Missing search parameters",
+            "examples": {
+                "application/json": {
+                    "error": "Please provide 'title' and/or 'content' as query params."
+                }
+            }
+        },
         404: {
             "description": "No matching posts found",
             "examples": {
                 "application/json": {
-                    "error": "No posts matched your search"
+                    "error": "No posts found matching your criteria."
                 }
             }
         }
     }
 })
 @limiter.limit("10 per minute")
-def search_posts_v2():
+def search_post():
+    """Searches posts by title and/or content."""
     posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+    if isinstance(posts, tuple):
         return posts
 
-    query = request.args.get("q", "").strip().lower()
+    title_query = request.args.get("title", "").lower()
+    content_query = request.args.get("content", "").lower()
 
-    if not query:
-        return jsonify({"error": "Missing query parameter `q`"}), 400
+    if not title_query and not content_query:
+        return jsonify({"error": "Please provide 'title' and/or 'content' as query params."}), 400
 
-    results = [p for p in posts if
-               query in p.get("title", "").lower() or
-               query in p.get("content", "").lower() or
-               query in p.get("author", "").lower()]
+    results = [
+        post for post in posts
+        if (title_query in post.get("title", "").lower() if title_query else True)
+        and (content_query in post.get("content", "").lower() if content_query else True)
+    ]
 
     if not results:
-        return jsonify({"error": f"No posts found matching '{query}'"}), 404
+        return jsonify({"error": "No posts found matching your criteria."}), 404
 
-    return jsonify(results)
+    return jsonify(results), 200
 
 
 @v2.route("/posts/<int:post_id>/like", methods=["POST"])
