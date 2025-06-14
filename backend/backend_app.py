@@ -298,8 +298,11 @@ def secret(current_user):
 #     return app.send_static_file('swagger_custom.css')
 
 
+# if __name__ == '__main__':
+#     # In Codio this will be set automatically to 5002
+#     port = int(os.environ.get("PORT", 5021))
+#     # Listen on all interfaces so Codio can route in
+#     app.run(host="0.0.0.0", port=port, debug=True)
+
 if __name__ == '__main__':
-    # In Codio this will be set automatically to 5002
-    port = int(os.environ.get("PORT", 5021))
-    # Listen on all interfaces so Codio can route in
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host='0.0.0.0', port=10000)
