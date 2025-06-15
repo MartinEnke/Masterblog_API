@@ -69,8 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('api-base-url')
     .addEventListener('change', storeBaseUrl);
 
+  requestAnimationFrame(() => {
   loadCategories();
   loadPosts();
+});
   updateAuthButton();
   updateUserInfo();
 
