@@ -248,6 +248,7 @@ function loadCategories() {
   fetch(`${getBaseUrl()}/categories`)
     .then(r => r.json())
     .then(fetched => {
+      console.log("Loading categories...");
       categories = fetched;
       ['filter-category','add-category','edit-category'].forEach(id => {
         const sel = document.getElementById(id);
@@ -261,6 +262,9 @@ function loadCategories() {
     .catch(console.error);
 }
 
+window.addEventListener('DOMContentLoaded', () => {
+  loadCategories();
+});
 /* ==========================================================================
    AUTH: LOGIN / SIGNUP / UI
    ========================================================================== */
