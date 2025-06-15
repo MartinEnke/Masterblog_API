@@ -88,7 +88,7 @@ function loadPosts() {
     sort:     document.getElementById('sort-field').value,
     direction:document.getElementById('sort-direction').value
   });
-  fetch(`${getBaseUrl()}/categories`)
+    fetch(`${base}/posts?${qs}`)
     .then(r => r.json())
     .then(data => {
       const posts = data.posts || data;
