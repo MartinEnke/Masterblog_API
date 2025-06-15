@@ -82,13 +82,15 @@ document.addEventListener('DOMContentLoaded', () => {
    POSTS: LOAD / RENDER / SEARCH
    ========================================================================== */
 function loadPosts() {
+  console.log("Calling loadPosts with base URL:", getBaseUrl());
   const base = getBaseUrl();
   const qs = new URLSearchParams({
     category: document.getElementById('filter-category').value,
     sort:     document.getElementById('sort-field').value,
-    direction:document.getElementById('sort-direction').value
+    direction: document.getElementById('sort-direction').value
   });
-    fetch(`${base}/posts?${qs}`)
+
+  fetch(`${base}/posts?${qs}`)
     .then(r => r.json())
     .then(data => {
       const posts = data.posts || data;
@@ -98,6 +100,7 @@ function loadPosts() {
     })
     .catch(err => console.error('Error loading posts:', err));
 }
+
 
 /**
  * Renders a single post card, showing Edit/Delete only to the author.

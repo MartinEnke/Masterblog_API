@@ -40,7 +40,7 @@ app.config['SWAGGER'] = {
 Swagger(app)
 # 👇 Enables Cross-Origin Resource Sharing for *all* routes and *all* methods
 CORS(app,
-     origins="*",
+     origins=["https://martinenke.github.io"],
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization"])
 # 👇 Activate Rate Limiting (works on all functions and routes below)
