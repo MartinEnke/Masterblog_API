@@ -44,7 +44,6 @@ function clearToken() {
    INITIALIZATION
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
-  checkBackendConnection(); // Backend Ping Check
 
   // Base-URL textbox
   document.getElementById('api-base-url').value = getBaseUrl();
@@ -245,10 +244,11 @@ function likePost(id) {
    CATEGORIES
    ========================================================================== */
 function loadCategories() {
+  console.log("Calling loadCategories with base URL:", getBaseUrl());
   fetch(`${getBaseUrl()}/categories`)
     .then(r => r.json())
     .then(fetched => {
-      console.log("Loading categories...");
+      console.log("Fetched categories:", fetched); // ✅ ADD THIS
       categories = fetched;
       ['filter-category','add-category','edit-category'].forEach(id => {
         const sel = document.getElementById(id);
@@ -259,12 +259,12 @@ function loadCategories() {
         categories.forEach(cat => sel.appendChild(new Option(cat, cat)));
       });
     })
-    .catch(console.error);
+    .catch(err => {
+      console.error('Error fetching categories:', err); // ✅ ADD THIS
+    });
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  loadCategories();
-});
+
 /* ==========================================================================
    AUTH: LOGIN / SIGNUP / UI
    ========================================================================== */
