@@ -298,6 +298,7 @@ function loadCategories() {
       console.log("📦 Categories fetched from API:", fetched);
       // 👇 Insert hardcoded test here
       categories = ["Test1", "Test2", "Another"];
+      console.log("📦 Categories fetched from API (overridden for test):", categories);
 
       if (!Array.isArray(categories)) {
         console.error("❌ Categories response is not an array:", categories);
