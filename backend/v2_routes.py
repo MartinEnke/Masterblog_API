@@ -335,7 +335,6 @@ def delete_post_v2(current_user, post_id):
     }
 })
 
-@v2.route("/categories", methods=["GET"])
 @limiter.exempt
 def get_categories_v2():
     posts = load_posts()
