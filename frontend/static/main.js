@@ -62,6 +62,8 @@ function clearToken() {
    INITIALIZATION
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("🚀 DOM fully loaded. Starting app.");
+
   checkBackendConnection(); // Backend Ping Check
 
   // Base-URL textbox
@@ -69,10 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('api-base-url')
     .addEventListener('change', storeBaseUrl);
 
-  requestAnimationFrame(() => {
   loadCategories();
   loadPosts();
-});
   updateAuthButton();
   updateUserInfo();
 
