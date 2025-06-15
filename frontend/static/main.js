@@ -274,36 +274,57 @@ function loadCategories() {
 
   const dropdownIds = ['filter-category', 'add-category', 'edit-category'];
 
-  // Clear and prepare dropdowns
   dropdownIds.forEach(id => {
     const sel = document.getElementById(id);
-    if (sel) {
-      const defaultOption = id === 'filter-category'
-        ? '<option value="">All Categories</option>'
-        : '<option value="">Select Category</option>';
-      sel.innerHTML = defaultOption;
+    if (!sel) {
+      console.warn(`⚠️ Element #${id} not found in DOM at loadCategories start.`);
+      return;
     }
+
+    const defaultOption = id === 'filter-category'
+      ? new Option("All Categories", "")
+      : new Option("Select Category", "");
+    sel.innerHTML = '';  // clear everything first
+    sel.appendChild(defaultOption);
   });
 
   fetch(categoryUrl)
-    .then(r => {
-      if (!r.ok) throw new Error(`Failed to fetch categories: ${r.status}`);
-      return r.json();
+    .then(response => {
+      console.log("📡 Category response status:", response.status);
+      if (!response.ok) throw new Error(`Bad response: ${response.status}`);
+      return response.json();
     })
     .then(fetched => {
-      categories = fetched;
-      console.log("📦 Categories loaded:", categories);
+      console.log("📦 Categories fetched from API:", fetched);
+      // 👇 Insert hardcoded test here
+      categories = ["Test1", "Test2", "Another"];
+
+      if (!Array.isArray(categories)) {
+        console.error("❌ Categories response is not an array:", categories);
+        return;
+      }
 
       dropdownIds.forEach(id => {
         const sel = document.getElementById(id);
-        if (!sel) return;
+        if (!sel) {
+          console.warn(`⚠️ Skipping #${id}, not found during population.`);
+          return;
+        }
+
         categories.forEach(cat => {
-          sel.appendChild(new Option(cat, cat));
+          if (typeof cat === 'string') {
+            const opt = new Option(cat, cat);
+            sel.appendChild(opt);
+          } else {
+            console.warn(`⚠️ Skipping non-string category:`, cat);
+          }
         });
+
+        console.log(`✅ Populated #${id} with ${sel.options.length} options.`);
       });
     })
     .catch(err => {
-      console.error('❌ Error fetching categories:', err);
+      console.error("❌ Failed to fetch or populate categories:", err);
     });
 }
 
