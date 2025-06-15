@@ -269,43 +269,35 @@ function likePost(id) {
    ========================================================================== */
 function loadCategories() {
   const baseUrl = getBaseUrl();
-  console.log("🔄 Calling loadCategories with base URL:", baseUrl);
+  const categoryUrl = baseUrl.replace(/\/api\/v[12]$/, '') + '/api/categories';
+  console.log("🔄 Calling loadCategories with:", categoryUrl);
 
   const dropdownIds = ['filter-category', 'add-category', 'edit-category'];
-  console.log("🎯 Targeting dropdowns:", dropdownIds);
 
-  // Check that the DOM elements are actually available
-  setTimeout(() => {
-    console.log("🧪 DOM Check for dropdown presence:");
-    dropdownIds.forEach(id => {
-      const el = document.getElementById(id);
-      console.log(`   #${id}:`, el ? "✅ found" : "❌ NOT found");
-    });
-  }, 1000);
+  // Clear and prepare dropdowns
+  dropdownIds.forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) {
+      const defaultOption = id === 'filter-category'
+        ? '<option value="">All Categories</option>'
+        : '<option value="">Select Category</option>';
+      sel.innerHTML = defaultOption;
+    }
+  });
 
-  fetch(`${baseUrl}/categories`)
+  fetch(categoryUrl)
     .then(r => {
       if (!r.ok) throw new Error(`Failed to fetch categories: ${r.status}`);
       return r.json();
     })
     .then(fetched => {
-      console.log("📦 Fetched categories:", fetched);
       categories = fetched;
+      console.log("📦 Categories loaded:", categories);
 
       dropdownIds.forEach(id => {
         const sel = document.getElementById(id);
-        if (!sel) {
-          console.warn(`⚠️ Dropdown with id '${id}' not found in DOM.`);
-          return;
-        }
-
-        const defaultOption = id === 'filter-category'
-          ? '<option value="">All Categories</option>'
-          : '<option value="">Select Category</option>';
-        sel.innerHTML = defaultOption;
-
+        if (!sel) return;
         categories.forEach(cat => {
-          console.log(`   ➕ Adding option '${cat}' to #${id}`);
           sel.appendChild(new Option(cat, cat));
         });
       });
@@ -314,6 +306,7 @@ function loadCategories() {
       console.error('❌ Error fetching categories:', err);
     });
 }
+
 
 
 

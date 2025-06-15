@@ -247,6 +247,26 @@ def get_categories():
     return jsonify(categories)
 
 
+@app.route("/api/categories", methods=["GET"])
+@limiter.exempt
+def get_categories_unversioned():
+    """Returns a unique sorted list of all categories (unversioned endpoint)."""
+    posts = load_posts()
+    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
+        return posts
+
+    categories_set = set()
+    for post in posts:
+        cat = post.get("category")
+        if isinstance(cat, list):
+            categories_set.update(cat)
+        elif isinstance(cat, str):
+            categories_set.add(cat)
+
+    categories = sorted(categories_set)
+    return jsonify(categories)
+
+
 @app.route("/api/v1/posts/<int:post_id>/like", methods=["POST"])
 @limiter.limit("20 per minute") # Potential abuse, limiting required, as well
 def like_post(post_id):
