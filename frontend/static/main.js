@@ -26,7 +26,10 @@ function checkBackendConnection() {
    UTILITIES: BASE URL (public v1 API)
    ========================================================================== */
 function getDefaultBaseUrl() {
-  return "https://the-quiet-almanac.onrender.com/api/v1";  // ✅ use your live Render backend URL
+  const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+  return isLocal
+    ? "http://127.0.0.1:5000/api/v1"
+    : "https://the-quiet-almanac.onrender.com/api/v1";
 }
 
 function getBaseUrl() {
@@ -264,6 +267,7 @@ function likePost(id) {
    ========================================================================== */
 function loadCategories() {
   console.log("Calling loadCategories with base URL:", getBaseUrl());
+  console.log("Targeting dropdowns:", ['filter-category','add-category','edit-category']);
   fetch(`${getBaseUrl()}/categories`)
     .then(r => r.json())
     .then(fetched => {

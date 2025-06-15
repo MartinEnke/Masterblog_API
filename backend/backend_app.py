@@ -9,6 +9,7 @@ from flasgger import Swagger
 from utils import load_posts, validate_post_data
 from rate_limit import limiter
 import os
+from flask import send_from_directory
 
 
 # 👇 Function for Identification (user or IP) managing separate limiting
@@ -45,6 +46,11 @@ CORS(app,
      allow_headers=["Content-Type", "Authorization"])
 # 👇 Activate Rate Limiting (works on all functions and routes below)
 limiter.init_app(app)
+
+
+@app.route('/')
+def serve_index():
+    return send_from_directory('frontend', 'index.html')
 
 
 def save_posts(posts):
