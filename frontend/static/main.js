@@ -64,22 +64,32 @@ function clearToken() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log("🚀 DOM fully loaded. Starting app.");
 
-  // Base-URL textbox
+  // 🔁 Wire up "Apply Filters" button
+  const btn = document.getElementById("load-posts-btn");
+  if (btn) {
+    btn.addEventListener("click", loadPosts);
+  } else {
+    console.warn("⚠️ Couldn't find #load-posts-btn in DOM.");
+  }
+
+  // Base URL handling
   document.getElementById('api-base-url').value = getBaseUrl();
   document.getElementById('api-base-url')
     .addEventListener('change', storeBaseUrl);
 
+  // Initialize core app behavior
   loadCategories();
   loadPosts();
   updateAuthButton();
   updateUserInfo();
 
-  // Search on Enter
+  // 🔍 Search on Enter
   document.getElementById('search-input')
     .addEventListener('keydown', e => {
       if (e.key === 'Enter') searchPosts();
     });
 });
+
 
 /* ==========================================================================
    POSTS: LOAD / RENDER / SEARCH

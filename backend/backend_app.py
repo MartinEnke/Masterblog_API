@@ -28,7 +28,7 @@ app = Flask(__name__)
 
 # Use a real secret in production—e.g. from env var.
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-app.register_blueprint(v2)  # v2_routes
+app.register_blueprint(v2, url_prefix="/api/v2")  # v2_routes
 app.config['SWAGGER'] = {
     "title": "The Quiet Almanac API",
     "uiversion": 3,
