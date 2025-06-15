@@ -282,6 +282,16 @@ def secret(current_user):
     return jsonify({'message': f'Welcome, {current_user}!'}), 200
 
 
+@app.route("/api/v1/status", methods=["GET"])
+@limiter.exempt
+def status():
+    return jsonify({
+        "status": "ok",
+        "message": "The Quiet Almanac API is live.",
+        "version": "v1"
+    }), 200
+
+
 # @app.route('/swagger-ui/custom.css')
 # def swagger_custom_css():
 #     """

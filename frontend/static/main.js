@@ -7,6 +7,21 @@ const API_URL_KEY = 'apiBaseUrl';
 let categories = [];
 let postToEditId = null;
 
+function checkBackendConnection() {
+  fetch(`${getBaseUrl()}/status`)
+    .then(res => {
+      if (res.ok) {
+        console.log("✅ Backend status: OK");
+      } else {
+        throw new Error("Non-200 status");
+      }
+    })
+    .catch(err => {
+      console.error("❌ Backend not reachable:", err);
+      alert("Could not reach the backend. Check API base URL.");
+    });
+}
+
 /* ==========================================================================
    UTILITIES: BASE URL (public v1 API)
    ========================================================================== */
@@ -73,7 +88,7 @@ function loadPosts() {
     sort:     document.getElementById('sort-field').value,
     direction:document.getElementById('sort-direction').value
   });
-  fetch(`${base}/posts?${qs}`)
+  fetch(`${getBaseUrl()}/categories`)
     .then(r => r.json())
     .then(data => {
       const posts = data.posts || data;
