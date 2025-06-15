@@ -9,7 +9,11 @@ USERS_FILE = "users.json"
 
 def load_users():
     if not os.path.exists(USERS_FILE):
+        print("⛔ users.json missing, creating empty one")
+        with open(USERS_FILE, "w") as f:
+            json.dump({}, f)
         return {}
+
     with open(USERS_FILE, "r") as f:
         return json.load(f)
 
@@ -51,7 +55,9 @@ def register_user():
     return {"message": "User registered successfully"}, code
 
 def login_user():
-    data = request.get_json() or {}
+    print("🔐 Login route hit")
+    data = request.get_json()
+    print("Received data:", data)
     ok, resp, code = validate_login(data.get("username"), data.get("password"))
     if not ok:
         return resp, code
