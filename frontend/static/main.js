@@ -64,8 +64,6 @@ function clearToken() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log("🚀 DOM fully loaded. Starting app.");
 
-  /*checkBackendConnection(); // Backend Ping Check  */
-
   // Base-URL textbox
   document.getElementById('api-base-url').value = getBaseUrl();
   document.getElementById('api-base-url')
