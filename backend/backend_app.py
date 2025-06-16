@@ -1,345 +1,204 @@
 from flask_cors import CORS
-import json
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template
 from auth import register_user, login_user, token_required
 from flask_limiter.util import get_remote_address
 from v2_routes import v2
 from flasgger import Swagger
-from utils import load_posts, validate_post_data
+from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data, translate_post
 from rate_limit import limiter
+from translations_db import init_db, get_translation, save_translation, session
+from models import Post
 import os
-from flask import send_from_directory
 
+init_db()
 
 # 👇 Function for Identification (user or IP) managing separate limiting
 def get_token_or_ip():
-    """Returns either the Authorization token or the IP address as a fallback."""
     return request.headers.get("Authorization") or get_remote_address()
 
 # locate backend and frontend dirs
-HERE     = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.abspath(__file__))
 FRONTEND = os.path.abspath(os.path.join(HERE, "..", "frontend"))
 
-TEMPLATE_DIR = os.path.join(FRONTEND, "templates")
-
-app = Flask(__name__)
-
-
-# Use a real secret in production—e.g. from env var.
+app = Flask(
+    __name__,
+    static_folder=os.path.join(FRONTEND, "static"),
+    template_folder=FRONTEND
+)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-app.register_blueprint(v2, url_prefix="/api/v2")  # v2_routes
+app.register_blueprint(v2)
 app.config['SWAGGER'] = {
     "title": "The Quiet Almanac API",
     "uiversion": 3,
-    "description": "A versioned Flask-based blog API with token authentication, "
-                   "rate limiting, and Swagger docs. Supports creating, updating, "
-                   "deleting, and searching blog posts.",
+    "description": "A versioned Flask-based blog API with token authentication, rate limiting, and Swagger docs.",
     "version": "2.0",
     "swagger_ui": True,
 }
 Swagger(app)
-# 👇 Enables Cross-Origin Resource Sharing for *all* routes and *all* methods
-CORS(app,
-     origins=["https://martinenke.github.io"],
-     supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization"])
-# 👇 Activate Rate Limiting (works on all functions and routes below)
+CORS(app, origins="*", supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
 limiter.init_app(app)
 
-
-@app.route('/')
-def serve_index():
-    return send_from_directory('frontend', 'index.html')
-
-
-def save_posts(posts):
-    """Saves the current list of blog posts to a JSON file."""
-    with open("blog_posts.json", "w") as file:
-        json.dump(posts, file, indent=4)
-
-#
-# @app.route("/", defaults={"path": ""})
-# @app.route("/<path:path>")
-# def serve_frontend(path):
-#     # serve static assets first
-#     static_path = os.path.join(app.static_folder, path)
-#     if path and os.path.exists(static_path):
-#         return app.send_static_file(path)
-#     # otherwise index.html lives in FRONTEND/
-#     return render_template("index.html")
-
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_frontend(path):
+    static_path = os.path.join(app.static_folder, path)
+    if path and os.path.exists(static_path):
+        return app.send_static_file(path)
+    return render_template("index.html")
 
 @app.route("/api/v1/posts", methods=["GET"])
-@limiter.exempt # Define Stop Limiting (maybe for all GET requests)
+@limiter.exempt
 def get_posts():
-    """Returns a paginated and optionally filtered/sorted list of blog posts."""
     posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption
-        return posts
 
     sort_field = request.args.get("sort")
     direction = request.args.get("direction", "asc")
     category = request.args.get("category")
     categories = request.args.get("categories")
-
     page = int(request.args.get("page", 1))
     limit = int(request.args.get("limit", 1000))
 
-    filtered_posts = posts.copy()
-
     if category:
-        filtered_posts = [p for p in filtered_posts if p["category"].lower() == category.lower()]
+        posts = [p for p in posts if p["category"].lower() == category.lower()]
     elif categories:
-        category_list = [c.strip().lower() for c in categories.split(",")]
-        filtered_posts = [p for p in filtered_posts if p["category"].lower() in category_list]
+        cats = [c.strip().lower() for c in categories.split(",")]
+        posts = [p for p in posts if p["category"].lower() in cats]
 
     if sort_field:
-        valid_fields = ["title", "content", "likes", "date", "updated", "author"]  # ✅ include "author"
-        if sort_field not in valid_fields:
-            return jsonify({"error": f"Invalid sort field. Use one of: {', '.join(valid_fields)}"}), 400
+        if sort_field not in ["title", "content", "likes", "date", "updated", "author"]:
+            return jsonify({"error": "Invalid sort field."}), 400
         if direction not in ["asc", "desc"]:
-            return jsonify({"error": "Invalid direction. Use 'asc' or 'desc'."}), 400
-
+            return jsonify({"error": "Invalid direction."}), 400
         reverse = direction == "desc"
-        filtered_posts.sort(
-            key=lambda post: (
-                post.get(sort_field, "").lower() if isinstance(post.get(sort_field), str)
-                else post.get(sort_field, "")
-            ),
-            reverse=reverse
-        )
+        posts.sort(key=lambda p: (p.get(sort_field, "") or "").lower() if isinstance(p.get(sort_field), str) else p.get(sort_field, ""), reverse=reverse)
 
     start = (page - 1) * limit
     end = start + limit
-    paginated_posts = filtered_posts[start:end]
+    paginated = posts[start:end]
 
-    return jsonify({
-        "page": page,
-        "limit": limit,
-        "total_posts": len(filtered_posts),
-        "posts": paginated_posts
-    })
+    lang = request.args.get("lang", "en").lower()
+    if lang != "en":
+        for post in paginated:
+            trans = get_translation(post["id"], lang)
+            if trans:
+                post["title"] = trans.title
+                post["content"] = trans.content
+            else:
+                post["title"], post["content"] = translate_post(post["title"], post["content"], lang)
+                save_translation(post["id"], lang, post["title"], post["content"])
 
+    return jsonify({"page": page, "limit": limit, "total_posts": len(posts), "posts": paginated})
 
-@app.route('/api/v1/posts', methods=['POST'])
+@app.route("/api/v1/posts", methods=["POST"])
 @token_required
-@limiter.limit("5 per minute") # Allows productive work but prevents Spam
+@limiter.limit("5 per minute")
 def add_post(current_user):
-    """Creates a new blog post for the logged-in user."""
     data = request.get_json()
     error = validate_post_data(data)
     if error:
         return jsonify(error), 400
 
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
-
     new_post = {
-        "id": max([post["id"] for post in posts], default=0) + 1,
-        "author": current_user,  # 🧠 use username from token
+        "author": current_user,
         "title": data["title"],
         "content": data["content"],
         "category": data["category"],
-        "date": datetime.now().strftime("%B %d, %Y"),
         "likes": 0
     }
-
-    posts.append(new_post)
-    save_posts(posts)
-
+    post_id = save_post(new_post)
+    new_post["id"] = post_id
+    new_post["date"] = datetime.now().strftime("%B %d, %Y")
     return jsonify(new_post), 201
 
+@app.route("/api/v1/posts/<int:post_id>", methods=['PUT'])
+@limiter.limit("5 per minute")
+@token_required
+def update_post(current_user, post_id):
+    new_data = request.get_json()
+    error = validate_post_data(new_data)
+    if error:
+        return jsonify(error), 400
+
+    updated_post = update_post_db(post_id, current_user, new_data)
+    if updated_post == "unauthorized":
+        return jsonify({"error": "Unauthorized to edit this post"}), 403
+    elif updated_post is None:
+        return jsonify({"error": f"Post with ID {post_id} not found"}), 404
+
+    return jsonify(updated_post), 200
 
 @app.route("/api/v1/posts/<int:post_id>", methods=['DELETE'])
 @token_required
-@limiter.limit("5 per minute") # Allows productive work but prevents Spam
+@limiter.limit("5 per minute")
 def delete_post(current_user, post_id):
-    """Deletes a blog post if it belongs to the current user."""
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
+    result = delete_post_db(post_id, current_user)
+    if result == "unauthorized":
+        return jsonify({"error": "Unauthorized to delete this post"}), 403
+    elif result == "not_found":
+        return jsonify({"error": f"Post with ID {post_id} not found"}), 404
+    return jsonify({"message": f"Post {post_id} deleted"}), 200
 
-    for post in posts:
-        if post['id'] == post_id:
-            if post['author'] != current_user:
-                return jsonify({"error": "Unauthorized to delete this post"}), 403
-            posts.remove(post)
-            save_posts(posts)
-            return jsonify({"message": f"Post {post_id} deleted"}), 200
-    return jsonify({"error": f"Post with ID {post_id} not found"}), 404
+@app.route("/api/v1/posts/<int:post_id>/like", methods=["POST"])
+@limiter.limit("20 per minute")
+def like_post(post_id):
+    updated_likes = like_post_db(post_id)
+    if updated_likes is None:
+        return jsonify({"error": f"Post with ID {post_id} not found"}), 404
+    return jsonify({"message": f"Post {post_id} liked", "likes": updated_likes}), 200
 
-
-@app.route("/api/v1/posts/<int:post_id>", methods=['PUT'])
-@limiter.limit("5 per minute") # Allows productive work but prevents Spam
-@token_required
-def update_post(current_user, post_id):
-    """Updates a blog post's title, content, or category if user owns the post."""
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
-
-    for post in posts:
-        if post['id'] == post_id:
-            if post['author'] != current_user:
-                return jsonify({"error": "Unauthorized to edit this post"}), 403
-
-            new_data = request.get_json()
-            error = validate_post_data(new_data)
-            if error:
-                return jsonify(error), 400
-
-            post['title'] = new_data['title']
-            post['content'] = new_data['content']
-            post['category'] = new_data['category']
-            post["updated"] = datetime.now().strftime("%B %d, %Y")
-
-            save_posts(posts)
-            return jsonify(post), 200
-    return jsonify({"error": f"Post with ID {post_id} not found"}), 404
-
-
-@app.route("/api/v1/posts/search", methods=["GET"])
+@app.route("/api/v1/posts/search", methods=['GET'])
 @limiter.limit("10 per minute")
 def search_post():
-    """Searches posts by title and/or content."""
-    posts = load_posts()
-    if isinstance(posts, tuple):
-        return posts
+    q = request.args.get("q", "").strip().lower()
+    if not q:
+        return jsonify({"error": "Please provide a search term using '?q=your_query'"}), 400
 
-    title_query = request.args.get("title", "").lower()
-    content_query = request.args.get("content", "").lower()
-
-    if not title_query and not content_query:
-        return jsonify({"error": "Please provide 'title' and/or 'content' as query params."}), 400
-
-    results = [
-        post for post in posts
-        if (title_query in post.get("title", "").lower() if title_query else True)
-        and (content_query in post.get("content", "").lower() if content_query else True)
-    ]
+    results = session.query(Post).filter(
+        (Post.title.ilike(f"%{q}%")) |
+        (Post.content.ilike(f"%{q}%")) |
+        (Post.author.ilike(f"%{q}%"))
+    ).all()
 
     if not results:
-        return jsonify({"error": "No posts found matching your criteria."}), 404
+        return jsonify({"error": f"No posts found matching '{q}'"}), 404
 
-    return jsonify(results), 200
+    posts = [{
+        "id": post.id,
+        "author": post.author,
+        "title": post.title,
+        "content": post.content,
+        "category": post.category,
+        "date": post.date.strftime("%B %d, %Y") if post.date else None,
+        "updated": post.updated.strftime("%B %d, %Y") if post.updated else None,
+        "likes": post.likes
+    } for post in results]
 
-
+    return jsonify(posts), 200
 
 @app.route("/api/v1/categories", methods=["GET"])
 @limiter.exempt
 def get_categories():
-    """Returns a unique sorted list of all categories in blog posts."""
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
-    categories_set = set()
+    categories = session.query(Post.category).distinct().all()
+    unique_categories = sorted({c[0] for c in categories if c[0]})
+    return jsonify(unique_categories)
 
-    for post in posts:
-        cat = post.get("category")
-        if isinstance(cat, list):
-            categories_set.update(cat)
-        elif isinstance(cat, str):
-            categories_set.add(cat)
-
-    categories = sorted(categories_set)
-    return jsonify(categories)
-
-
-@app.route("/api/categories", methods=["GET"])
-@limiter.exempt
-def get_categories_unversioned():
-    """Returns a unique sorted list of all categories (unversioned endpoint)."""
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
-
-    categories_set = set()
-    for post in posts:
-        cat = post.get("category")
-        if isinstance(cat, list):
-            categories_set.update(cat)
-        elif isinstance(cat, str):
-            categories_set.add(cat)
-
-    categories = sorted(categories_set)
-    return jsonify(categories)
-
-
-@app.route("/api/v1/posts/<int:post_id>/like", methods=["POST"])
-@limiter.limit("20 per minute") # Potential abuse, limiting required, as well
-def like_post(post_id):
-    """Increments the like count of a post by its ID."""
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
-
-    for post in posts:
-        if post["id"] == post_id:
-            post["likes"] = post.get("likes", 0) + 1
-            save_posts(posts)
-            return jsonify({"message": f"Post {post_id} liked", "likes": post["likes"]}), 200
-
-    return jsonify({"error": f"Post with ID {post_id} not found"}), 404
-
-
-'''Register & Login Part'''
 @app.route("/api/v1/register", methods=["POST"])
-@limiter.limit("3 per minute") # Vulnerable for Brute-Force-Attacks
+@limiter.limit("3 per minute")
 def register():
-    """Registers a new user with username and password."""
     return register_user()
 
-
 @app.route("/api/v1/login", methods=["POST"])
-@limiter.limit("5 per minute") # Vulnerable for Brute-Force-Attacks
+@limiter.limit("5 per minute")
 def login():
-    """Authenticates a user and returns a token."""
     return login_user()
 
-
-# Debug/Test-Route
 @app.route('/api/v1/secret', methods=['GET'])
 @token_required
 @limiter.limit("3 per minute")
 def secret(current_user):
-    """Protected test route to verify token authentication."""
     return jsonify({'message': f'Welcome, {current_user}!'}), 200
 
-
-@app.route("/api/v1/status", methods=["GET"])
-@limiter.exempt
-def status():
-    return jsonify({
-        "status": "ok",
-        "message": "The Quiet Almanac API is live.",
-        "version": "v1"
-    }), 200
-
-
-# @app.route('/swagger-ui/custom.css')
-# def swagger_custom_css():
-#     """
-#         NOT USED YET
-#         Serves the custom Swagger UI stylesheet.
-#
-#         This route provides a custom CSS file to override or enhance the default
-#         styling of the Swagger UI. It's typically referenced in the Swagger config
-#         via the `swagger_ui_css` key to apply branding, layout changes, or visual improvements.
-#
-#         Returns:
-#             Response: The static CSS file 'swagger_custom.css' from the Flask static folder.
-#         """
-#     return app.send_static_file('swagger_custom.css')
-
-
-# if __name__ == '__main__':
-#     # In Codio this will be set automatically to 5002
-#     port = int(os.environ.get("PORT", 5021))
-#     # Listen on all interfaces so Codio can route in
-#     app.run(host="0.0.0.0", port=port, debug=True)
-
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    port = int(os.environ.get("PORT", 5021))
+    app.run(host="0.0.0.0", port=port, debug=True)

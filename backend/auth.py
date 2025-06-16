@@ -1,63 +1,47 @@
-import json
-import os
-import datetime
+
 import jwt
 from flask import request, jsonify, current_app
 from functools import wraps
-
-USERS_FILE = "users.json"
-
-def load_users():
-    if not os.path.exists(USERS_FILE):
-        print("⛔ users.json missing, creating empty one")
-        with open(USERS_FILE, "w") as f:
-            json.dump({}, f)
-        return {}
-
-    with open(USERS_FILE, "r") as f:
-        return json.load(f)
-
-def save_users(users):
-    with open(USERS_FILE, "w") as f:
-        json.dump(users, f, indent=4)
+from werkzeug.security import check_password_hash, generate_password_hash
+from models import User
+from db import session
+from datetime import datetime, timedelta
 
 def validate_login(username, password):
-    users = load_users()
-    if username not in users or users[username] != password:
+    user = session.query(User).filter_by(username=username).first()
+    if not user or not check_password_hash(user.password, password):
         return False, {"error": "Invalid username or password"}, 401
     return True, {}, 200
 
 def validate_registration(username, password):
-    users = load_users()
-    if username in users:
+    existing_user = session.query(User).filter_by(username=username).first()
+    if existing_user:
         return False, {"error": "User already exists"}, 400
-    users[username] = password
-    save_users(users)
+
+    hashed_pw = generate_password_hash(password)
+    new_user = User(username=username, password=hashed_pw)
+    session.add(new_user)
+    session.commit()
     return True, {}, 201
 
 def generate_jwt(username):
-    """Create a JWT with a 2-hour expiration."""
-    now = datetime.datetime.utcnow()
     payload = {
         "sub": username,
-        "iat": now,
-        "exp": now + datetime.timedelta(hours=2)
+        "exp": datetime.utcnow() + timedelta(days=1)
     }
     token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm="HS256")
     return token
+
 
 def register_user():
     data = request.get_json() or {}
     ok, resp, code = validate_registration(data.get("username"), data.get("password"))
     if not ok:
         return resp, code
-    # on success, auto-login could generate a token here if you like
     return {"message": "User registered successfully"}, code
 
 def login_user():
-    print("🔐 Login route hit")
-    data = request.get_json()
-    print("Received data:", data)
+    data = request.get_json() or {}
     ok, resp, code = validate_login(data.get("username"), data.get("password"))
     if not ok:
         return resp, code

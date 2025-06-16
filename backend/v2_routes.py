@@ -1,20 +1,15 @@
 from flask import Blueprint, jsonify, request
 from flasgger import swag_from
-import json
 from datetime import datetime
-from utils import load_posts, validate_post_data
+from sqlalchemy.orm import joinedload
+from db import session
+from models import Post, User, Comment
 from rate_limit import limiter
-from auth import token_required
+from auth import token_required, register_user, login_user
+from utils import validate_post_data
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
-# -------------------------
-# 🔧 Utility functions
-# -------------------------
-
-def save_posts(posts):
-    with open("blog_posts.json", "w") as file:
-        json.dump(posts, file, indent=4)
 
 # -------------------------
 # 📚 Swagger schemas
@@ -82,47 +77,43 @@ post_schema = {
     }
 })
 
-@limiter.exempt # Define Stop Limiting (maybe for all GET requests)
+@limiter.exempt
 def get_posts_v2():
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
-
     sort_field = request.args.get("sort")
     direction = request.args.get("direction", "asc")
     category = request.args.get("category")
     categories = request.args.get("categories")
-
     page = int(request.args.get("page", 1))
     limit = int(request.args.get("limit", 5))
 
-    filtered = posts.copy()
+    query = session.query(Post).options(joinedload(Post.user))
 
     if category:
-        filtered = [p for p in filtered if p["category"].lower() == category.lower()]
+        query = query.filter(Post.category.ilike(category))
     elif categories:
-        cat_list = [c.strip().lower() for c in categories.split(",")]
-        filtered = [p for p in filtered if p["category"].lower() in cat_list]
+        cat_list = [c.strip() for c in categories.split(",")]
+        query = query.filter(Post.category.in_(cat_list))
 
     if sort_field:
-        reverse = direction == "desc"
-        filtered.sort(
-            key=lambda post: (
-                post.get(sort_field, "").lower()
-                if isinstance(post.get(sort_field), str)
-                else post.get(sort_field, "")
-            ),
-            reverse=reverse
-        )
+        sort_column = getattr(Post, sort_field, None)
+        if sort_column is not None:
+            query = query.order_by(sort_column.desc() if direction == "desc" else sort_column.asc())
 
-    start = (page - 1) * limit
-    end = start + limit
-    return jsonify({
-        "page": page,
-        "limit": limit,
-        "total_posts": len(filtered),
-        "posts": filtered[start:end]
-    })
+    total_posts = query.count()
+    posts = query.offset((page - 1) * limit).limit(limit).all()
+
+    posts_data = [{
+        "id": p.id,
+        "author": p.user.username,
+        "title": p.title,
+        "content": p.content,
+        "category": p.category,
+        "date": p.date.strftime("%B %d, %Y") if p.date else None,
+        "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
+        "likes": p.likes
+    } for p in posts]
+
+    return jsonify({"page": page, "limit": limit, "total_posts": total_posts, "posts": posts_data})
 
 
 # -------------------------
@@ -166,28 +157,37 @@ def get_posts_v2():
     }
 })
 @token_required
-@limiter.limit("5 per minute") # Allows productive work but prevents Spam
+@limiter.limit("5 per minute")  # Allows productive work but prevents spam
 def add_post_v2(current_user):
     data = request.get_json()
     error = validate_post_data(data)
     if error:
         return jsonify(error), 400
 
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
-    new_post = {
-        "id": max((post["id"] for post in posts), default=0) + 1,
+    user = session.query(User).filter_by(username=current_user).first()
+    if not user:
+        return jsonify({"error": "Invalid user"}), 403
+
+    new_post = Post(
+        user_id=user.id,
+        title=data["title"],
+        content=data["content"],
+        category=data["category"],
+        date=datetime.now(),
+        likes=0
+    )
+    session.add(new_post)
+    session.commit()
+
+    return jsonify({
+        "id": new_post.id,
         "author": current_user,
-        "title": data["title"],
-        "content": data["content"],
-        "category": data["category"],
-        "date": datetime.now().strftime("%B %d, %Y"),
-        "likes": 0
-    }
-    posts.append(new_post)
-    save_posts(posts)
-    return jsonify(new_post), 201
+        "title": new_post.title,
+        "content": new_post.content,
+        "category": new_post.category,
+        "date": new_post.date.strftime("%B %d, %Y"),
+        "likes": new_post.likes
+    }), 201
 
 
 @v2.route("/posts/<int:post_id>", methods=["PUT"])
@@ -250,27 +250,37 @@ def add_post_v2(current_user):
 @token_required
 @limiter.limit("5 per minute") # Allows productive work but prevents Spam
 def update_post_v2(current_user, post_id):
-    # (basic version without auth for now)
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
+    post = session.query(Post).filter_by(id=post_id).first()
+    if not post:
+        return jsonify({"error": "Post not found"}), 404
 
-    for post in posts:
-        if post['id'] == post_id:
-            new_data = request.get_json()
-            error = validate_post_data(new_data)
-            if error:
-                return jsonify(error), 400
+    if post.author != current_user:
+        return jsonify({"error": "Unauthorized"}), 403
 
-            post.update({
-                "title": new_data["title"],
-                "content": new_data["content"],
-                "category": new_data["category"],
-                "updated": datetime.now().strftime("%B %d, %Y")
-            })
-            save_posts(posts)
-            return jsonify(post), 200
-    return jsonify({"error": "Post not found"}), 404
+    data = request.get_json()
+    error = validate_post_data(data)
+    if error:
+        return jsonify(error), 400
+
+    post.title = data["title"]
+    post.content = data["content"]
+    post.category = data["category"]
+    post.updated = datetime.now()
+
+    session.commit()
+    return jsonify({
+        "message": "Post updated",
+        "post": {
+            "id": post.id,
+            "author": post.author,
+            "title": post.title,
+            "content": post.content,
+            "category": post.category,
+            "date": post.date.strftime("%B %d, %Y") if post.date else None,
+            "updated": post.updated.strftime("%B %d, %Y") if post.updated else None,
+            "likes": post.likes
+        }
+    }), 200
 
 
 @v2.route("/posts/<int:post_id>", methods=["DELETE"])
@@ -304,16 +314,16 @@ def update_post_v2(current_user, post_id):
 @token_required
 @limiter.limit("5 per minute") # Allows productive work but prevents Spam
 def delete_post_v2(current_user, post_id):
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
+    post = session.query(Post).filter_by(id=post_id).first()
+    if not post:
+        return jsonify({"error": "Post not found"}), 404
 
-    for post in posts:
-        if post["id"] == post_id:
-            posts.remove(post)
-            save_posts(posts)
-            return jsonify({"message": f"Post {post_id} deleted successfully"}), 200
-    return jsonify({"error": "Post not found"}), 404
+    if post.author != current_user:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    session.delete(post)
+    session.commit()
+    return jsonify({"message": "Post deleted"}), 200
 
 
 @v2.route("/categories", methods=["GET"])
@@ -337,33 +347,22 @@ def delete_post_v2(current_user, post_id):
 
 @limiter.exempt
 def get_categories_v2():
-    posts = load_posts()
-    if isinstance(posts, tuple):
-        return posts
-
-    categories = sorted({p["category"] for p in posts if p.get("category")})
-    return jsonify(categories)
+    categories = session.query(Post.category).distinct().all()
+    return jsonify(sorted([c[0] for c in categories if c[0]]))
 
 
 @v2.route("/posts/search", methods=["GET"])
 @swag_from({
     "tags": ["Posts"],
-    "summary": "Search posts by title and/or content",
-    "description": "Searches blog posts by matching text in the title and/or content fields.",
+    "summary": "Search posts by keyword",
+    "description": "Searches for blog posts by matching text in title, content, or author.",
     "parameters": [
         {
-            "name": "title",
+            "name": "q",
             "in": "query",
             "type": "string",
-            "required": False,
-            "description": "Text to search for in the post title"
-        },
-        {
-            "name": "content",
-            "in": "query",
-            "type": "string",
-            "required": False,
-            "description": "Text to search for in the post content"
+            "required": True,
+            "description": "Keyword to search in title, content, or author (e.g., 'AI')"
         }
     ],
     "responses": {
@@ -387,47 +386,42 @@ def get_categories_v2():
                 ]
             }
         },
-        400: {
-            "description": "Missing search parameters",
-            "examples": {
-                "application/json": {
-                    "error": "Please provide 'title' and/or 'content' as query params."
-                }
-            }
-        },
         404: {
             "description": "No matching posts found",
             "examples": {
                 "application/json": {
-                    "error": "No posts found matching your criteria."
+                    "error": "No posts matched your search"
                 }
             }
         }
     }
 })
 @limiter.limit("10 per minute")
-def search_post():
-    """Searches posts by title and/or content."""
-    posts = load_posts()
-    if isinstance(posts, tuple):
-        return posts
+def search_posts_v2():
+    query = request.args.get("q", "").strip().lower()
+    if not query:
+        return jsonify({"error": "Missing query parameter `q`"}), 400
 
-    title_query = request.args.get("title", "").lower()
-    content_query = request.args.get("content", "").lower()
-
-    if not title_query and not content_query:
-        return jsonify({"error": "Please provide 'title' and/or 'content' as query params."}), 400
-
+    posts = session.query(Post).options(joinedload(Post.user)).all()
     results = [
-        post for post in posts
-        if (title_query in post.get("title", "").lower() if title_query else True)
-        and (content_query in post.get("content", "").lower() if content_query else True)
+        {
+            "id": p.id,
+            "author": p.user.username,
+            "title": p.title,
+            "content": p.content,
+            "category": p.category,
+            "date": p.date.strftime("%B %d, %Y") if p.date else None,
+            "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
+            "likes": p.likes
+        }
+        for p in posts
+        if query in p.title.lower() or query in p.content.lower() or query in p.user.username.lower()
     ]
 
     if not results:
-        return jsonify({"error": "No posts found matching your criteria."}), 404
+        return jsonify({"error": f"No posts found matching '{query}'"}), 404
 
-    return jsonify(results), 200
+    return jsonify(results)
 
 
 @v2.route("/posts/<int:post_id>/like", methods=["POST"])
@@ -471,48 +465,45 @@ def search_post():
         }
     }
 })
-@limiter.limit("20 per minute") # Potential abuse, limiting required, as well
+@limiter.limit("20 per minute")
 def like_post_v2(post_id):
-    posts = load_posts()
-    if isinstance(posts, tuple):  # Handles file corruption, sends error response and status code
-        return posts
+    post = session.query(Post).filter_by(id=post_id).first()
+    if not post:
+        return jsonify({"error": f"Post with ID {post_id} not found"}), 404
 
-    for post in posts:
-        if post["id"] == post_id:
-            post["likes"] = post.get("likes", 0) + 1
-            save_posts(posts)
-            return jsonify({"message": f"Post {post_id} liked", "likes": post["likes"]}), 200
-
-    return jsonify({"error": f"Post with ID {post_id} not found"}), 404
-
-
-from auth import register_user, login_user
+    post.likes = post.likes + 1
+    session.commit()
+    return jsonify({"message": f"Post {post_id} liked", "likes": post.likes}), 200
 
 
 @v2.route("/posts/<int:post_id>/comments", methods=["POST"])
 def add_comment_v2(post_id):
-    posts = load_posts()
-    if isinstance(posts, tuple):
-        return posts
+    post = session.query(Post).filter_by(id=post_id).first()
+    if not post:
+        return jsonify({"error": "Post not found"}), 404
 
     data = request.get_json()
     if not data or not data.get("text"):
         return jsonify({"error": "Comment text required"}), 400
 
-    comment = {
-        "author": data.get("author", "Anonymous"),
-        "text": data["text"],
-        "date": datetime.now().strftime("%B %d, %Y")
-    }
+    comment = Comment(
+        post_id=post.id,
+        author=data.get("author", "Anonymous"),
+        text=data["text"],
+        date=datetime.now()
+    )
 
-    for post in posts:
-        if post["id"] == post_id:
-            post.setdefault("comments", []).append(comment)
-            save_posts(posts)
-            return jsonify({"message": "Comment added", "comment": comment}), 201
+    session.add(comment)
+    session.commit()
 
-    return jsonify({"error": "Post not found"}), 404
-
+    return jsonify({
+        "message": "Comment added",
+        "comment": {
+            "author": comment.author,
+            "text": comment.text,
+            "date": comment.date.strftime("%B %d, %Y")
+        }
+    }), 201
 
 
 # -------------------------

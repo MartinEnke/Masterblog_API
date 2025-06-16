@@ -127,15 +127,21 @@ function renderSinglePost(post) {
   });
 
   div.innerHTML = `
-    <h2>${post.title}</h2>
-    <p>${post.content}</p>
-    <p class="post-meta">${post.date || 'No date'} · by ${post.author || 'Unknown'}</p>
-    ${post.updated
-      ? `<p style="font-size:.9em;color:#777;margin-bottom:10px">
-          Updated: ${post.updated}
-        </p>`
-      : ''}
-  `;
+  <h2>${post.title}</h2>
+  <p>${post.content}</p>
+  <p class="post-meta">${post.date || 'No date'} · by ${post.author || 'Unknown'}</p>
+  ${post.updated
+    ? `<p style="font-size:.9em;color:#777;margin-bottom:10px">
+         Updated: ${post.updated}
+       </p>`
+    : ''}
+  <div class="comment-section" id="comments-${post.id}">
+    <h4>Comments</h4>
+    <div id="comment-list-${post.id}"></div>
+    <textarea id="comment-text-${post.id}" placeholder="Add a comment..."></textarea>
+    <button onclick="submitComment(${post.id})">Post Comment</button>
+  </div>
+`;
 
   const btnWrap = document.createElement('div');
   Object.assign(btnWrap.style, {
@@ -267,6 +273,34 @@ function likePost(id) {
     }
   })
   .catch(console.error);
+}
+
+function submitComment(postId) {
+  const base = getBaseUrl();
+  const text = document.getElementById(`comment-text-${postId}`).value.trim();
+  const author = localStorage.getItem('username') || "Anonymous";
+
+  if (!text) return alert("Please enter a comment");
+
+  fetch(`${base}/posts/${postId}/comments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ author, text })
+  })
+  .then(r => {
+    if (!r.ok) return r.json().then(e => Promise.reject(e.error));
+    return r.json();
+  })
+  .then(d => {
+    const list = document.getElementById(`comment-list-${postId}`);
+    const p = document.createElement('p');
+    p.innerHTML = `<strong>${d.comment.author}</strong>: ${d.comment.text} <span style="font-size:.8em; color:#888">(${d.comment.date})</span>`;
+    list.appendChild(p);
+    document.getElementById(`comment-text-${postId}`).value = '';
+  })
+  .catch(e => alert("Error: " + e));
 }
 
 /* ==========================================================================
