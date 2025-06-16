@@ -172,6 +172,10 @@ function renderSinglePost(post) {
   }
 
   div.appendChild(btnWrap);
+
+  // 🔁 Load comments from DB
+  loadComments(post.id);
+
   container.appendChild(div);
 }
 
@@ -191,7 +195,19 @@ function searchPosts() {
     .catch(err => console.error('Search error:', err));
 }
 
-
+function loadComments(postId) {
+  fetch(`${getBaseUrl()}/posts/${postId}/comments`)
+    .then(res => res.json())
+    .then(comments => {
+      const list = document.getElementById(`comment-list-${postId}`);
+      list.innerHTML = '';
+      comments.forEach(c => {
+        const p = document.createElement('p');
+        p.innerHTML = `<strong>${c.author}</strong>: ${c.text} <span style="font-size:.8em; color:#888">(${c.date})</span>`;
+        list.appendChild(p);
+      });
+    });
+}
 /* ==========================================================================
    POSTS: ADD / EDIT / DELETE
    ========================================================================== */

@@ -511,6 +511,23 @@ def add_comment_v2(post_id):
     }), 201
 
 
+@v2.route("/posts/<int:post_id>/comments", methods=["GET"])
+def get_comments_v2(post_id):
+    post = session.query(Post).filter_by(id=post_id).first()
+    if not post:
+        return jsonify({"error": "Post not found"}), 404
+
+    comments = session.query(Comment).filter_by(post_id=post_id).order_by(Comment.date.asc()).all()
+    return jsonify([
+        {
+            "author": c.author,
+            "text": c.text,
+            "date": c.date.strftime("%B %d, %Y")
+        }
+        for c in comments
+    ])
+
+
 # -------------------------
 # 🔐 POST /register
 # -------------------------
