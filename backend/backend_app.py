@@ -150,7 +150,12 @@ def like_post(post_id):
 @app.route("/api/v1/posts/search", methods=['GET'])
 @limiter.limit("10 per minute")
 def search_post():
-    q = request.args.get("q", "").strip().lower()
+    q = (
+            request.args.get("q") or
+            request.args.get("title") or
+            request.args.get("content") or
+            ""
+    ).strip().lower()
     if not q:
         return jsonify({"error": "Please provide a search term using '?q=your_query'"}), 400
 

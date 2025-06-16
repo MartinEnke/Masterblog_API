@@ -398,7 +398,12 @@ def get_categories_v2():
 })
 @limiter.limit("10 per minute")
 def search_posts_v2():
-    query = request.args.get("q", "").strip().lower()
+    query = (
+            request.args.get("q") or
+            request.args.get("title") or
+            request.args.get("content") or
+            ""
+    ).strip().lower()
     if not query:
         return jsonify({"error": "Missing query parameter `q`"}), 400
 

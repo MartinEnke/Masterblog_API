@@ -26,7 +26,7 @@ function checkBackendConnection() {
    UTILITIES: BASE URL (public v1 API)
    ========================================================================== */
 function getDefaultBaseUrl() {
-  return "https://the-quiet-almanac.onrender.com/api/v2";
+  return "http://127.0.0.1:5021/api/v2";
 }
 
 function getBaseUrl() {
@@ -179,11 +179,7 @@ function searchPosts() {
   const query = document.getElementById('search-input').value.trim();
   if (!query) return loadPosts();
 
-  // Send the same query as both title and content for now
-  const qs = new URLSearchParams({
-    title: query,
-    content: query
-  });
+  const qs = new URLSearchParams({ q: query });
 
   fetch(`${getBaseUrl()}/posts/search?${qs}`)
     .then(r => r.json())
@@ -308,7 +304,7 @@ function submitComment(postId) {
    ========================================================================== */
 function loadCategories() {
   const baseUrl = getBaseUrl();
-  const categoryUrl = baseUrl.replace(/\/api\/v[12]$/, '') + '/api/categories';
+  const categoryUrl = getBaseUrl() + '/categories';
   console.log("🔄 Calling loadCategories with:", categoryUrl);
 
   const dropdownIds = ['filter-category', 'add-category', 'edit-category'];
@@ -334,10 +330,8 @@ function loadCategories() {
       return response.json();
     })
     .then(fetched => {
-      console.log("📦 Categories fetched from API:", fetched);
-      // 👇 Insert hardcoded test here
-      categories = ["Test1", "Test2", "Another"];
-      console.log("📦 Categories fetched from API (overridden for test):", categories);
+  console.log("📦 Categories fetched from API:", fetched);
+  categories = fetched;
 
       if (!Array.isArray(categories)) {
         console.error("❌ Categories response is not an array:", categories);
