@@ -26,10 +26,7 @@ function checkBackendConnection() {
    UTILITIES: BASE URL (public v1 API)
    ========================================================================== */
 function getDefaultBaseUrl() {
-  const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
-  return isLocal
-    ? "http://127.0.0.1:5000/api/v1"
-    : "https://the-quiet-almanac.onrender.com/api/v1";
+  return "https://the-quiet-almanac.onrender.com/api/v2";
 }
 
 function getBaseUrl() {
