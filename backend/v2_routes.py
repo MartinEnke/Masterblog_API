@@ -312,18 +312,18 @@ def update_post_v2(current_user, post_id):
 })
 
 @token_required
-@limiter.limit("5 per minute") # Allows productive work but prevents Spam
 def delete_post_v2(current_user, post_id):
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return jsonify({"error": "Post not found"}), 404
 
-    if post.author != current_user:
+    # 🛡️ Allow if user is author OR admin
+    if post.user_id != current_user.id and not current_user.is_admin:
         return jsonify({"error": "Unauthorized"}), 403
 
     session.delete(post)
     session.commit()
-    return jsonify({"message": "Post deleted"}), 200
+    return jsonify({"message": "Post deleted"})
 
 
 @v2.route("/categories", methods=["GET"])
@@ -512,6 +512,7 @@ def add_comment_v2(post_id):
 
 
 @v2.route("/posts/<int:post_id>/comments", methods=["GET"])
+@limiter.exempt
 def get_comments_v2(post_id):
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
@@ -526,6 +527,21 @@ def get_comments_v2(post_id):
         }
         for c in comments
     ])
+
+
+@v2.route("/posts/<int:post_id>/comments/<int:comment_id>", methods=["DELETE"])
+@token_required
+def delete_comment_v2(current_user, post_id, comment_id):
+    comment = session.query(Comment).filter_by(id=comment_id, post_id=post_id).first()
+    if not comment:
+        return jsonify({"error": "Comment not found"}), 404
+
+    if comment.author != current_user.username and not current_user.is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    session.delete(comment)
+    session.commit()
+    return jsonify({"message": "Comment deleted"})
 
 
 # -------------------------
@@ -631,6 +647,15 @@ def register_v2():
 })
 def login_v2():
     return login_user()
+
+
+@v2.route("/me", methods=["GET"])
+@token_required
+def get_current_user(current_user):
+    return jsonify({
+        "username": current_user.username,
+        "is_admin": current_user.is_admin
+    })
 
 
 @v2.route("/secret", methods=["GET"])

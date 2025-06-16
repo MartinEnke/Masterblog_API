@@ -388,26 +388,50 @@ function submitLogin() {
   const base = getBaseUrl().split('/api/')[0];
   const u = document.getElementById('login-username').value;
   const p = document.getElementById('login-password').value;
+
   fetch(`${base}/api/v1/login`, {
     method: 'POST',
-    headers: { 'Content-Type':'application/json' },
-    body: JSON.stringify({ username:u, password:p })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: u, password: p })
   })
   .then(r => r.json())
-  .then(d => {
-    if (d.token) {
-      saveToken(d.token);
-      localStorage.setItem('username', u);
-      updateAuthButton();
-      updateUserInfo();
-      closeLoginModal();
-      loadPosts();
-    } else {
-      alert('Login failed: '+(d.error||''));
+  .then(async d => {
+    if (!d.token) {
+      alert('Login failed: ' + (d.error || ''));
+      return;
     }
+
+    saveToken(d.token);
+    localStorage.setItem('username', u);
+
+    // ✅ Try to fetch admin info before proceeding
+    try {
+      const res = await fetch(`${base}/api/v1/me`, {
+        headers: { 'Authorization': `Bearer ${d.token}` }
+      });
+
+      if (res.ok) {
+        const user = await res.json();
+        if (user?.is_admin) {
+          localStorage.setItem('isAdmin', 'true');
+        } else {
+          localStorage.removeItem('isAdmin');
+        }
+      } else {
+        console.warn("Warning: Failed to fetch /me. Status:", res.status);
+      }
+    } catch (err) {
+      console.warn("Warning: Error fetching /me:", err);
+    }
+
+    updateAuthButton();
+    updateUserInfo();
+    closeLoginModal();
+    loadPosts();
   })
   .catch(() => alert('Login request failed'));
 }
+
 
 function submitSignup() {
   const base = getBaseUrl().split('/api/')[0];
@@ -443,13 +467,22 @@ function updateAuthButton() {
   document.getElementById('auth-button').textContent =
     getToken() ? 'Logout' : 'Login';
 }
+
+function clearToken() {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('username');
+  localStorage.removeItem('isAdmin');
+}
+
 function handleAuthClick() {
   if (getToken()) {
-    clearToken();
+    clearToken();                // ✅ clears auth, username, admin
     updateAuthButton();
     updateUserInfo();
     loadPosts();
-  } else openLoginModal();
+  } else {
+    openLoginModal();           // Show login modal if not logged in
+  }
 }
 function updateUserInfo() {
   const u = localStorage.getItem('username');
