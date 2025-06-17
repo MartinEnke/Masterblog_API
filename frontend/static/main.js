@@ -7,6 +7,10 @@ const API_URL_KEY = 'apiBaseUrl';
 let categories = [];
 let postToEditId = null;
 
+function getCurrentLanguage() {
+  return localStorage.getItem("lang") || "en";
+}
+
 function checkBackendConnection() {
   fetch(`${getBaseUrl()}/status`)
     .then(res => {
@@ -20,6 +24,34 @@ function checkBackendConnection() {
       console.error("❌ Backend not reachable:", err);
       alert("Could not reach the backend. Check API base URL.");
     });
+}
+
+/* ==========================================================================
+   UI TRANSLATIONS
+   ========================================================================== */
+function applyUITranslations() {
+  const lang = getCurrentLanguage();
+  const strings = UI_TRANSLATIONS[lang];
+
+  // Text content
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (strings[key]) el.textContent = strings[key];
+  });
+
+  // Placeholders (e.g. for input fields)
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (strings[key]) el.placeholder = strings[key];
+  });
+
+  // Optional: welcome text
+  const username = localStorage.getItem("username");
+  if (username) {
+    document.getElementById("user-info").textContent = `${strings.welcome}, ${username}!`;
+  } else {
+    document.getElementById("user-info").textContent = "";
+  }
 }
 
 /* ==========================================================================
@@ -74,6 +106,20 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('api-base-url')
     .addEventListener('change', storeBaseUrl);
 
+  // 🌐 Apply UI translations on load
+  applyUITranslations();
+
+  // 🌐 Set up language dropdown
+  const langSelect = document.getElementById("lang-select");
+  if (langSelect) {
+    langSelect.value = getCurrentLanguage();
+    langSelect.addEventListener("change", e => {
+      localStorage.setItem("lang", e.target.value);
+      applyUITranslations();  // ✅ Update UI strings
+      loadPosts();            // ✅ Load posts in new language
+    });
+  }
+
   // Initialize core app behavior
   loadCategories();
   loadPosts();
@@ -95,10 +141,11 @@ function loadPosts() {
   console.log("Calling loadPosts with base URL:", getBaseUrl());
   const base = getBaseUrl();
   const qs = new URLSearchParams({
-    category: document.getElementById('filter-category').value,
-    sort:     document.getElementById('sort-field').value,
-    direction: document.getElementById('sort-direction').value
-  });
+  category: document.getElementById('filter-category').value,
+  sort: document.getElementById('sort-field').value,
+  direction: document.getElementById('sort-direction').value,
+  lang: getCurrentLanguage()
+});
 
   fetch(`${base}/posts?${qs}`)
     .then(r => r.json())
@@ -188,7 +235,10 @@ function searchPosts() {
   const query = document.getElementById('search-input').value.trim();
   if (!query) return loadPosts();
 
-  const qs = new URLSearchParams({ q: query });
+  const qs = new URLSearchParams({
+  q: query,
+  lang: getCurrentLanguage()
+});
 
   fetch(`${getBaseUrl()}/posts/search?${qs}`)
     .then(r => r.json())

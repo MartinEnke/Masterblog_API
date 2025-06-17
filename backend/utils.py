@@ -93,7 +93,3 @@ def like_post_db(post_id):
     session.commit()
     return {"message": f"Post {post_id} liked", "likes": post.likes}, 200
 
-
-def translate_post(title, content, lang):
-    # Replace this with real API call to DeepL or OpenAI later
-    return f"[{lang.upper()}] {title}", f"[{lang.upper()}] {content}"

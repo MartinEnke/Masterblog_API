@@ -15,39 +15,48 @@
   <main class="container">
     <!-- 🔧 Top Bar -->
     <section class="top-bar">
-       <input
-      type="text"
-      id="api-base-url"
-      class="styled-input"
-      placeholder="https://your‐host:port/api/v2"
-      value=""
-     >
-      <span id="load-posts-btn" class="text-button large">Load Posts</span>
+      <input
+        type="text"
+        id="api-base-url"
+        class="styled-input"
+        placeholder="https://your‐host:port/api/v2"
+        value=""
+      >
+      <span id="load-posts-btn" class="text-button large" data-i18n="loadPosts" onclick="loadPosts()">Load Posts</span>
+
+      <select id="lang-select">
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+      </select>
       <div class="top-bar-right">
-        <div id="user-info" class="user-info-pill">Welcome!</div>
-        <span class="text-button large" id="auth-button" onclick="handleAuthClick()">Login</span>
-        <span class="text-button large" onclick="openSignupModal()">Signup</span>
+        <div id="user-info" class="user-info-pill"></div>
+        <span class="text-button large" id="auth-button" data-i18n="login" onclick="handleAuthClick()">Login</span>
+        <span class="text-button large" data-i18n="signup" onclick="openSignupModal()">Signup</span>
       </div>
     </section>
 
     <!-- 🧩 Filters -->
     <section class="filter-bar">
-      <select id="filter-category"><option value="">All Categories</option></select>
-      <select id="sort-field">
-        <option value="">No Sorting</option>
-        <option value="author">Author</option>
-        <option value="title">Title</option>
-        <option value="likes">Likes</option>
-        <option value="date">Date</option>
-        <option value="updated">Last Updated</option>
-      </select>
-      <select id="sort-direction">
-        <option value="asc">Ascending</option>
-        <option value="desc">Descending</option>
-      </select>
-      <span class="text-button" onclick="loadPosts()">Apply Filters</span>
-      <span class="text-button" onclick="openAddModal()">Add Post</span>
-      <input type="text" id="search-input" placeholder="Search author, title or content...">
+      <select id="filter-category" data-i18n-option>
+  <option value="">All Categories</option>
+</select>
+      <select id="sort-field" data-i18n-option>
+  <option value="">noSorting</option>
+  <option value="author" data-i18n-option="sortAuthor">Author</option>
+  <option value="title" data-i18n-option="sortTitle">Title</option>
+  <option value="likes" data-i18n-option="sortLikes">Likes</option>
+  <option value="date" data-i18n-option="sortDate">Date</option>
+  <option value="updated" data-i18n-option="sortUpdated">Last Updated</option>
+</select>
+      <select id="sort-direction" data-i18n-option>
+  <option value="asc" data-i18n-option="ascending">Ascending</option>
+  <option value="desc" data-i18n-option="descending">Descending</option>
+</select>
+      <span class="text-button" data-i18n="applyFilters" onclick="loadPosts()">Apply Filters</span>
+      <span class="text-button" data-i18n="addPost" onclick="openAddModal()">Add Post</span>
+      <input type="text" id="search-input" placeholder="Search author, title or content..." data-i18n-placeholder="searchPlaceholder">
     </section>
 
     <!-- 📬 Posts Container -->
@@ -57,90 +66,91 @@
   <!-- 🔧 Modals -->
   <div id="update-modal" class="modal hidden">
     <div class="modal-content">
-      <h2>✏️ Edit Post</h2>
+      <h2 data-i18n="editPost">✏️ Edit Post</h2>
       <input type="text" id="edit-title" placeholder="Title">
       <textarea id="edit-content" placeholder="Content"></textarea>
       <select id="edit-category"></select>
       <div class="modal-buttons">
-        <span class="text-button" onclick="submitUpdate()">Save</span>
-        <span class="text-button" onclick="closeModal()">Cancel</span>
+        <span class="text-button" data-i18n="save" onclick="submitUpdate()">Save</span>
+        <span class="text-button" data-i18n="cancel" onclick="closeModal()">Cancel</span>
       </div>
     </div>
   </div>
 
   <div id="add-modal" class="modal hidden">
     <div class="modal-content">
-      <h2>📝 Add Post</h2>
+      <h2 data-i18n="addPost">📝 Add Post</h2>
       <input type="text" id="add-title" placeholder="Title">
       <textarea id="add-content" placeholder="Content"></textarea>
       <select id="add-category"></select>
       <div class="modal-buttons">
-        <span class="text-button" onclick="submitAdd()">Save</span>
-        <span class="text-button" onclick="closeAddModal()">Cancel</span>
+        <span class="text-button" data-i18n="save" onclick="submitAdd()">Save</span>
+        <span class="text-button" data-i18n="cancel" onclick="closeAddModal()">Cancel</span>
       </div>
     </div>
   </div>
 
   <div id="login-modal" class="modal hidden">
     <div class="modal-content">
-      <h2>🔐 Login</h2>
+      <h2 data-i18n="login">🔐 Login</h2>
       <input type="text" id="login-username" placeholder="Username">
       <input type="password" id="login-password" placeholder="Password">
       <div class="modal-buttons">
-        <span class="text-button" onclick="submitLogin()">Login</span>
-        <span class="text-button" onclick="closeLoginModal()">Cancel</span>
+        <span class="text-button" data-i18n="login" onclick="submitLogin()">Login</span>
+        <span class="text-button" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
       </div>
     </div>
   </div>
 
   <div id="logout-modal" class="modal hidden">
     <div class="modal-content">
-      <h2>🚪 Logout</h2>
-      <p>Are you sure you want to log out?</p>
+      <h2 data-i18n="logout">🚪 Logout</h2>
+      <p data-i18n="logoutConfirm">Are you sure you want to log out?</p>
       <div class="modal-buttons">
-        <button onclick="confirmLogout()">Yes, Logout</button>
-        <button onclick="closeLogoutModal()">Cancel</button>
+        <button data-i18n="yes" onclick="confirmLogout()">Yes, Logout</button>
+        <button data-i18n="cancel" onclick="closeLogoutModal()">Cancel</button>
       </div>
     </div>
   </div>
 
   <div id="signup-modal" class="modal hidden">
     <div class="modal-content">
-      <h2>📝 Signup</h2>
+      <h2 data-i18n="signup">📝 Signup</h2>
       <input type="text" id="signup-username" placeholder="Username">
       <input type="password" id="signup-password" placeholder="Password">
       <div class="modal-buttons">
-        <button onclick="submitSignup()">Register</button>
-        <button onclick="closeSignupModal()">Cancel</button>
+        <button data-i18n="register" onclick="submitSignup()">Register</button>
+        <button data-i18n="cancel" onclick="closeSignupModal()">Cancel</button>
       </div>
     </div>
   </div>
 
   <div id="add-warning-modal" class="modal hidden">
     <div class="modal-content">
-      <h2>⚠️ Login Required</h2>
-      <p>You need to be logged in to add a post.</p>
+      <h2 data-i18n="loginRequired">⚠️ Login Required</h2>
+      <p data-i18n="loginToAdd">You need to be logged in to add a post.</p>
       <div class="modal-buttons">
-        <span class="text-button" onclick="submitLogin()">Login</span>
-        <span class="text-button" onclick="closeLoginModal()">Cancel</span>
+        <span class="text-button" data-i18n="login" onclick="submitLogin()">Login</span>
+        <span class="text-button" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
       </div>
     </div>
   </div>
 
   <div id="alert-modal" class="modal hidden">
     <div class="modal-content">
-      <p id="alert-message">You must be logged in to add a post.</p>
+      <p id="alert-message" data-i18n="mustBeLoggedIn">You must be logged in to add a post.</p>
       <div class="modal-buttons">
-        <span class="text-button" onclick="handleAlertLogin()">Login</span>
-        <span class="text-button" onclick="closeAlertModal()">Cancel</span>
+        <span class="text-button" data-i18n="login" onclick="handleAlertLogin()">Login</span>
+        <span class="text-button" data-i18n="cancel" onclick="closeAlertModal()">Cancel</span>
       </div>
     </div>
   </div>
 
-
   <footer>
     &copy; The Quiet Almanac {{ 2025 }}
   </footer>
-<script src="/static/main.js" defer></script>
+
+  <script src="/static/i18n.js"></script>
+  <script src="/static/main.js" defer></script>
 </body>
 </html>

@@ -6,7 +6,8 @@ from db import session
 from models import Post, User, Comment
 from rate_limit import limiter
 from auth import token_required, register_user, login_user, TOKENS
-from utils import validate_post_data
+from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data
+from translations_db import translate_post
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -79,6 +80,7 @@ post_schema = {
 
 @limiter.exempt
 def get_posts_v2():
+    lang = request.args.get("lang", "en")
     sort_field = request.args.get("sort")
     direction = request.args.get("direction", "asc")
     category = request.args.get("category")
@@ -102,19 +104,32 @@ def get_posts_v2():
     total_posts = query.count()
     posts = query.offset((page - 1) * limit).limit(limit).all()
 
-    posts_data = [{
-        "id": p.id,
-        "author": p.user.username,
-        "title": p.title,
-        "content": p.content,
-        "category": p.category,
-        "date": p.date.strftime("%B %d, %Y") if p.date else None,
-        "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
-        "likes": p.likes
-    } for p in posts]
+    posts_data = []
+    for p in posts:
+        title = p.title
+        content = p.content
+
+        if lang != "en":
+            cached = get_translation(p.id, lang)
+            if cached:
+                title = cached.title
+                content = cached.content
+            else:
+                title, content = translate_post(p.title, p.content, lang)
+                save_translation(p.id, lang, title, content)
+
+        posts_data.append({
+            "id": p.id,
+            "author": p.user.username,
+            "title": title,
+            "content": content,
+            "category": p.category,
+            "date": p.date.strftime("%B %d, %Y") if p.date else None,
+            "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
+            "likes": p.likes
+        })
 
     return jsonify({"page": page, "limit": limit, "total_posts": total_posts, "posts": posts_data})
-
 
 # -------------------------
 # 📝 POST /posts

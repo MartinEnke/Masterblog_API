@@ -1,9 +1,8 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 from db import Base
-
 
 
 class User(Base):
@@ -46,3 +45,6 @@ class Comment(Base):
     date = Column(DateTime, default=datetime.utcnow)
 
     post = relationship("Post", back_populates="comments")
+
+
+

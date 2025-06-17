@@ -29,3 +29,10 @@ def save_translation(post_id, lang, title, content):
         new = PostTranslation(post_id=post_id, lang=lang, title=title, content=content)
         session.add(new)
     session.commit()
+
+def translate_text(text, lang):
+    # 🔁 Replace with OpenAI or DeepL later
+    return f"[{lang.upper()}] {text}"
+
+def translate_post(title, content, lang):
+    return translate_text(title, lang), translate_text(content, lang)
