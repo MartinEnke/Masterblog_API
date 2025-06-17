@@ -249,18 +249,19 @@ const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
 // Show Edit/Delete if author OR admin
 if (post.author === currentUser || isAdmin) {
-  if (post.author === currentUser) {
-    const editBtn = document.createElement('button');
-    editBtn.textContent = '✏️ Edit';
-    editBtn.onclick = () => openEditModal(post);
-    btnWrap.appendChild(editBtn);
-  }
-
-  const delBtn = document.createElement('button');
-  delBtn.textContent = '🗑️ Delete';
-  delBtn.onclick = () => deletePost(post.id);
-  btnWrap.appendChild(delBtn);
+  const editBtn = document.createElement('button');
+  editBtn.setAttribute("data-i18n", "editPost");
+  editBtn.onclick = () => openEditModal(post);
+  editBtn.textContent = UI_TRANSLATIONS[getCurrentLanguage()].editPost || 'Edit';
+  btnWrap.appendChild(editBtn);
 }
+
+const delBtn = document.createElement('button');
+delBtn.setAttribute("data-i18n", "deletePost");
+delBtn.onclick = () => deletePost(post.id);
+delBtn.textContent = UI_TRANSLATIONS[getCurrentLanguage()].deletePost || 'Delete';
+btnWrap.appendChild(delBtn);
+
 
   div.appendChild(btnWrap);
 
