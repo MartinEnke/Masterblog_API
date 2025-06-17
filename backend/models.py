@@ -9,7 +9,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True)
+    username = Column(String, unique=True, nullable=False)
     password = Column(String)
     is_admin = Column(Boolean, default=False)
 
@@ -28,6 +28,7 @@ class Post(Base):
     date = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime)
     likes = Column(Integer, default=0)
+    original_lang = Column(String(10), default="en")
 
     user = relationship("User", back_populates="posts")
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")

@@ -7,8 +7,9 @@ from models import Post, User, Comment
 from rate_limit import limiter
 from auth import token_required, register_user, login_user, TOKENS
 from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data
-from translations_db import translate_post
+from translations_db import get_translation, save_translation, translate_post
 from babel.dates import format_date
+from langdetect import detect
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -81,88 +82,115 @@ post_schema = {
 
 @limiter.exempt
 def get_posts_v2():
-    lang = request.args.get("lang", "en")
-    sort_field = request.args.get("sort")
-    direction = request.args.get("direction", "asc")
-    category = request.args.get("category")
-    categories = request.args.get("categories")
-    page = int(request.args.get("page", 1))
-    limit = int(request.args.get("limit", 5))
+    try:
+        lang = request.args.get("lang", "en")
+        sort_field = request.args.get("sort")
+        direction = request.args.get("direction", "asc")
+        category = request.args.get("category")
+        categories = request.args.get("categories")
+        page = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 50))
 
-    locale_map = {
-        "en": "en_US",
-        "de": "de_DE",
-        "fr": "fr_FR",
-        "es": "es_ES"
-    }
-    locale = locale_map.get(lang, "en_US")
+        query = session.query(Post).options(joinedload(Post.user))
 
-    query = session.query(Post).options(joinedload(Post.user))
+        if category:
+            query = query.filter(Post.category.ilike(category))
+        elif categories:
+            cat_list = [c.strip() for c in categories.split(",")]
+            query = query.filter(Post.category.in_(cat_list))
 
-    # 🔎 Filter by category or multiple categories
-    if category:
-        query = query.filter(Post.category.ilike(category))
-    elif categories:
-        cat_list = [c.strip() for c in categories.split(",")]
-        query = query.filter(Post.category.in_(cat_list))
-
-    # 🔃 Sorting (including related User.username)
-    if sort_field:
-        if sort_field == "author":
-            query = query.join(Post.user).order_by(
-                User.username.desc() if direction == "desc" else User.username.asc()
-            )
-        else:
-            sort_column = getattr(Post, sort_field, None)
-            if sort_column is not None:
-                query = query.order_by(
-                    sort_column.desc() if direction == "desc" else sort_column.asc()
+        if sort_field:
+            if sort_field == "author":
+                query = query.join(Post.user).order_by(
+                    User.username.desc() if direction == "desc" else User.username.asc()
                 )
+            else:
+                sort_column = getattr(Post, sort_field, None)
+                if sort_column is not None:
+                    query = query.order_by(
+                        sort_column.desc() if direction == "desc" else sort_column.asc()
+                    )
 
-    # 📦 Pagination
-    total_posts = query.count()
-    posts = query.offset((page - 1) * limit).limit(limit).all()
+        total_posts = query.count()
+        posts = query.offset((page - 1) * limit).limit(limit).all()
 
-    # 🌍 Translation handling with fallback
-    posts_data = []
-    for p in posts:
-        title = p.title
-        content = p.content
+        posts_data = []
+        for p in posts:
+            title = p.title
+            content = p.content
 
-        if lang != "en":
-            try:
+            # ✅ NEW: Try translation only if the requested lang differs from the original
+            if lang != p.original_lang:
                 cached = get_translation(p.id, lang)
                 if cached:
                     title = cached.title
                     content = cached.content
+                    translated_flag = True
                 else:
-                    title, content = translate_post(p.title, p.content, lang)
-                    if title and content:
-                        save_translation(p.id, lang, title, content)
-                    else:
-                        title, content = p.title, p.content  # fallback
-            except Exception as e:
-                print(f"⚠️ Translation failed for post {p.id}: {e}")
-                title, content = p.title, p.content
+                    title = p.title
+                    content = p.content
+                    translated_flag = False
+            else:
+                title = p.title
+                content = p.content
+                translated_flag = True
 
-        posts_data.append({
-            "id": p.id,
-            "author": p.user.username,
-            "title": title,
-            "content": content,
-            "category": p.category,
-            "date": format_date(p.date, format='long', locale=locale) if p.date else None,
-            "updated": format_date(p.updated, format='long', locale=locale) if p.updated else None,
-            "likes": p.likes
+            posts_data.append({
+                "id": p.id,
+                "author": p.user.username,
+                "title": title,
+                "content": content,
+                "category": p.category,
+                "date": p.date.strftime("%B %d, %Y") if p.date else None,
+                "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
+                "likes": p.likes,
+                "translated": translated_flag
+            })
+
+        return jsonify({
+            "page": page,
+            "limit": limit,
+            "total_posts": total_posts,
+            "posts": posts_data
         })
 
-    return jsonify({
-        "page": page,
-        "limit": limit,
-        "total_posts": total_posts,
-        "posts": posts_data
-    })
+    except Exception as e:
+        import traceback
+        print("🔥 ERROR IN /posts:", e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
+
+
+@v2.route("/posts/<int:post_id>/translate")
+def translate_individual_post(post_id):
+    lang = request.args.get("lang", "en")
+    post = session.query(Post).filter_by(id=post_id).first()
+
+    if not post:
+        return jsonify({"error": "Post not found"}), 404
+
+    translation = get_translation(post_id, lang)
+    if translation:
+        return jsonify({
+            "title": translation.title,
+            "content": translation.content,
+            "lang": lang
+        })
+
+    # 🧠 AI translation logic
+    from translations_db import translate_post, save_translation
+    print(f"🔁 Translating post {post_id} to {lang} using AI")
+
+    new_title, new_content = translate_post(post.title, post.content, lang)
+    save_translation(post_id, lang, new_title, new_content)
+    session.commit()
+
+    return jsonify({
+        "title": new_title,
+        "content": new_content,
+        "lang": lang
+    })
 # -------------------------
 # 📝 POST /posts
 # -------------------------
@@ -206,41 +234,48 @@ def get_posts_v2():
 @token_required
 @limiter.limit("5 per minute")
 def add_post_v2(current_user):
+    data = request.get_json()
+    title = data.get("title", "")
+    content = data.get("content", "")
+    category = data.get("category", "")
+    ui_lang = data.get("lang", "en")  # UI language sent by frontend
+    date = datetime.now()
+
+    # 1. Detect the actual language of the submitted text
     try:
-        data = request.get_json()
-        error = validate_post_data(data)
-        if error:
-            return jsonify(error), 400
+        original_lang = detect(f"{title} {content}")
+    except Exception:
+        original_lang = "und"
 
-        # 👇 safer and more explicit
-        user = session.query(User).filter_by(username=current_user.username).first()
-        if not user:
-            return jsonify({"error": "Invalid user"}), 403
+    # 2. Save the original post
+    post = Post(
+        title=title,
+        content=content,
+        category=category,
+        user_id=current_user.id,
+        date=date,
+        original_lang=original_lang
+    )
+    session.add(post)
+    session.commit()
 
-        new_post = Post(
-            user_id=user.id,
-            title=data["title"],
-            content=data["content"],
-            category=data["category"],
-            date=datetime.now(),
-            likes=0
-        )
-        session.add(new_post)
-        session.commit()
+    # 3. Auto-translate to English if needed
+    if original_lang != "en":
+        print(f"🌍 Original post language: {original_lang}, translating to English...")
+        title_en, content_en = translate_post(title, content, "en")
+        save_translation(post.id, "en", title_en, content_en)
 
+    # 4. Warn the user if their UI language doesn't match detected language
+    if ui_lang != original_lang:
+        warning = f"⚠️ The text appears to be in {original_lang}, not {ui_lang}."
         return jsonify({
-            "id": new_post.id,
-            "author": current_user.username,
-            "title": new_post.title,
-            "content": new_post.content,
-            "category": new_post.category,
-            "date": new_post.date.strftime("%B %d, %Y"),
-            "likes": new_post.likes
+            "message": "Post added",
+            "post_id": post.id,
+            "warning": warning
         }), 201
 
-    except Exception as e:
-        print("❌ ERROR in add_post_v2:", e)
-        return jsonify({"error": "Internal server error"}), 500
+    return jsonify({"message": "Post added successfully", "post_id": post.id}), 201
+
 
 
 @v2.route("/posts/<int:post_id>", methods=["PUT"])
@@ -567,6 +602,7 @@ def add_comment_v2(user, post_id):
 
 
 @v2.route("/posts/<int:post_id>/comments", methods=["GET"])
+@limiter.exempt
 def get_comments_v2(post_id):
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
@@ -578,7 +614,7 @@ def get_comments_v2(post_id):
             "id": c.id,
             "author": c.author,
             "text": c.text,
-            "date": c.date.strftime("%B %d, %Y")
+            "date": c.date.strftime("%B %d, %Y") if c.date else ""  # ✅ Safe fallback
         }
         for c in comments
     ])

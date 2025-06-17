@@ -174,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
    POSTS: LOAD / RENDER / SEARCH
    ========================================================================== */
 function loadPosts() {
+  console.log("🌍 Language set to:", getCurrentLanguage());
   console.log("Calling loadPosts with base URL:", getBaseUrl());
   const base = getBaseUrl();
   const qs = new URLSearchParams({
@@ -182,8 +183,11 @@ function loadPosts() {
     direction: document.getElementById('sort-direction').value,
     lang: getCurrentLanguage()
   });
+  console.log("🌐 Final posts URL:", `${base}/posts?${qs.toString()}`);
 
-  fetch(`${base}/posts?${qs}`)
+  const url = new URL(`${base}/posts`);
+url.search = qs.toString();
+fetch(url.toString())
     .then(r => r.json())
     .then(data => {
       const posts = data.posts || data;
@@ -213,20 +217,20 @@ function renderSinglePost(post) {
   });
 
   div.innerHTML = `
-  <h2>${post.title}</h2>
-  <p>${post.content}</p>
+  <h2 id="post-title-${post.id}">${post.title}</h2>
+  <p id="post-content-${post.id}">${post.content}</p>
   <p class="post-meta" data-i18n-by="${post.author}">${post.date || 'No date'} · <span data-i18n="by">by</span> ${post.author || 'Unknown'}</p>
   ${post.updated
-  ? `<p style="font-size:.9em;color:#777;margin-bottom:10px" data-i18n-updated="${post.updated}">
-       <span data-i18n="updatedLabel">Updated:</span> ${post.updated}
-     </p>`
-  : ''}
+    ? `<p style="font-size:.9em;color:#777;margin-bottom:10px" data-i18n-updated="${post.updated}">
+         <span data-i18n="updatedLabel">Updated:</span> ${post.updated}
+       </p>`
+    : ''}
   <div class="comment-section" id="comments-${post.id}">
-  <h4 data-i18n="comments">Comments</h4>
-  <div id="comment-list-${post.id}"></div>
-  <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..."></textarea>
-  <button data-i18n="postComment" onclick="submitComment(${post.id})">Post Comment</button>
-</div>
+    <h4 data-i18n="comments">Comments</h4>
+    <div id="comment-list-${post.id}"></div>
+    <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..."></textarea>
+    <button data-i18n="postComment" onclick="submitComment(${post.id})">Post Comment</button>
+  </div>
 `;
 
   const btnWrap = document.createElement('div');
@@ -269,6 +273,21 @@ btnWrap.appendChild(delBtn);
   loadComments(post.id);
 
   container.appendChild(div);
+
+  // 🌀 If the post is not translated yet, fetch it in background
+  if (post.translated === false && getCurrentLanguage() !== "en") {
+  console.log(`🔁 Translating post ${post.id} to ${getCurrentLanguage()}`);
+  const base = getBaseUrl();
+  const lang = getCurrentLanguage();
+
+  fetch(`${base}/posts/${post.id}/translate?lang=${lang}`)
+    .then(r => r.json())
+    .then(translated => {
+  updatePostDom(post.id, translated.title, translated.content);
+  post.translated = true;  // ✅ Mark as translated for session
+})
+    .catch(err => console.warn("Translation failed for post", post.id, err));
+}
 }
 
 function searchPosts() {
@@ -316,6 +335,20 @@ function loadComments(postId) {
       });
     });
 }
+
+/* ==========================================================================
+   UTILS
+   ========================================================================== */
+
+function updatePostDom(postId, newTitle, newContent) {
+  const titleEl = document.getElementById(`post-title-${postId}`);
+  const contentEl = document.getElementById(`post-content-${postId}`);
+
+  if (titleEl) titleEl.textContent = newTitle;
+  if (contentEl) contentEl.textContent = newContent;
+}
+
+
 /* ==========================================================================
    POSTS: ADD / EDIT / DELETE
    ========================================================================== */
