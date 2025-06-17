@@ -33,26 +33,62 @@ function applyUITranslations() {
   const lang = getCurrentLanguage();
   const strings = UI_TRANSLATIONS[lang];
 
-  // Text content
+  // Text content (e.g. spans, buttons)
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
     if (strings[key]) el.textContent = strings[key];
   });
 
-  // Placeholders (e.g. for input fields)
+  // Placeholder for inputs
   document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
     const key = el.getAttribute("data-i18n-placeholder");
     if (strings[key]) el.placeholder = strings[key];
   });
 
-  // Optional: welcome text
+  // Option labels in <select> dropdowns
+  document.querySelectorAll("select[data-i18n-option]").forEach(select => {
+    select.querySelectorAll("option").forEach(option => {
+      const key = option.getAttribute("data-i18n-option");
+      if (key && strings[key]) option.textContent = strings[key];
+    });
+  });
+
+  // Manually update filter-category first option if empty value
+  const catSelect = document.getElementById("filter-category");
+  if (catSelect && catSelect.options.length > 0) {
+    const first = catSelect.options[0];
+    if (first.value === "") {
+      first.textContent = strings.allCategories || "All Categories";
+    }
+  }
+
+  // Manually update sort-field "no sorting" option
+  const sortFieldSelect = document.getElementById("sort-field");
+  if (sortFieldSelect && sortFieldSelect.options.length > 0) {
+    const first = sortFieldSelect.options[0];
+    if (first.value === "") {
+      first.textContent = strings.noSorting || "No Sorting";
+    }
+  }
+
+  // Translate existing comment placeholders and buttons
+  document.querySelectorAll("textarea[id^='comment-text-']").forEach(textarea => {
+    textarea.placeholder = strings.commentPlaceholder || "Add a comment...";
+  });
+  document.querySelectorAll(".comment-section button").forEach(btn => {
+    btn.textContent = strings.postComment || "Post Comment";
+  });
+
+  // Welcome message
   const username = localStorage.getItem("username");
-  if (username) {
-    document.getElementById("user-info").textContent = `${strings.welcome}, ${username}!`;
-  } else {
-    document.getElementById("user-info").textContent = "";
+  const userInfo = document.getElementById("user-info");
+  if (username && userInfo) {
+    userInfo.textContent = `${strings.welcome}, ${username}!`;
+  } else if (userInfo) {
+    userInfo.textContent = "";
   }
 }
+
 
 /* ==========================================================================
    UTILITIES: BASE URL (public v1 API)
