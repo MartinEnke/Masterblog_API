@@ -90,33 +90,51 @@ def get_posts_v2():
 
     query = session.query(Post).options(joinedload(Post.user))
 
+    # 🔎 Filter by category or multiple categories
     if category:
         query = query.filter(Post.category.ilike(category))
     elif categories:
         cat_list = [c.strip() for c in categories.split(",")]
         query = query.filter(Post.category.in_(cat_list))
 
+    # 🔃 Sorting (including related User.username)
     if sort_field:
-        sort_column = getattr(Post, sort_field, None)
-        if sort_column is not None:
-            query = query.order_by(sort_column.desc() if direction == "desc" else sort_column.asc())
+        if sort_field == "author":
+            query = query.join(Post.user).order_by(
+                User.username.desc() if direction == "desc" else User.username.asc()
+            )
+        else:
+            sort_column = getattr(Post, sort_field, None)
+            if sort_column is not None:
+                query = query.order_by(
+                    sort_column.desc() if direction == "desc" else sort_column.asc()
+                )
 
+    # 📦 Pagination
     total_posts = query.count()
     posts = query.offset((page - 1) * limit).limit(limit).all()
 
+    # 🌍 Translation handling with fallback
     posts_data = []
     for p in posts:
         title = p.title
         content = p.content
 
         if lang != "en":
-            cached = get_translation(p.id, lang)
-            if cached:
-                title = cached.title
-                content = cached.content
-            else:
-                title, content = translate_post(p.title, p.content, lang)
-                save_translation(p.id, lang, title, content)
+            try:
+                cached = get_translation(p.id, lang)
+                if cached:
+                    title = cached.title
+                    content = cached.content
+                else:
+                    title, content = translate_post(p.title, p.content, lang)
+                    if title and content:
+                        save_translation(p.id, lang, title, content)
+                    else:
+                        title, content = p.title, p.content  # fallback
+            except Exception as e:
+                print(f"⚠️ Translation failed for post {p.id}: {e}")
+                title, content = p.title, p.content
 
         posts_data.append({
             "id": p.id,
@@ -129,7 +147,12 @@ def get_posts_v2():
             "likes": p.likes
         })
 
-    return jsonify({"page": page, "limit": limit, "total_posts": total_posts, "posts": posts_data})
+    return jsonify({
+        "page": page,
+        "limit": limit,
+        "total_posts": total_posts,
+        "posts": posts_data
+    })
 
 # -------------------------
 # 📝 POST /posts
