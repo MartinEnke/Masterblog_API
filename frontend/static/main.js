@@ -177,11 +177,11 @@ function loadPosts() {
   console.log("Calling loadPosts with base URL:", getBaseUrl());
   const base = getBaseUrl();
   const qs = new URLSearchParams({
-  category: document.getElementById('filter-category').value,
-  sort: document.getElementById('sort-field').value,
-  direction: document.getElementById('sort-direction').value,
-  lang: getCurrentLanguage()
-});
+    category: document.getElementById('filter-category').value,
+    sort: document.getElementById('sort-field').value,
+    direction: document.getElementById('sort-direction').value,
+    lang: getCurrentLanguage()
+  });
 
   fetch(`${base}/posts?${qs}`)
     .then(r => r.json())
@@ -190,6 +190,9 @@ function loadPosts() {
       const c = document.getElementById('post-container');
       c.innerHTML = '';
       posts.forEach(renderSinglePost);
+
+      // ✅ This must be inside this `.then()` block
+      applyUITranslations();
     })
     .catch(err => console.error('Error loading posts:', err));
 }
@@ -219,11 +222,11 @@ function renderSinglePost(post) {
        </p>`
     : ''}
   <div class="comment-section" id="comments-${post.id}">
-    <h4>Comments</h4>
-    <div id="comment-list-${post.id}"></div>
-    <textarea id="comment-text-${post.id}" placeholder="Add a comment..."></textarea>
-    <button onclick="submitComment(${post.id})">Post Comment</button>
-  </div>
+  <h4 data-i18n="comments">Comments</h4>
+  <div id="comment-list-${post.id}"></div>
+  <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..."></textarea>
+  <button data-i18n="postComment" onclick="submitComment(${post.id})">Post Comment</button>
+</div>
 `;
 
   const btnWrap = document.createElement('div');
@@ -272,9 +275,9 @@ function searchPosts() {
   if (!query) return loadPosts();
 
   const qs = new URLSearchParams({
-  q: query,
-  lang: getCurrentLanguage()
-});
+    q: query,
+    lang: getCurrentLanguage()
+  });
 
   fetch(`${getBaseUrl()}/posts/search?${qs}`)
     .then(r => r.json())
@@ -282,6 +285,9 @@ function searchPosts() {
       const container = document.getElementById('post-container');
       container.innerHTML = data.error ? `<p>${data.error}</p>` : '';
       (data.posts || data).forEach(renderSinglePost);
+
+      // ✅ Apply after rendering
+      applyUITranslations();
     })
     .catch(err => console.error('Search error:', err));
 }
