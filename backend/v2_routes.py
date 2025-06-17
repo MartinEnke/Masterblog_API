@@ -157,37 +157,43 @@ def get_posts_v2():
     }
 })
 @token_required
-@limiter.limit("5 per minute")  # Allows productive work but prevents spam
+@limiter.limit("5 per minute")
 def add_post_v2(current_user):
-    data = request.get_json()
-    error = validate_post_data(data)
-    if error:
-        return jsonify(error), 400
+    try:
+        data = request.get_json()
+        error = validate_post_data(data)
+        if error:
+            return jsonify(error), 400
 
-    user = session.query(User).filter_by(username=current_user).first()
-    if not user:
-        return jsonify({"error": "Invalid user"}), 403
+        # 👇 safer and more explicit
+        user = session.query(User).filter_by(username=current_user.username).first()
+        if not user:
+            return jsonify({"error": "Invalid user"}), 403
 
-    new_post = Post(
-        user_id=user.id,
-        title=data["title"],
-        content=data["content"],
-        category=data["category"],
-        date=datetime.now(),
-        likes=0
-    )
-    session.add(new_post)
-    session.commit()
+        new_post = Post(
+            user_id=user.id,
+            title=data["title"],
+            content=data["content"],
+            category=data["category"],
+            date=datetime.now(),
+            likes=0
+        )
+        session.add(new_post)
+        session.commit()
 
-    return jsonify({
-        "id": new_post.id,
-        "author": current_user,
-        "title": new_post.title,
-        "content": new_post.content,
-        "category": new_post.category,
-        "date": new_post.date.strftime("%B %d, %Y"),
-        "likes": new_post.likes
-    }), 201
+        return jsonify({
+            "id": new_post.id,
+            "author": current_user.username,
+            "title": new_post.title,
+            "content": new_post.content,
+            "category": new_post.category,
+            "date": new_post.date.strftime("%B %d, %Y"),
+            "likes": new_post.likes
+        }), 201
+
+    except Exception as e:
+        print("❌ ERROR in add_post_v2:", e)
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @v2.route("/posts/<int:post_id>", methods=["PUT"])

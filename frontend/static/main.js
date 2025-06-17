@@ -159,17 +159,22 @@ function renderSinglePost(post) {
 
   // Only show Edit/Delete to the post's author
   const currentUser = localStorage.getItem('username');
+const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+// Show Edit/Delete if author OR admin
+if (post.author === currentUser || isAdmin) {
   if (post.author === currentUser) {
     const editBtn = document.createElement('button');
     editBtn.textContent = '✏️ Edit';
     editBtn.onclick = () => openEditModal(post);
     btnWrap.appendChild(editBtn);
-
-    const delBtn = document.createElement('button');
-    delBtn.textContent = '🗑️ Delete';
-    delBtn.onclick = () => deletePost(post.id);
-    btnWrap.appendChild(delBtn);
   }
+
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '🗑️ Delete';
+  delBtn.onclick = () => deletePost(post.id);
+  btnWrap.appendChild(delBtn);
+}
 
   div.appendChild(btnWrap);
 
