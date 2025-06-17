@@ -321,19 +321,22 @@ function submitComment(postId) {
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
     const c = d.comment;
+
+    // 🛠️ This is the key rendering logic:
     const p = document.createElement('p');
+    const showDelete = currentUser && (c.author === currentUser || isAdmin);
+
     p.innerHTML = `
       <strong>${c.author}</strong>: ${c.text}
       <span style="font-size:.8em; color:#888">(${c.date})</span>
-      ${(c.author === currentUser || isAdmin)
-        ? `<span style="cursor:pointer; color:red; margin-left:10px" onclick="deleteComment(${c.id}, ${postId})">❌</span>`
-        : ''}
+      ${showDelete ? `<span style="cursor:pointer; color:red; margin-left:10px" onclick="deleteComment(${c.id}, ${postId})">❌</span>` : ''}
     `;
     list.appendChild(p);
     document.getElementById(`comment-text-${postId}`).value = '';
   })
   .catch(e => alert("Error: " + e));
 }
+
 
 function deleteComment(commentId) {
   const base = getBaseUrl();
@@ -456,7 +459,7 @@ function submitLogin() {
 
     // ✅ Try to fetch admin info before proceeding
     try {
-      const res = await fetch(`${base}/api/v1/me`, {
+      const res = await fetch(`${base}/api/v2/me`, {
         headers: { 'Authorization': `Bearer ${d.token}` }
       });
 
@@ -487,31 +490,58 @@ function submitSignup() {
   const base = getBaseUrl().split('/api/')[0];
   const u = document.getElementById('signup-username').value;
   const p = document.getElementById('signup-password').value;
+
   fetch(`${base}/api/v1/register`, {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify({ username:u, password:p })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: u, password: p })
   })
   .then(r => r.json())
   .then(d => {
     if (d.error) throw d.error;
-    return fetch(`${base}/api/v1/login`, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ username:u, password:p })
+
+    // Auto-login after signup
+    return fetch(`${base}/api/v2/me`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
     });
   })
   .then(r => r.json())
-  .then(d => {
+  .then(async d => {
+    if (!d.token) throw new Error("Login failed");
+
     saveToken(d.token);
     localStorage.setItem('username', u);
+
+    // ✅ Fetch is_admin info for signup flow too
+    try {
+      const res = await fetch(`${base}/api/v1/me`, {
+        headers: { 'Authorization': `Bearer ${d.token}` }
+      });
+
+      if (res.ok) {
+        const user = await res.json();
+        if (user?.is_admin) {
+          localStorage.setItem('isAdmin', 'true');
+        } else {
+          localStorage.removeItem('isAdmin');
+        }
+      } else {
+        console.warn("Warning: Failed to fetch /me after signup. Status:", res.status);
+      }
+    } catch (err) {
+      console.warn("Warning: Error fetching /me after signup:", err);
+    }
+
     updateAuthButton();
     updateUserInfo();
     closeSignupModal();
     loadPosts();
   })
-  .catch(e => alert('Signup/Login error: '+e));
+  .catch(e => alert('Signup/Login error: ' + e));
 }
+
 
 function updateAuthButton() {
   document.getElementById('auth-button').textContent =
