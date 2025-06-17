@@ -505,6 +505,7 @@ def add_comment_v2(user, post_id):
     return jsonify({
         "message": "Comment added",
         "comment": {
+            "id": comment.id,  # ✅ include ID
             "author": comment.author,
             "text": comment.text,
             "date": comment.date.strftime("%B %d, %Y")

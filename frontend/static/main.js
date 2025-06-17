@@ -301,25 +301,34 @@ function submitComment(postId) {
   const base = getBaseUrl();
   const text = document.getElementById(`comment-text-${postId}`).value.trim();
 
-
   if (!text) return alert("Please enter a comment");
 
   fetch(`${base}/posts/${postId}/comments`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${getToken()}`
-  },
-  body: JSON.stringify({ text })
-})
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getToken()}`
+    },
+    body: JSON.stringify({ text })
+  })
   .then(r => {
     if (!r.ok) return r.json().then(e => Promise.reject(e.error));
     return r.json();
   })
   .then(d => {
     const list = document.getElementById(`comment-list-${postId}`);
+    const currentUser = localStorage.getItem('username');
+    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+    const c = d.comment;
     const p = document.createElement('p');
-    p.innerHTML = `<strong>${d.comment.author}</strong>: ${d.comment.text} <span style="font-size:.8em; color:#888">(${d.comment.date})</span>`;
+    p.innerHTML = `
+      <strong>${c.author}</strong>: ${c.text}
+      <span style="font-size:.8em; color:#888">(${c.date})</span>
+      ${(c.author === currentUser || isAdmin)
+        ? `<span style="cursor:pointer; color:red; margin-left:10px" onclick="deleteComment(${c.id}, ${postId})">❌</span>`
+        : ''}
+    `;
     list.appendChild(p);
     document.getElementById(`comment-text-${postId}`).value = '';
   })
