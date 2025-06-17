@@ -38,11 +38,11 @@ class Post(Base):
         return self.user.username
 
 class Comment(Base):
-    __tablename__ = "comments"
+    __tablename__ = 'comments'
     id = Column(Integer, primary_key=True)
     post_id = Column(Integer, ForeignKey('posts.id'))
-    author = Column(String, default="Anonymous")
-    text = Column(Text, nullable=False)
+    author = Column(String)
+    text = Column(String)
     date = Column(DateTime, default=datetime.utcnow)
 
     post = relationship("Post", back_populates="comments")

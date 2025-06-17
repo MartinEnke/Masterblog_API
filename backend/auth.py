@@ -1,4 +1,3 @@
-
 import jwt
 from flask import request, jsonify, current_app
 from functools import wraps
@@ -6,6 +5,10 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from models import User
 from db import session
 from datetime import datetime, timedelta
+from jwt import ExpiredSignatureError, InvalidTokenError
+
+
+TOKENS = {}
 
 def validate_login(username, password):
     user = session.query(User).filter_by(username=username).first()
@@ -33,6 +36,16 @@ def generate_jwt(username):
     return token
 
 
+def decode_jwt(token):
+    try:
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
+        return payload
+    except ExpiredSignatureError:
+        raise Exception("Token expired")
+    except InvalidTokenError:
+        raise Exception("Invalid token")
+
+
 def register_user():
     data = request.get_json() or {}
     ok, resp, code = validate_registration(data.get("username"), data.get("password"))
@@ -52,24 +65,19 @@ def login_user():
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth_header = request.headers.get("Authorization", "")
-        parts = auth_header.split()
-        if len(parts) != 2 or parts[0] != "Bearer":
+        token = request.headers.get("Authorization", "").replace("Bearer ", "")
+        if not token:
             return jsonify({"error": "Authentication required"}), 401
 
-        token = parts[1]
         try:
-            payload = jwt.decode(
-                token,
-                current_app.config['SECRET_KEY'],
-                algorithms=["HS256"]
-            )
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "Token expired"}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"error": "Invalid token"}), 401
+            payload = decode_jwt(token)
+            username = payload["sub"]  # you stored it as 'sub'
+        except Exception as e:
+            return jsonify({"error": f"Invalid token: {str(e)}"}), 401
 
-        current_user = payload["sub"]
-        return f(current_user, *args, **kwargs)
+        user = session.query(User).filter_by(username=username).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 401
 
+        return f(user, *args, **kwargs)
     return decorated

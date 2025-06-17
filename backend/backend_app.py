@@ -10,6 +10,7 @@ from rate_limit import limiter
 from translations_db import init_db, get_translation, save_translation, session
 from models import Post
 import os
+from v2_routes import v2 as v2_blueprint
 
 init_db()
 
@@ -27,7 +28,7 @@ app = Flask(
     template_folder=FRONTEND
 )
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-app.register_blueprint(v2)
+app.register_blueprint(v2_blueprint, url_prefix="/api/v2")
 app.config['SWAGGER'] = {
     "title": "The Quiet Almanac API",
     "uiversion": 3,

@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload
 from db import session
 from models import Post, User, Comment
 from rate_limit import limiter
-from auth import token_required, register_user, login_user
+from auth import token_required, register_user, login_user, TOKENS
 from utils import validate_post_data
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
@@ -482,7 +482,8 @@ def like_post_v2(post_id):
 
 
 @v2.route("/posts/<int:post_id>/comments", methods=["POST"])
-def add_comment_v2(post_id):
+@token_required
+def add_comment_v2(user, post_id):
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return jsonify({"error": "Post not found"}), 404
@@ -493,7 +494,7 @@ def add_comment_v2(post_id):
 
     comment = Comment(
         post_id=post.id,
-        author=data.get("author", "Anonymous"),
+        author=user.username,  # ✅ real authenticated user
         text=data["text"],
         date=datetime.now()
     )
@@ -512,15 +513,15 @@ def add_comment_v2(post_id):
 
 
 @v2.route("/posts/<int:post_id>/comments", methods=["GET"])
-@limiter.exempt
 def get_comments_v2(post_id):
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return jsonify({"error": "Post not found"}), 404
 
-    comments = session.query(Comment).filter_by(post_id=post_id).order_by(Comment.date.asc()).all()
+    comments = session.query(Comment).filter_by(post_id=post_id).all()
     return jsonify([
         {
+            "id": c.id,
             "author": c.author,
             "text": c.text,
             "date": c.date.strftime("%B %d, %Y")
@@ -529,19 +530,21 @@ def get_comments_v2(post_id):
     ])
 
 
-@v2.route("/posts/<int:post_id>/comments/<int:comment_id>", methods=["DELETE"])
+@v2.route("/comments/<int:comment_id>", methods=["DELETE"])
 @token_required
-def delete_comment_v2(current_user, post_id, comment_id):
-    comment = session.query(Comment).filter_by(id=comment_id, post_id=post_id).first()
+def delete_comment(user, comment_id):
+    comment = session.query(Comment).get(comment_id)
+
     if not comment:
         return jsonify({"error": "Comment not found"}), 404
 
-    if comment.author != current_user.username and not current_user.is_admin:
-        return jsonify({"error": "Unauthorized"}), 403
+    # Check if the user is the author or admin
+    if comment.author != user.username and not user.is_admin:
+        return jsonify({"error": "Unauthorized to delete this comment"}), 403
 
     session.delete(comment)
     session.commit()
-    return jsonify({"message": "Comment deleted"})
+    return jsonify({"message": f"Comment {comment_id} deleted"}), 200
 
 
 # -------------------------

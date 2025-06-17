@@ -201,9 +201,19 @@ function loadComments(postId) {
     .then(comments => {
       const list = document.getElementById(`comment-list-${postId}`);
       list.innerHTML = '';
+
+      const currentUser = localStorage.getItem("username");
+      const isAdmin = localStorage.getItem("isAdmin") === "true";
+
       comments.forEach(c => {
         const p = document.createElement('p');
-        p.innerHTML = `<strong>${c.author}</strong>: ${c.text} <span style="font-size:.8em; color:#888">(${c.date})</span>`;
+        p.innerHTML = `
+          <strong>${c.author}</strong>: ${c.text}
+          <span style="font-size:.8em; color:#888">(${c.date})</span>
+          ${(c.author === currentUser || isAdmin) ?
+            `<span style="cursor:pointer; color:red; margin-left:10px" onclick="deleteComment(${c.id}, ${postId})">❌</span>`
+            : ''}
+        `;
         list.appendChild(p);
       });
     });
@@ -290,17 +300,18 @@ function likePost(id) {
 function submitComment(postId) {
   const base = getBaseUrl();
   const text = document.getElementById(`comment-text-${postId}`).value.trim();
-  const author = localStorage.getItem('username') || "Anonymous";
+
 
   if (!text) return alert("Please enter a comment");
 
   fetch(`${base}/posts/${postId}/comments`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ author, text })
-  })
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${getToken()}`
+  },
+  body: JSON.stringify({ text })
+})
   .then(r => {
     if (!r.ok) return r.json().then(e => Promise.reject(e.error));
     return r.json();
@@ -314,6 +325,36 @@ function submitComment(postId) {
   })
   .catch(e => alert("Error: " + e));
 }
+
+function deleteComment(commentId) {
+  const base = getBaseUrl();
+  const token = getToken();
+
+  if (!token) {
+    alert("You must be logged in to delete a comment.");
+    return;
+  }
+
+  if (!confirm("Are you sure you want to delete this comment?")) return;
+
+  fetch(`${base}/comments/${commentId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(r => {
+    if (!r.ok) return r.json().then(e => Promise.reject(e.error));
+    return r.json();
+  })
+  .then(data => {
+    console.log("🧾 Delete success:", data);
+    loadPosts(); // reloads comments too
+  })
+  .catch(err => console.error("❌ Delete failed:", err));
+}
+
 
 /* ==========================================================================
    CATEGORIES
