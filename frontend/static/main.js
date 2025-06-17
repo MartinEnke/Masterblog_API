@@ -215,12 +215,12 @@ function renderSinglePost(post) {
   div.innerHTML = `
   <h2>${post.title}</h2>
   <p>${post.content}</p>
-  <p class="post-meta">${post.date || 'No date'} · by ${post.author || 'Unknown'}</p>
+  <p class="post-meta" data-i18n-by="${post.author}">${post.date || 'No date'} · <span data-i18n="by">by</span> ${post.author || 'Unknown'}</p>
   ${post.updated
-    ? `<p style="font-size:.9em;color:#777;margin-bottom:10px">
-         Updated: ${post.updated}
-       </p>`
-    : ''}
+  ? `<p style="font-size:.9em;color:#777;margin-bottom:10px" data-i18n-updated="${post.updated}">
+       <span data-i18n="updatedLabel">Updated:</span> ${post.updated}
+     </p>`
+  : ''}
   <div class="comment-section" id="comments-${post.id}">
   <h4 data-i18n="comments">Comments</h4>
   <div id="comment-list-${post.id}"></div>

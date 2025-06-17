@@ -1,8 +1,6 @@
 /* ==========================================================================
    UI LANGUAGE DICTIONARY & TRANSLATION LOGIC
    ========================================================================== */
-// static/i18n.js
-
 const UI_TRANSLATIONS = {
   en: {
     loadPosts: "Load Posts",
@@ -26,7 +24,9 @@ const UI_TRANSLATIONS = {
     sortUpdated: "Last Updated",
     ascending: "Ascending",
     descending: "Descending",
-    allCategories: "All Categories"
+    allCategories: "All Categories",
+    updatedLabel: "Updated:",
+    by: "by"
   },
   de: {
     loadPosts: "Beiträge laden",
@@ -50,7 +50,9 @@ const UI_TRANSLATIONS = {
     sortUpdated: "Zuletzt aktualisiert",
     ascending: "Aufsteigend",
     descending: "Absteigend",
-    allCategories: "Alle Kategorien"
+    allCategories: "Alle Kategorien",
+    updatedLabel: "Aktualisiert:",
+    by: "von"
   },
   fr: {
     loadPosts: "Charger les articles",
@@ -74,7 +76,9 @@ const UI_TRANSLATIONS = {
     sortUpdated: "Dernière modification",
     ascending: "Ascendant",
     descending: "Descendant",
-    allCategories: "Toutes les catégories"
+    allCategories: "Toutes les catégories",
+    updatedLabel: "Mis à jour :",
+    by: "par"
   },
   es: {
     loadPosts: "Cargar publicaciones",
@@ -98,7 +102,9 @@ const UI_TRANSLATIONS = {
     sortUpdated: "Última actualización",
     ascending: "Ascendente",
     descending: "Descendente",
-    allCategories: "Todas las categorías"
+    allCategories: "Todas las categorías",
+    updatedLabel: "Actualizado:",
+    by: "por"
   }
 };
 

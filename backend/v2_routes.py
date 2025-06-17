@@ -8,6 +8,7 @@ from rate_limit import limiter
 from auth import token_required, register_user, login_user, TOKENS
 from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data
 from translations_db import translate_post
+from babel.dates import format_date
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -88,6 +89,14 @@ def get_posts_v2():
     page = int(request.args.get("page", 1))
     limit = int(request.args.get("limit", 5))
 
+    locale_map = {
+        "en": "en_US",
+        "de": "de_DE",
+        "fr": "fr_FR",
+        "es": "es_ES"
+    }
+    locale = locale_map.get(lang, "en_US")
+
     query = session.query(Post).options(joinedload(Post.user))
 
     # 🔎 Filter by category or multiple categories
@@ -142,8 +151,8 @@ def get_posts_v2():
             "title": title,
             "content": content,
             "category": p.category,
-            "date": p.date.strftime("%B %d, %Y") if p.date else None,
-            "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
+            "date": format_date(p.date, format='long', locale=locale) if p.date else None,
+            "updated": format_date(p.updated, format='long', locale=locale) if p.updated else None,
             "likes": p.likes
         })
 
