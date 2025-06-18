@@ -131,6 +131,10 @@ function clearToken() {
    INITIALIZATION
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+document.getElementById("cancel-add-btn")
+    ?.addEventListener("click", () => {
+      document.getElementById("add-modal").classList.add("hidden");
+    });
   console.log("🚀 DOM fully loaded. Starting app.");
 
   // 🔁 Wire up "Apply Filters" button
@@ -418,7 +422,10 @@ function submitAdd() {
     if (!r.ok) return r.json().then(e=>Promise.reject(e.error));
     return r.json();
   })
-  .then(() => { closeAddModal(); loadPosts(); })
+  .then(() => {
+  document.getElementById("add-modal").classList.add("hidden");
+  loadPosts();
+})
   .catch(e => alert("Error: "+e));
 }
 
@@ -429,6 +436,8 @@ function submitUpdate() {
     content: document.getElementById('edit-content').value,
     category:document.getElementById('edit-category').value
   };
+  console.log("🔐 Sending token:", getToken());
+  console.log("📦 Payload:", payload);
   fetch(`${base}/posts/${postToEditId}`, {
     method: 'PUT',
     headers: {
@@ -666,20 +675,28 @@ function submitLogin() {
 
 function submitSignup() {
   const base = getBaseUrl().split('/api/')[0];
-  const u = document.getElementById('signup-username').value;
-  const p = document.getElementById('signup-password').value;
+  const u = document.getElementById('signup-username').value.trim();
+  const p = document.getElementById('signup-password').value.trim();
 
+  if (!u || !p) {
+    alert("Username and password required.");
+    return;
+  }
+
+  // 🔐 Step 1: Register
   fetch(`${base}/api/v1/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: u, password: p })
   })
-  .then(r => r.json())
-  .then(d => {
-    if (d.error) throw d.error;
+  .then(async res => {
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Signup failed.");
+    }
 
-    // Auto-login after signup
-    return fetch(`${base}/api/v2/me`, {
+    // ✅ Step 2: Login right after successful signup
+    return fetch(`${base}/api/v1/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: u, password: p })
@@ -687,14 +704,14 @@ function submitSignup() {
   })
   .then(r => r.json())
   .then(async d => {
-    if (!d.token) throw new Error("Login failed");
+    if (!d.token) throw new Error("Login after signup failed.");
 
     saveToken(d.token);
     localStorage.setItem('username', u);
 
-    // ✅ Fetch is_admin info for signup flow too
+    // 🧠 Optional: fetch admin info
     try {
-      const res = await fetch(`${base}/api/v1/me`, {
+      const res = await fetch(`${base}/api/v2/me`, {
         headers: { 'Authorization': `Bearer ${d.token}` }
       });
 
@@ -705,11 +722,9 @@ function submitSignup() {
         } else {
           localStorage.removeItem('isAdmin');
         }
-      } else {
-        console.warn("Warning: Failed to fetch /me after signup. Status:", res.status);
       }
     } catch (err) {
-      console.warn("Warning: Error fetching /me after signup:", err);
+      console.warn("Warning: Couldn't fetch /me:", err);
     }
 
     updateAuthButton();
@@ -717,8 +732,10 @@ function submitSignup() {
     closeSignupModal();
     loadPosts();
   })
-  .catch(e => alert('Signup/Login error: ' + e));
+  .catch(e => alert("Signup error: " + e.message));
 }
+
+
 
 
 function updateAuthButton() {
@@ -757,50 +774,102 @@ function updateUserInfo() {
 /* ==========================================================================
    MODAL HELPERS
    ========================================================================== */
-function openLoginModal()  { document.getElementById('login-modal').classList.remove('hidden'); }
-function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
-function openSignupModal(){ document.getElementById('signup-modal').classList.remove('hidden'); }
-function closeSignupModal(){ document.getElementById('signup-modal').classList.add('hidden'); }
+
+// Translates modal text and placeholders
+function translateModalPlaceholders() {
+  const currentLang = getCurrentLanguage();
+  const strings = UI_TRANSLATIONS[currentLang];
+
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (strings?.[key]) {
+      el.textContent = strings[key];
+    }
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (strings?.[key]) {
+      el.placeholder = strings[key];
+    }
+  });
+}
+
+function openLoginModal() {
+  translateModalPlaceholders();
+  document.getElementById('login-modal').classList.remove('hidden');
+}
+
+function closeLoginModal() {
+  document.getElementById('login-modal').classList.add('hidden');
+}
+
+function openSignupModal() {
+  translateModalPlaceholders();
+  document.getElementById('signup-modal').classList.remove('hidden');
+}
+
+function closeSignupModal() {
+  document.getElementById('signup-modal').classList.add('hidden');
+}
+
 /**
  * Opens the Add Post modal, or the Login modal if no user is signed in.
  */
 function openAddModal() {
-  // If not logged in, prompt login instead
-  if (!localStorage.getItem('authToken')) {
-    openLoginModal();
-    return;
+  try {
+    if (!localStorage.getItem('authToken')) {
+      openLoginModal();
+      return;
+    }
+
+    document.getElementById('add-title').value = '';
+    document.getElementById('add-content').value = '';
+
+    const currentLang = getCurrentLanguage();
+    const strings = UI_TRANSLATIONS[currentLang];
+    const dropdown = document.getElementById('add-category');
+
+    dropdown.innerHTML = `<option value="">${strings.selectCategory || "Select Category"}</option>`;
+    categories.forEach(cat => {
+      const option = new Option(cat, cat);
+      dropdown.appendChild(option);
+    });
+
+    translateModalPlaceholders();
+    document.getElementById('add-modal').classList.remove('hidden');
+
+  } catch (err) {
+    console.error("❌ Failed to open Add Post modal:", err);
   }
-
-  // Clear the form fields
-  document.getElementById('add-title').value = '';
-  document.getElementById('add-content').value = '';
-  const dropdown = document.getElementById('add-category');
-  dropdown.innerHTML = '<option value="">Select Category</option>';
-  categories.forEach(cat => {
-    const option = new Option(cat, cat);
-    dropdown.appendChild(option);
-  });
-
-  // Show the Add Post modal
-  document.getElementById('add-modal').classList.remove('hidden');
 }
-function closeAddModal()  { document.getElementById('add-modal').classList.add('hidden'); }
-function openEditModal(post){
-  postToEditId=post.id;
-  document.getElementById('edit-title').value=post.title;
-  document.getElementById('edit-content').value=post.content;
-  const dd=document.getElementById('edit-category');
-  dd.innerHTML='<option value="">Select Category</option>';
-  categories.forEach(cat=>{
-    const o=new Option(cat,cat);
-    if(cat.toLowerCase()===post.category.toLowerCase())o.selected=true;
+
+function openEditModal(post) {
+  postToEditId = post.id;
+  document.getElementById('edit-title').value = post.title;
+  document.getElementById('edit-content').value = post.content;
+
+  const currentLang = getCurrentLanguage();
+  const strings = UI_TRANSLATIONS[currentLang];
+
+  const dd = document.getElementById('edit-category');
+  dd.innerHTML = `<option value="">${strings.selectCategory || "Select Category"}</option>`;
+  categories.forEach(cat => {
+    const o = new Option(cat, cat);
+    if (cat.toLowerCase() === post.category.toLowerCase()) o.selected = true;
     dd.appendChild(o);
   });
+
+  translateModalPlaceholders();
   document.getElementById('update-modal').classList.remove('hidden');
 }
-function closeModal(){ document.getElementById('update-modal').classList.add('hidden'); }
 
-// wire up buttons
+function closeModal() {
+  document.getElementById('update-modal').classList.add('hidden');
+}
+
+window.closeAddModal = closeAddModal;
+// Wire up buttons
 document.getElementById('auth-button').onclick = handleAuthClick;
 document.getElementById('add-save-btn')?.addEventListener('click', submitAdd);
 document.getElementById('edit-save-btn')?.addEventListener('click', submitUpdate);

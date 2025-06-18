@@ -362,7 +362,7 @@ def update_post_v2(current_user, post_id):
     if not post:
         return jsonify({"error": "Post not found"}), 404
 
-    if post.author != current_user:
+    if post.user_id != current_user.id and not getattr(current_user, "is_admin", False):
         return jsonify({"error": "Unauthorized"}), 403
 
     data = request.get_json()

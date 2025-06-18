@@ -64,87 +64,88 @@
   </main>
 
   <!-- 🔧 Modals -->
-  <div id="update-modal" class="modal hidden">
-    <div class="modal-content">
-      <h2 data-i18n="editPost">✏️ Edit Post</h2>
-      <input type="text" id="edit-title" placeholder="Title">
-      <textarea id="edit-content" placeholder="Content"></textarea>
-      <select id="edit-category"></select>
-      <div class="modal-buttons">
-        <span class="text-button" data-i18n="save" onclick="submitUpdate()">Save</span>
-        <span class="text-button" data-i18n="cancel" onclick="closeModal()">Cancel</span>
-      </div>
+<div id="update-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2 data-i18n="editPost">✏️ Edit Post</h2>
+    <input type="text" id="edit-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title">
+    <textarea id="edit-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"></textarea>
+    <select id="edit-category"></select>
+    <div class="modal-buttons">
+      <span class="text-button" data-i18n="save" onclick="submitUpdate()">Save</span>
+      <span class="text-button" data-i18n="cancel" onclick="closeModal()">Cancel</span>
     </div>
   </div>
+</div>
 
-  <div id="add-modal" class="modal hidden">
-    <div class="modal-content">
-      <h2 data-i18n="addPost">📝 Add Post</h2>
-      <input type="text" id="add-title" placeholder="Title">
-      <textarea id="add-content" placeholder="Content"></textarea>
-      <select id="add-category"></select>
-      <div class="modal-buttons">
-        <span class="text-button" data-i18n="save" onclick="submitAdd()">Save</span>
-        <span class="text-button" data-i18n="cancel" onclick="closeAddModal()">Cancel</span>
-      </div>
+<div id="add-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2 data-i18n="addPost">📝 Add Post</h2>
+    <input type="text" id="add-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title">
+    <textarea id="add-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"></textarea>
+    <select id="add-category"></select>
+    <div class="modal-buttons">
+      <span class="text-button" data-i18n="save" onclick="submitAdd()">Save</span>
+      <span class="text-button" data-i18n="cancel" id="cancel-add-btn">Cancel</span>
     </div>
   </div>
+</div>
 
-  <div id="login-modal" class="modal hidden">
-    <div class="modal-content">
-      <h2 data-i18n="login">🔐 Login</h2>
-      <input type="text" id="login-username" placeholder="Username">
-      <input type="password" id="login-password" placeholder="Password">
-      <div class="modal-buttons">
-        <span class="text-button" data-i18n="login" onclick="submitLogin()">Login</span>
-        <span class="text-button" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
-      </div>
+<div id="login-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2 data-i18n="login">🔐 Login</h2>
+    <input type="text" id="login-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username">
+    <input type="password" id="login-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
+    <div class="modal-buttons">
+      <span class="text-button" data-i18n="login" onclick="submitLogin()">Login</span>
+      <span class="text-button" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
     </div>
   </div>
+</div>
 
-  <div id="logout-modal" class="modal hidden">
-    <div class="modal-content">
-      <h2 data-i18n="logout">🚪 Logout</h2>
-      <p data-i18n="logoutConfirm">Are you sure you want to log out?</p>
-      <div class="modal-buttons">
-        <button data-i18n="yes" onclick="confirmLogout()">Yes, Logout</button>
-        <button data-i18n="cancel" onclick="closeLogoutModal()">Cancel</button>
-      </div>
+<div id="logout-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2 data-i18n="logout">🚪 Logout</h2>
+    <p data-i18n="logoutConfirm">Are you sure you want to log out?</p>
+    <div class="modal-buttons">
+      <button data-i18n="yes" onclick="confirmLogout()">Yes, Logout</button>
+      <button data-i18n="cancel" onclick="closeLogoutModal()">Cancel</button>
     </div>
   </div>
+</div>
 
-  <div id="signup-modal" class="modal hidden">
-    <div class="modal-content">
-      <h2 data-i18n="signup">📝 Signup</h2>
-      <input type="text" id="signup-username" placeholder="Username">
-      <input type="password" id="signup-password" placeholder="Password">
-      <div class="modal-buttons">
-        <button data-i18n="register" onclick="submitSignup()">Register</button>
-        <button data-i18n="cancel" onclick="closeSignupModal()">Cancel</button>
-      </div>
+<div id="signup-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2 data-i18n="signup">📝 Signup</h2>
+    <input type="text" id="signup-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username">
+    <input type="password" id="signup-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
+    <div class="modal-buttons">
+      <button data-i18n="register" onclick="submitSignup()">Register</button>
+      <button data-i18n="cancel" onclick="closeSignupModal()">Cancel</button>
     </div>
   </div>
+</div>
 
-  <div id="add-warning-modal" class="modal hidden">
-    <div class="modal-content">
-      <h2 data-i18n="loginRequired">⚠️ Login Required</h2>
-      <p data-i18n="loginToAdd">You need to be logged in to add a post.</p>
-      <div class="modal-buttons">
-        <span class="text-button" data-i18n="login" onclick="submitLogin()">Login</span>
-        <span class="text-button" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
-      </div>
+<div id="add-warning-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2 data-i18n="loginRequired">⚠️ Login Required</h2>
+    <p data-i18n="loginToAdd">You need to be logged in to add a post.</p>
+    <div class="modal-buttons">
+      <span class="text-button" data-i18n="login" onclick="submitLogin()">Login</span>
+      <span class="text-button" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
     </div>
   </div>
+</div>
 
-  <div id="alert-modal" class="modal hidden">
-    <div class="modal-content">
-      <p id="alert-message" data-i18n="mustBeLoggedIn">You must be logged in to add a post.</p>
-      <div class="modal-buttons">
-        <span class="text-button" data-i18n="login" onclick="handleAlertLogin()">Login</span>
-        <span class="text-button" data-i18n="cancel" onclick="closeAlertModal()">Cancel</span>
-      </div>
+<div id="alert-modal" class="modal hidden">
+  <div class="modal-content">
+    <p id="alert-message" data-i18n="mustBeLoggedIn">You must be logged in to add a post.</p>
+    <div class="modal-buttons">
+      <span class="text-button" data-i18n="login" onclick="handleAlertLogin()">Login</span>
+      <span class="text-button" data-i18n="cancel" onclick="closeAlertModal()">Cancel</span>
     </div>
   </div>
+</div>
+
 
   <footer>
     &copy; The Quiet Almanac {{ 2025 }}
