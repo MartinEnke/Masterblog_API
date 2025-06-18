@@ -144,7 +144,8 @@ def get_posts_v2():
                 "date": p.date.strftime("%B %d, %Y") if p.date else None,
                 "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
                 "likes": p.likes,
-                "translated": translated_flag
+                "translated": translated_flag,
+                "is_ai_translation": (lang != "en" and translated_flag)
             })
 
         return jsonify({

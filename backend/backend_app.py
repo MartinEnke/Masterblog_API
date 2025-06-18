@@ -7,7 +7,7 @@ from v2_routes import v2
 from flasgger import Swagger
 from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data
 from rate_limit import limiter
-from translations_db import init_db, get_translation, save_translation, session
+from translations_db import init_db, get_translation, save_translation, session, translate_post
 from models import Post
 import os
 from v2_routes import v2 as v2_blueprint

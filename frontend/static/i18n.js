@@ -26,7 +26,8 @@ const UI_TRANSLATIONS = {
     descending: "Descending",
     allCategories: "All Categories",
     updatedLabel: "Updated:",
-    by: "by"
+    by: "by",
+    aiTranslated: "AI-translated"
   },
   de: {
     loadPosts: "Beiträge laden",
@@ -52,7 +53,8 @@ const UI_TRANSLATIONS = {
     descending: "Absteigend",
     allCategories: "Alle Kategorien",
     updatedLabel: "Aktualisiert:",
-    by: "von"
+    by: "von",
+    aiTranslated: "KI-übersetzt",
   },
   fr: {
     loadPosts: "Charger les articles",
@@ -78,7 +80,8 @@ const UI_TRANSLATIONS = {
     descending: "Descendant",
     allCategories: "Toutes les catégories",
     updatedLabel: "Mis à jour :",
-    by: "par"
+    by: "par",
+    aiTranslated: "Traduit par IA"
   },
   es: {
     loadPosts: "Cargar publicaciones",
@@ -104,7 +107,8 @@ const UI_TRANSLATIONS = {
     descending: "Descendente",
     allCategories: "Todas las categorías",
     updatedLabel: "Actualizado:",
-    by: "por"
+    by: "por",
+    aiTranslated: "Traducido por IA"
   }
 };
 

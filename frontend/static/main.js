@@ -83,11 +83,15 @@ function applyUITranslations() {
   const username = localStorage.getItem("username");
   const userInfo = document.getElementById("user-info");
   if (username && userInfo) {
-    userInfo.textContent = `${strings.welcome}, ${username}!`;
+    userInfo.textContent = `${strings.welcome || "Welcome"}, ${username}!`;
   } else if (userInfo) {
     userInfo.textContent = "";
   }
+
+  // 🔁 Also update the auth button text (Login/Logout)
+  updateAuthButton();
 }
+
 
 
 /* ==========================================================================
@@ -213,25 +217,46 @@ function renderSinglePost(post) {
     padding: '15px',
     border: '1px solid #ccc',
     marginBottom: '20px',
-    borderRadius: '8px'
+    borderRadius: '8px',
+    position: 'relative'
   });
 
-  div.innerHTML = `
-  <h2 id="post-title-${post.id}">${post.title}</h2>
-  <p id="post-content-${post.id}">${post.content}</p>
-  <p class="post-meta" data-i18n-by="${post.author}">${post.date || 'No date'} · <span data-i18n="by">by</span> ${post.author || 'Unknown'}</p>
-  ${post.updated
-    ? `<p style="font-size:.9em;color:#777;margin-bottom:10px" data-i18n-updated="${post.updated}">
-         <span data-i18n="updatedLabel">Updated:</span> ${post.updated}
-       </p>`
-    : ''}
-  <div class="comment-section" id="comments-${post.id}">
-    <h4 data-i18n="comments">Comments</h4>
-    <div id="comment-list-${post.id}"></div>
-    <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..."></textarea>
-    <button data-i18n="postComment" onclick="submitComment(${post.id})">Post Comment</button>
-  </div>
-`;
+  // 🧠 Add AI translation badge if pre-translated
+  if (post.translated === true && post.is_ai_translation === true) {
+    const badge = document.createElement('div');
+    badge.className = 'ai-badge';
+    badge.setAttribute('data-i18n', 'aiTranslated');
+    badge.textContent = UI_TRANSLATIONS[getCurrentLanguage()].aiTranslated || 'AI-translated';
+    Object.assign(badge.style, {
+      position: 'absolute',
+      top: '10px',
+      right: '10px',
+      backgroundColor: '#e0e0e0',
+      padding: '3px 8px',
+      borderRadius: '5px',
+      fontSize: '0.8em',
+      color: '#444',
+      fontStyle: 'italic'
+    });
+    div.appendChild(badge);
+  }
+
+  div.innerHTML += `
+    <h2 id="post-title-${post.id}">${post.title}</h2>
+    <p id="post-content-${post.id}">${post.content}</p>
+    <p class="post-meta" data-i18n-by="${post.author}">${post.date || 'No date'} · <span data-i18n="by">by</span> ${post.author || 'Unknown'}</p>
+    ${post.updated
+      ? `<p style="font-size:.9em;color:#777;margin-bottom:10px" data-i18n-updated="${post.updated}">
+           <span data-i18n="updatedLabel">Updated:</span> ${post.updated}
+         </p>`
+      : ''}
+    <div class="comment-section" id="comments-${post.id}">
+      <h4 data-i18n="comments">Comments</h4>
+      <div id="comment-list-${post.id}"></div>
+      <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..."></textarea>
+      <button data-i18n="postComment" onclick="submitComment(${post.id})">Post Comment</button>
+    </div>
+  `;
 
   const btnWrap = document.createElement('div');
   Object.assign(btnWrap.style, {
@@ -241,54 +266,69 @@ function renderSinglePost(post) {
     marginTop: '10px'
   });
 
-  // Like button
   const likeBtn = document.createElement('button');
   likeBtn.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
   likeBtn.onclick = () => likePost(post.id);
   btnWrap.appendChild(likeBtn);
 
-  // Only show Edit/Delete to the post's author
   const currentUser = localStorage.getItem('username');
-const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
-// Show Edit/Delete if author OR admin
-if (post.author === currentUser || isAdmin) {
-  const editBtn = document.createElement('button');
-  editBtn.setAttribute("data-i18n", "editPost");
-  editBtn.onclick = () => openEditModal(post);
-  editBtn.textContent = UI_TRANSLATIONS[getCurrentLanguage()].editPost || 'Edit';
-  btnWrap.appendChild(editBtn);
-}
+  if (post.author === currentUser || isAdmin) {
+    const editBtn = document.createElement('button');
+    editBtn.setAttribute("data-i18n", "editPost");
+    editBtn.onclick = () => openEditModal(post);
+    editBtn.textContent = UI_TRANSLATIONS[getCurrentLanguage()].editPost || 'Edit';
+    btnWrap.appendChild(editBtn);
 
-const delBtn = document.createElement('button');
-delBtn.setAttribute("data-i18n", "deletePost");
-delBtn.onclick = () => deletePost(post.id);
-delBtn.textContent = UI_TRANSLATIONS[getCurrentLanguage()].deletePost || 'Delete';
-btnWrap.appendChild(delBtn);
-
+    const delBtn = document.createElement('button');
+    delBtn.setAttribute("data-i18n", "deletePost");
+    delBtn.onclick = () => deletePost(post.id);
+    delBtn.textContent = UI_TRANSLATIONS[getCurrentLanguage()].deletePost || 'Delete';
+    btnWrap.appendChild(delBtn);
+  }
 
   div.appendChild(btnWrap);
-
-  // 🔁 Load comments from DB
   loadComments(post.id);
-
   container.appendChild(div);
 
-  // 🌀 If the post is not translated yet, fetch it in background
+  // 🌀 Lazy translation if missing
   if (post.translated === false && getCurrentLanguage() !== "en") {
-  console.log(`🔁 Translating post ${post.id} to ${getCurrentLanguage()}`);
-  const base = getBaseUrl();
-  const lang = getCurrentLanguage();
+    console.log(`🔁 Translating post ${post.id} to ${getCurrentLanguage()}`);
+    const base = getBaseUrl();
+    const lang = getCurrentLanguage();
 
-  fetch(`${base}/posts/${post.id}/translate?lang=${lang}`)
-    .then(r => r.json())
-    .then(translated => {
-  updatePostDom(post.id, translated.title, translated.content);
-  post.translated = true;  // ✅ Mark as translated for session
-})
-    .catch(err => console.warn("Translation failed for post", post.id, err));
+    fetch(`${base}/posts/${post.id}/translate?lang=${lang}`)
+      .then(r => r.json())
+      .then(translated => {
+        updatePostDom(post.id, translated.title, translated.content);
+        post.translated = true;
+
+        // Dynamically insert AI badge
+        const badge = document.createElement('div');
+        badge.className = 'ai-badge';
+        badge.setAttribute('data-i18n', 'aiTranslated');
+        badge.textContent = UI_TRANSLATIONS[getCurrentLanguage()].aiTranslated || 'AI-translated';
+        Object.assign(badge.style, {
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          backgroundColor: '#e0e0e0',
+          padding: '3px 8px',
+          borderRadius: '5px',
+          fontSize: '0.8em',
+          color: '#444',
+          fontStyle: 'italic'
+        });
+
+        const postDiv = document.getElementById(`post-title-${post.id}`).closest('.post');
+        postDiv.appendChild(badge);
+      })
+      .catch(err => console.warn("Translation failed for post", post.id, err));
+  }
 }
-}
+
+
 
 function searchPosts() {
   const query = document.getElementById('search-input').value.trim();
@@ -675,8 +715,14 @@ function submitSignup() {
 
 
 function updateAuthButton() {
-  document.getElementById('auth-button').textContent =
-    getToken() ? 'Logout' : 'Login';
+  const btn = document.getElementById('auth-button');
+  if (!btn) return;
+
+  if (getToken()) {
+    btn.textContent = UI_TRANSLATIONS[getCurrentLanguage()]?.logout || 'Logout';
+  } else {
+    btn.textContent = UI_TRANSLATIONS[getCurrentLanguage()]?.login || 'Login';
+  }
 }
 
 function clearToken() {
