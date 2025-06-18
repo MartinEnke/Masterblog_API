@@ -222,7 +222,14 @@ function renderSinglePost(post) {
   });
 
   // 🧠 Add AI translation badge if pre-translated
-  if (post.translated === true && post.is_ai_translation === true) {
+  const currentLang = getCurrentLanguage();
+const isTranslatedCopy = post.translated === true && post.is_ai_translation === true;
+const isOriginalLang = post.original_lang === currentLang;
+
+
+if (isTranslatedCopy && !isOriginalLang) {
+  // Show AI badge
+
     const badge = document.createElement('div');
     badge.className = 'ai-badge';
     badge.setAttribute('data-i18n', 'aiTranslated');

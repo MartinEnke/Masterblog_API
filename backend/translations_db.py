@@ -1,5 +1,5 @@
 # translations_db.py
-from sqlalchemy import Column, Integer, String, UniqueConstraint
+from sqlalchemy import Column, Integer, String, UniqueConstraint, Boolean, ForeignKey
 from sqlalchemy.orm import declarative_base
 from db import Base, engine, session
 import os
@@ -20,6 +20,8 @@ class PostTranslation(Base):
     lang = Column(String(10), nullable=False)
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
+    is_ai_translation = Column(Boolean, default=False)
+    original_post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
 
     __table_args__ = (UniqueConstraint('post_id', 'lang', name='uix_post_lang'),)
 
@@ -30,21 +32,29 @@ def init_db():
 def get_translation(post_id, lang):
     return session.query(PostTranslation).filter_by(post_id=post_id, lang=lang).first()
 
-def save_translation(post_id, lang, title, content):
+def save_translation(post_id, lang, title, content, is_ai=True):
     try:
         existing = get_translation(post_id, lang)
         if existing:
             existing.title = title
             existing.content = content
+            existing.is_ai_translation = is_ai
+            existing.original_post_id = post_id
         else:
-            new = PostTranslation(post_id=post_id, lang=lang, title=title, content=content)
+            new = PostTranslation(
+                post_id=post_id,
+                lang=lang,
+                title=title,
+                content=content,
+                is_ai_translation=is_ai,
+                original_post_id=post_id
+            )
             session.add(new)
 
-        # 🔁 Flush instead of commit
-        session.flush()
-
+        session.flush()  # defer commit for flexibility
     except Exception as e:
         print("❌ Error saving translation:", e)
+
 
 def translate_text(text, lang):
     # 🔁 Replace with OpenAI or DeepL later
@@ -52,7 +62,7 @@ def translate_text(text, lang):
 
 def translate_post(title, content, target_lang):
     prompt = (
-        f"Translate the following blog post to {target_lang.upper()}:\n\n"
+        f"Translate the following blog post as it is (not more, not less) to {target_lang.upper()}:\n\n"
         f"Title:\n{title}\n\nContent:\n{content}"
     )
 

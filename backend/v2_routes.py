@@ -82,6 +82,7 @@ post_schema = {
 
 @limiter.exempt
 def get_posts_v2():
+    print("✅ /api/v2/posts was called")
     try:
         lang = request.args.get("lang", "en")
         sort_field = request.args.get("sort")
@@ -118,22 +119,38 @@ def get_posts_v2():
         for p in posts:
             title = p.title
             content = p.content
+            is_ai = False
+            translated_flag = False
 
-            # ✅ NEW: Try translation only if the requested lang differs from the original
             if lang != p.original_lang:
                 cached = get_translation(p.id, lang)
                 if cached:
                     title = cached.title
                     content = cached.content
                     translated_flag = True
+                    is_ai = getattr(cached, "is_ai_translation", True)
                 else:
-                    title = p.title
-                    content = p.content
-                    translated_flag = False
+                    # 🟡 No cached translation: translate now and save
+                    try:
+                        title_trans, content_trans = translate_post(p.title, p.content, lang)
+                        save_translation(
+                            post_id=p.id,
+                            lang=lang,
+                            title=title_trans,
+                            content=content_trans,
+                            is_ai=True  # Make sure your save_translation() accepts this param
+                        )
+                        title = title_trans
+                        content = content_trans
+                        translated_flag = True
+                        is_ai = True
+                    except Exception as e:
+                        print(f"⚠️ Failed to translate post {p.id} to {lang}:", e)
+                        translated_flag = False
+                        is_ai = False
             else:
-                title = p.title
-                content = p.content
                 translated_flag = True
+                is_ai = False
 
             posts_data.append({
                 "id": p.id,
@@ -145,7 +162,8 @@ def get_posts_v2():
                 "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
                 "likes": p.likes,
                 "translated": translated_flag,
-                "is_ai_translation": (lang != "en" and translated_flag)
+                "is_ai_translation": is_ai,
+                "original_lang": p.original_lang
             })
 
         return jsonify({
@@ -160,6 +178,7 @@ def get_posts_v2():
         print("🔥 ERROR IN /posts:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 
 
