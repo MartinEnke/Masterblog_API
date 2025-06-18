@@ -742,10 +742,14 @@ function updateAuthButton() {
   const btn = document.getElementById('auth-button');
   if (!btn) return;
 
-  if (getToken()) {
-    btn.textContent = UI_TRANSLATIONS[getCurrentLanguage()]?.logout || 'Logout';
+  const token = getToken();
+  const lang = getCurrentLanguage();
+  const strings = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS["en"];
+
+  if (token && token.length > 10) {
+    btn.textContent = strings.logout || 'Logout';
   } else {
-    btn.textContent = UI_TRANSLATIONS[getCurrentLanguage()]?.login || 'Login';
+    btn.textContent = strings.login || 'Login';
   }
 }
 
@@ -842,6 +846,7 @@ function openAddModal() {
   } catch (err) {
     console.error("❌ Failed to open Add Post modal:", err);
   }
+  updateAuthButton();
 }
 
 function openEditModal(post) {
@@ -862,6 +867,7 @@ function openEditModal(post) {
 
   translateModalPlaceholders();
   document.getElementById('update-modal').classList.remove('hidden');
+  updateAuthButton();
 }
 
 function closeModal() {
