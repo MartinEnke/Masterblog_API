@@ -182,31 +182,29 @@ document.getElementById("cancel-add-btn")
    POSTS: LOAD / RENDER / SEARCH
    ========================================================================== */
 function loadPosts() {
-  console.log("🌍 Language set to:", getCurrentLanguage());
-  console.log("Calling loadPosts with base URL:", getBaseUrl());
   const base = getBaseUrl();
-  const qs = new URLSearchParams({
-    category: document.getElementById('filter-category').value,
-    sort: document.getElementById('sort-field').value,
-    direction: document.getElementById('sort-direction').value,
-    lang: getCurrentLanguage()
-  });
-  console.log("🌐 Final posts URL:", `${base}/posts?${qs.toString()}`);
+  const lang = getCurrentLanguage();
+  const category = document.getElementById("filter-category")?.value || "";
+  const sort = document.getElementById("sort-by")?.value || "";
+  const direction = document.getElementById("sort-direction")?.value || "asc";
 
-  const url = new URL(`${base}/posts`);
-url.search = qs.toString();
-fetch(url.toString())
+  const url = `${base}/posts?category=${category}&sort=${sort}&direction=${direction}&lang=${lang}`;
+  console.log("🌐 Final posts URL:", url);
+
+  fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${getToken()}`  // ✅ Send token for accurate liked_by_current_user
+    }
+  })
     .then(r => r.json())
     .then(data => {
-      const posts = data.posts || data;
-      const c = document.getElementById('post-container');
-      c.innerHTML = '';
+      const posts = data.posts || [];
+      document.getElementById("post-container").innerHTML = "";
       posts.forEach(renderSinglePost);
-
-      // ✅ This must be inside this `.then()` block
-      applyUITranslations();
     })
-    .catch(err => console.error('Error loading posts:', err));
+    .catch(e => {
+      console.error("Error loading posts:", e);
+    });
 }
 
 
@@ -225,19 +223,15 @@ function renderSinglePost(post) {
     position: 'relative'
   });
 
-  // 🧠 Add AI translation badge if pre-translated
   const currentLang = getCurrentLanguage();
-const isTranslatedCopy = post.translated === true && post.is_ai_translation === true;
-const isOriginalLang = post.original_lang === currentLang;
+  const isTranslatedCopy = post.translated === true && post.is_ai_translation === true;
+  const isOriginalLang = post.original_lang === currentLang;
 
-
-if (isTranslatedCopy && !isOriginalLang) {
-  // Show AI badge
-
+  if (isTranslatedCopy && !isOriginalLang) {
     const badge = document.createElement('div');
     badge.className = 'ai-badge';
     badge.setAttribute('data-i18n', 'aiTranslated');
-    badge.textContent = UI_TRANSLATIONS[getCurrentLanguage()].aiTranslated || 'AI-translated';
+    badge.textContent = UI_TRANSLATIONS[currentLang].aiTranslated || 'AI-translated';
     Object.assign(badge.style, {
       position: 'absolute',
       top: '10px',
@@ -277,9 +271,30 @@ if (isTranslatedCopy && !isOriginalLang) {
     marginTop: '10px'
   });
 
+  // ❤️ Like button (dynamic heart and toggle state)
   const likeBtn = document.createElement('button');
-  likeBtn.innerHTML = `❤️ <span id="like-count-${post.id}">${post.likes || 0}</span>`;
-  likeBtn.onclick = () => likePost(post.id);
+  likeBtn.id = `like-btn-${post.id}`;
+  likeBtn.className = post.liked_by_current_user ? 'liked' : '';
+  likeBtn.innerHTML = `
+    <span id="like-heart-${post.id}" style="font-size: 1.2em;">${post.liked_by_current_user ? '❤️' : '🤍'}</span>
+    <span id="like-count-${post.id}">${post.likes || 0}</span>
+  `;
+  likeBtn.onclick = () => {
+  fetch(`${getBaseUrl()}/posts/${post.id}/like`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${getToken()}` }
+  })
+    .then(r => r.json())
+    .then(d => {
+      console.log("✅ Like response:", d);
+      if (d.likes !== undefined && typeof d.liked_by_current_user === "boolean") {
+        document.getElementById(`like-count-${post.id}`).textContent = d.likes;
+        document.getElementById(`like-heart-${post.id}`).textContent = d.liked_by_current_user ? '❤️' : '🤍';
+        likeBtn.className = d.liked_by_current_user ? 'liked' : '';
+      }
+    })
+    .catch(console.error);
+};
   btnWrap.appendChild(likeBtn);
 
   const currentUser = localStorage.getItem('username');
@@ -289,13 +304,13 @@ if (isTranslatedCopy && !isOriginalLang) {
     const editBtn = document.createElement('button');
     editBtn.setAttribute("data-i18n", "editPost");
     editBtn.onclick = () => openEditModal(post);
-    editBtn.textContent = UI_TRANSLATIONS[getCurrentLanguage()].editPost || 'Edit';
+    editBtn.textContent = UI_TRANSLATIONS[currentLang].editPost || 'Edit';
     btnWrap.appendChild(editBtn);
 
     const delBtn = document.createElement('button');
     delBtn.setAttribute("data-i18n", "deletePost");
     delBtn.onclick = () => deletePost(post.id);
-    delBtn.textContent = UI_TRANSLATIONS[getCurrentLanguage()].deletePost || 'Delete';
+    delBtn.textContent = UI_TRANSLATIONS[currentLang].deletePost || 'Delete';
     btnWrap.appendChild(delBtn);
   }
 
@@ -303,23 +318,19 @@ if (isTranslatedCopy && !isOriginalLang) {
   loadComments(post.id);
   container.appendChild(div);
 
-  // 🌀 Lazy translation if missing
-  if (post.translated === false && getCurrentLanguage() !== "en") {
-    console.log(`🔁 Translating post ${post.id} to ${getCurrentLanguage()}`);
+  // 🌀 Lazy translation (fallback)
+  if (post.translated === false && currentLang !== "en") {
     const base = getBaseUrl();
-    const lang = getCurrentLanguage();
-
-    fetch(`${base}/posts/${post.id}/translate?lang=${lang}`)
+    fetch(`${base}/posts/${post.id}/translate?lang=${currentLang}`)
       .then(r => r.json())
       .then(translated => {
         updatePostDom(post.id, translated.title, translated.content);
         post.translated = true;
 
-        // Dynamically insert AI badge
         const badge = document.createElement('div');
         badge.className = 'ai-badge';
         badge.setAttribute('data-i18n', 'aiTranslated');
-        badge.textContent = UI_TRANSLATIONS[getCurrentLanguage()].aiTranslated || 'AI-translated';
+        badge.textContent = UI_TRANSLATIONS[currentLang].aiTranslated || 'AI-translated';
         Object.assign(badge.style, {
           position: 'absolute',
           top: '10px',
@@ -470,19 +481,7 @@ function deletePost(id) {
   .catch(e => alert("Error: "+e));
 }
 
-function likePost(id) {
-  fetch(`${getBaseUrl()}/posts/${id}/like`, {
-    method:'POST',
-    headers:{ 'Authorization': `Bearer ${getToken()}` }
-  })
-  .then(r => r.json())
-  .then(d => {
-    if (d.likes!==undefined) {
-      document.getElementById(`like-count-${id}`).textContent = d.likes;
-    }
-  })
-  .catch(console.error);
-}
+
 
 function submitComment(postId) {
   const base = getBaseUrl();

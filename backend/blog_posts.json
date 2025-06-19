@@ -7,7 +7,6 @@
         "category": "Chemistry",
         "date": "April 10, 2025",
         "updated": "April 16, 2025",
-        "likes": 11,
         "comments": [
             {
                 "author": "Anonymous",
@@ -24,7 +23,6 @@
         "category": "Astronomy",
         "date": "April 11, 2025",
         "updated": null,
-        "likes": 9,
         "comments": []
     },
     {
@@ -35,7 +33,6 @@
         "category": "Quantum Physics",
         "date": "April 12, 2025",
         "updated": "April 15, 2025",
-        "likes": 13,
         "comments": [
             {
                 "author": "Anonymous",
@@ -52,7 +49,6 @@
         "category": "Quantum Physics",
         "date": "April 13, 2025",
         "updated": "April 16, 2025",
-        "likes": 18,
         "comments": [
             {
                 "author": "Anonymous",

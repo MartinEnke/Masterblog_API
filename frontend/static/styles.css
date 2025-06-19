@@ -558,3 +558,16 @@ footer {
 
 .goog-te-banner-frame.skiptranslate { display: none !important; }
 body { top: 0px !important; }
+
+.heart-icon {
+  font-size: 1.5rem;
+  transition: transform 0.2s ease;
+}
+.heart-icon:hover {
+  transform: scale(1.2);
+}
+.like-count {
+  margin-left: 0.3rem;
+  font-weight: bold;
+}
+

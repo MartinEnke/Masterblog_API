@@ -12,12 +12,14 @@ from models import Post
 import os
 from v2_routes import v2 as v2_blueprint
 
+
 print("Using DB path:", os.path.abspath('blog.db'))
 init_db()
 
 # 👇 Function for Identification (user or IP) managing separate limiting
 def get_token_or_ip():
     return request.headers.get("Authorization") or get_remote_address()
+
 
 # locate backend and frontend dirs
 HERE = os.path.dirname(os.path.abspath(__file__))

@@ -51,9 +51,10 @@ def save_translation(post_id, lang, title, content, is_ai=True):
             )
             session.add(new)
 
-        session.flush()  # defer commit for flexibility
+        session.commit()  # ← added this
     except Exception as e:
         print("❌ Error saving translation:", e)
+
 
 
 def translate_text(text, lang):

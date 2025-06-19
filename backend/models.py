@@ -14,6 +14,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
 
     posts = relationship("Post", back_populates="user")
+    likes = relationship("PostLike", back_populates="user")
 
     def __repr__(self):
         return f"<User(username={self.username})>"
@@ -27,10 +28,11 @@ class Post(Base):
     category = Column(String, nullable=False)
     date = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime)
-    likes = Column(Integer, default=0)
     original_lang = Column(String(10), default="en")
 
     user = relationship("User", back_populates="posts")
+    liked_by = relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
+
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
 
     @property
@@ -46,6 +48,18 @@ class Comment(Base):
     date = Column(DateTime, default=datetime.utcnow)
 
     post = relationship("Post", back_populates="comments")
+
+
+class PostLike(Base):
+    __tablename__ = 'post_likes'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    post_id = Column(Integer, ForeignKey('posts.id'))
+
+    __table_args__ = (UniqueConstraint('user_id', 'post_id', name='uix_user_post'),)
+
+    user = relationship("User", back_populates="likes")
+    post = relationship("Post", back_populates="liked_by")
 
 
 

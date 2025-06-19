@@ -3,17 +3,30 @@ from flasgger import swag_from
 from datetime import datetime
 from sqlalchemy.orm import joinedload
 from db import session
-from models import Post, User, Comment
+from models import Post, User, Comment, PostLike
 from rate_limit import limiter
 from auth import token_required, register_user, login_user, TOKENS
 from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data
 from translations_db import get_translation, save_translation, translate_post
 from babel.dates import format_date
 from langdetect import detect
+from traceback import print_exc
+from flask import g
+import jwt
+from flask import current_app
+from models import User
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
-
+def get_current_user_from_token():
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    try:
+        payload = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+        username = payload["sub"]
+        return session.query(User).filter_by(username=username).first()
+    except Exception as e:
+        print("❌ Invalid token:", e)
+        return None
 # -------------------------
 # 📚 Swagger schemas
 # -------------------------
@@ -116,6 +129,8 @@ def get_posts_v2():
         posts = query.offset((page - 1) * limit).limit(limit).all()
 
         posts_data = []
+
+        current_user = get_current_user_from_token()
         for p in posts:
             title = p.title
             content = p.content
@@ -152,6 +167,11 @@ def get_posts_v2():
                 translated_flag = True
                 is_ai = False
 
+            # 🔽 Add this logic to check if user liked this post
+            liked_by_user = False
+            if current_user:
+                liked_by_user = any(l.user_id == current_user.id for l in p.liked_by)
+
             posts_data.append({
                 "id": p.id,
                 "author": p.user.username,
@@ -160,10 +180,11 @@ def get_posts_v2():
                 "category": p.category,
                 "date": p.date.strftime("%B %d, %Y") if p.date else None,
                 "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
-                "likes": p.likes,
+                "likes": len(p.liked_by),
                 "translated": translated_flag,
                 "is_ai_translation": is_ai,
-                "original_lang": p.original_lang
+                "original_lang": p.original_lang,
+                "liked_by_current_user": liked_by_user  # ✅ New field
             })
 
         return jsonify({
@@ -386,7 +407,7 @@ def update_post_v2(current_user, post_id):
             "category": post.category,
             "date": post.date.strftime("%B %d, %Y") if post.date else None,
             "updated": post.updated.strftime("%B %d, %Y") if post.updated else None,
-            "likes": post.likes
+            "likes": len(post.liked_by)
         }
     }), 200
 
@@ -525,7 +546,7 @@ def search_posts_v2():
             "category": p.category,
             "date": p.date.strftime("%B %d, %Y") if p.date else None,
             "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
-            "likes": p.likes
+            "likes": len(p.liked_by)
         }
         for p in posts
         if query in p.title.lower() or query in p.content.lower() or query in p.user.username.lower()
@@ -535,7 +556,6 @@ def search_posts_v2():
         return jsonify({"error": f"No posts found matching '{query}'"}), 404
 
     return jsonify(results)
-
 
 @v2.route("/posts/<int:post_id>/like", methods=["POST"])
 @swag_from({
@@ -579,14 +599,37 @@ def search_posts_v2():
     }
 })
 @limiter.limit("20 per minute")
-def like_post_v2(post_id):
-    post = session.query(Post).filter_by(id=post_id).first()
-    if not post:
-        return jsonify({"error": f"Post with ID {post_id} not found"}), 404
+@token_required
+def like_post(current_user, post_id):
+    try:
+        post = session.query(Post).filter_by(id=post_id).first()
+        if not post:
+            return jsonify({"error": "Post not found"}), 404
 
-    post.likes = post.likes + 1
-    session.commit()
-    return jsonify({"message": f"Post {post_id} liked", "likes": post.likes}), 200
+        existing_like = session.query(PostLike).filter_by(user_id=current_user.id, post_id=post_id).first()
+        if existing_like:
+            session.delete(existing_like)
+            liked_by_user = False
+            message = f"👎 {current_user.username} unliked post {post_id}"
+        else:
+            new_like = PostLike(user_id=current_user.id, post_id=post_id)
+            session.add(new_like)
+            liked_by_user = True
+            message = f"❤️ {current_user.username} liked post {post_id}"
+
+        session.commit()
+        print(message)
+
+        return jsonify({
+            "message": message,
+            "likes": len(post.liked_by),
+            "liked_by_current_user": liked_by_user
+        }), 200
+
+    except Exception as e:
+        print("❌ Error in like route:", e)
+        return jsonify({"error": "Something went wrong"}), 500
+
 
 
 @v2.route("/posts/<int:post_id>/comments", methods=["POST"])
