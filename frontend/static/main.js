@@ -453,11 +453,18 @@ function updatePostDom(postId, newTitle, newContent) {
    ========================================================================== */
 function submitAdd() {
   const base = getBaseUrl();
+  let category = document.getElementById('add-category').value;
+  if (category === "custom") {
+    const custom = document.getElementById('custom-category-input-add').value.trim();
+    if (custom) category = custom;
+  }
+
   const payload = {
     title:   document.getElementById('add-title').value,
     content: document.getElementById('add-content').value,
-    category:document.getElementById('add-category').value
+    category
   };
+
   fetch(`${base}/posts`, {
     method: 'POST',
     headers: {
@@ -467,25 +474,31 @@ function submitAdd() {
     body: JSON.stringify(payload)
   })
   .then(r => {
-    if (!r.ok) return r.json().then(e=>Promise.reject(e.error));
+    if (!r.ok) return r.json().then(e => Promise.reject(e.error));
     return r.json();
   })
   .then(() => {
-  document.getElementById("add-modal").classList.add("hidden");
-  loadPosts();
-})
-  .catch(e => alert("Error: "+e));
+    document.getElementById("add-modal").classList.add("hidden");
+    loadPosts();
+  })
+  .catch(e => alert("Error: " + e));
 }
+
 
 function submitUpdate() {
   const base = getBaseUrl();
+  let category = document.getElementById('edit-category').value;
+  if (category === "custom") {
+    const custom = document.getElementById('custom-category-input-edit').value.trim();
+    if (custom) category = custom;
+  }
+
   const payload = {
     title:   document.getElementById('edit-title').value,
     content: document.getElementById('edit-content').value,
-    category:document.getElementById('edit-category').value
+    category
   };
-  console.log("🔐 Sending token:", getToken());
-  console.log("📦 Payload:", payload);
+
   fetch(`${base}/posts/${postToEditId}`, {
     method: 'PUT',
     headers: {
@@ -495,29 +508,12 @@ function submitUpdate() {
     body: JSON.stringify(payload)
   })
   .then(r => {
-    if (!r.ok) return r.json().then(e=>Promise.reject(e.error));
+    if (!r.ok) return r.json().then(e => Promise.reject(e.error));
     return r.json();
   })
   .then(() => { closeModal(); loadPosts(); })
-  .catch(e => alert("Error: "+e));
+  .catch(e => alert("Error: " + e));
 }
-
-function deletePost(id) {
-  if (!confirm("Delete this post?")) return;
-  fetch(`${getBaseUrl()}/posts/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${getToken()}`
-    }
-  })
-  .then(r => {
-    if (!r.ok) return r.json().then(e=>Promise.reject(e.error));
-    return r.json();
-  })
-  .then(() => loadPosts())
-  .catch(e => alert("Error: "+e));
-}
-
 
 
 function submitComment(postId) {
@@ -870,20 +866,30 @@ function openAddModal() {
     const strings = UI_TRANSLATIONS[currentLang];
     const dropdown = document.getElementById('add-category');
 
+    // ✅ Reset and populate category dropdown
     dropdown.innerHTML = `<option value="">${strings.selectCategory || "Select Category"}</option>`;
     categories.forEach(cat => {
       const option = new Option(cat, cat);
       dropdown.appendChild(option);
     });
 
+    // ✅ Append custom category option last
+    const customOption = new Option("➕ Enter Custom Category...", "custom");
+    customOption.id = "custom-category-option";
+    dropdown.appendChild(customOption);
+
+    // ✅ Show input only if "custom" is selected
+    setupCustomCategoryInput("add-category", "custom-category-wrapper-add", "custom-category-input-add");
+
     translateModalPlaceholders();
     document.getElementById('add-modal').classList.remove('hidden');
-
   } catch (err) {
     console.error("❌ Failed to open Add Post modal:", err);
   }
+
   updateAuthButton();
 }
+
 
 function openEditModal(post) {
   postToEditId = post.id;
@@ -894,6 +900,13 @@ function openEditModal(post) {
   const strings = UI_TRANSLATIONS[currentLang];
 
   const dd = document.getElementById('edit-category');
+// Append "custom" option
+const customOption = new Option("➕ Enter Custom Category...", "custom");
+customOption.id = "custom-category-option";
+dd.appendChild(customOption);
+
+// Enable dynamic field
+setupCustomCategoryInput("edit-category", "custom-category-wrapper-edit", "custom-category-input-edit");
   dd.innerHTML = `<option value="">${strings.selectCategory || "Select Category"}</option>`;
   categories.forEach(cat => {
     const o = new Option(cat, cat);
@@ -911,6 +924,28 @@ function closeModal() {
 }
 
 window.closeAddModal = closeAddModal;
+
+function setupCustomCategoryInput(dropdownId, inputWrapperId, inputFieldId) {
+  const dropdown = document.getElementById(dropdownId);
+  const wrapper = document.getElementById(inputWrapperId);
+  const input = document.getElementById(inputFieldId);
+
+  if (!dropdown || !wrapper || !input) {
+    console.warn("❌ setupCustomCategoryInput: One or more elements not found.");
+    return;
+  }
+
+  dropdown.addEventListener("change", () => {
+    if (dropdown.value === "custom") {
+      wrapper.style.display = "block";
+      input.focus();
+    } else {
+      wrapper.style.display = "none";
+      input.value = ""; // clear old custom value
+    }
+  });
+}
+
 // Wire up buttons
 document.getElementById('auth-button').onclick = handleAuthClick;
 document.getElementById('add-save-btn')?.addEventListener('click', submitAdd);

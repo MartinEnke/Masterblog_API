@@ -89,6 +89,9 @@
     <input type="text" id="edit-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title">
     <textarea id="edit-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"></textarea>
     <select id="edit-category"></select>
+    <div id="custom-category-wrapper-edit" style="display:none; margin-top:10px;">
+  <input type="text" id="custom-category-input-edit" placeholder="Enter custom category" />
+</div>
     <div class="modal-buttons">
       <span class="text-button" data-i18n="save" onclick="submitUpdate()">Save</span>
       <span class="text-button" data-i18n="cancel" onclick="closeModal()">Cancel</span>
@@ -102,6 +105,11 @@
     <input type="text" id="add-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title">
     <textarea id="add-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"></textarea>
     <select id="add-category"></select>
+    <!-- Custom category input (hidden until selected) -->
+<div id="custom-category-wrapper-add" style="display:none; margin-top:10px;">
+  <input type="text" id="custom-category-input-add" placeholder="Enter custom category"
+         style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 5px;" />
+</div>
     <div class="modal-buttons">
       <span class="text-button" data-i18n="save" onclick="submitAdd()">Save</span>
       <span class="text-button" data-i18n="cancel" id="cancel-add-btn">Cancel</span>
