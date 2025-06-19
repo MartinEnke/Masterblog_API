@@ -92,6 +92,37 @@ function applyUITranslations() {
   updateAuthButton();
 }
 
+/* ==========================================================================
+   GOOGLE TRANSLATE ON DEMAND
+   ========================================================================== */
+
+function loadGoogleTranslate() {
+  const container = document.getElementById("google_translate_element");
+
+  if (!container) {
+    console.warn("Missing #google_translate_element in DOM");
+    return;
+  }
+
+  container.style.display = "block";
+
+  // Avoid loading twice
+  if (!window.google || !window.google.translate) {
+    const s = document.createElement("script");
+    s.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    document.body.appendChild(s);
+  } else {
+    googleTranslateElementInit();
+  }
+}
+
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    includedLanguages: 'de,fr,es',
+    layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+  }, 'google_translate_element');
+}
 
 
 /* ==========================================================================
@@ -271,7 +302,7 @@ function renderSinglePost(post) {
     marginTop: '10px'
   });
 
-  // ❤️ Like button (dynamic heart and toggle state)
+  // ❤️ Like button
   const likeBtn = document.createElement('button');
   likeBtn.id = `like-btn-${post.id}`;
   likeBtn.className = post.liked_by_current_user ? 'liked' : '';
@@ -280,45 +311,51 @@ function renderSinglePost(post) {
     <span id="like-count-${post.id}">${post.likes || 0}</span>
   `;
   likeBtn.onclick = () => {
-  fetch(`${getBaseUrl()}/posts/${post.id}/like`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${getToken()}` }
-  })
-    .then(r => r.json())
-    .then(d => {
-      console.log("✅ Like response:", d);
-      if (d.likes !== undefined && typeof d.liked_by_current_user === "boolean") {
-        document.getElementById(`like-count-${post.id}`).textContent = d.likes;
-        document.getElementById(`like-heart-${post.id}`).textContent = d.liked_by_current_user ? '❤️' : '🤍';
-        likeBtn.className = d.liked_by_current_user ? 'liked' : '';
-      }
+    fetch(`${getBaseUrl()}/posts/${post.id}/like`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getToken()}` }
     })
-    .catch(console.error);
-};
+      .then(r => r.json())
+      .then(d => {
+        console.log("✅ Like response:", d);
+        if (d.likes !== undefined && typeof d.liked_by_current_user === "boolean") {
+          document.getElementById(`like-count-${post.id}`).textContent = d.likes;
+          document.getElementById(`like-heart-${post.id}`).textContent = d.liked_by_current_user ? '❤️' : '🤍';
+          likeBtn.className = d.liked_by_current_user ? 'liked' : '';
+        }
+      })
+      .catch(console.error);
+  };
   btnWrap.appendChild(likeBtn);
 
   const currentUser = localStorage.getItem('username');
   const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
   if (post.author === currentUser || isAdmin) {
-    const editBtn = document.createElement('button');
-    editBtn.setAttribute("data-i18n", "editPost");
-    editBtn.onclick = () => openEditModal(post);
-    editBtn.textContent = UI_TRANSLATIONS[currentLang].editPost || 'Edit';
-    btnWrap.appendChild(editBtn);
+    if (isOriginalLang) {
+      const editBtn = document.createElement('button');
+      editBtn.setAttribute("data-i18n", "editPost");
+      editBtn.onclick = () => openEditModal(post);
+      editBtn.textContent = UI_TRANSLATIONS[currentLang].editPost || 'Edit';
+      btnWrap.appendChild(editBtn);
 
-    const delBtn = document.createElement('button');
-    delBtn.setAttribute("data-i18n", "deletePost");
-    delBtn.onclick = () => deletePost(post.id);
-    delBtn.textContent = UI_TRANSLATIONS[currentLang].deletePost || 'Delete';
-    btnWrap.appendChild(delBtn);
+      const delBtn = document.createElement('button');
+      delBtn.setAttribute("data-i18n", "deletePost");
+      delBtn.onclick = () => deletePost(post.id);
+      delBtn.textContent = UI_TRANSLATIONS[currentLang].deletePost || 'Delete';
+      btnWrap.appendChild(delBtn);
+    } else {
+      const warn = document.createElement("p");
+
+      btnWrap.appendChild(warn);
+    }
   }
 
   div.appendChild(btnWrap);
   loadComments(post.id);
   container.appendChild(div);
 
-  // 🌀 Lazy translation (fallback)
+  // 🌀 Lazy translation
   if (post.translated === false && currentLang !== "en") {
     const base = getBaseUrl();
     fetch(`${base}/posts/${post.id}/translate?lang=${currentLang}`)
