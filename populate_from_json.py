@@ -48,6 +48,7 @@ for post_data in posts_data:
         category=post_data["category"],
         date=date,
         updated=updated,
+        review_status="approved"  # ✅ New line
     )
     session.add(post)
     session.flush()

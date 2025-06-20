@@ -332,24 +332,24 @@ function renderSinglePost(post) {
   const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
   if (post.author === currentUser || isAdmin) {
-    if (isOriginalLang) {
-      const editBtn = document.createElement('button');
-      editBtn.setAttribute("data-i18n", "editPost");
-      editBtn.onclick = () => openEditModal(post);
-      editBtn.textContent = UI_TRANSLATIONS[currentLang].editPost || 'Edit';
-      btnWrap.appendChild(editBtn);
-
-      const delBtn = document.createElement('button');
-      delBtn.setAttribute("data-i18n", "deletePost");
-      delBtn.onclick = () => deletePost(post.id);
-      delBtn.textContent = UI_TRANSLATIONS[currentLang].deletePost || 'Delete';
-      btnWrap.appendChild(delBtn);
-    } else {
-      const warn = document.createElement("p");
-
-      btnWrap.appendChild(warn);
-    }
+  if (isOriginalLang || isAdmin) {
+    // ✅ Admins can delete in any language
+    const delBtn = document.createElement('button');
+    delBtn.setAttribute("data-i18n", "deletePost");
+    delBtn.onclick = () => deletePost(post.id);
+    delBtn.textContent = UI_TRANSLATIONS[currentLang].deletePost || 'Delete';
+    btnWrap.appendChild(delBtn);
   }
+
+  if (isOriginalLang) {
+    // ✏️ Only show Edit if original language
+    const editBtn = document.createElement('button');
+    editBtn.setAttribute("data-i18n", "editPost");
+    editBtn.onclick = () => openEditModal(post);
+    editBtn.textContent = UI_TRANSLATIONS[currentLang].editPost || 'Edit';
+    btnWrap.appendChild(editBtn);
+  }
+}
 
   div.appendChild(btnWrap);
   loadComments(post.id);
@@ -515,6 +515,38 @@ function submitUpdate() {
   .catch(e => alert("Error: " + e));
 }
 
+
+function deletePost(postId) {
+  const base = getBaseUrl();
+  const token = getToken();
+
+  if (!token) {
+    alert("You must be logged in to delete a post.");
+    return;
+  }
+
+  if (!confirm("Are you sure you want to delete this post?")) return;
+
+  fetch(`${base}/posts/${postId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(r => {
+      if (!r.ok) return r.json().then(e => Promise.reject(e.error));
+      return r.json();
+    })
+    .then(data => {
+      console.log("✅ Post deleted:", data);
+      loadPosts();  // Reload post list after deletion
+    })
+    .catch(err => {
+      console.error("❌ Delete failed:", err);
+      alert("Failed to delete post.");
+    });
+}
 
 function submitComment(postId) {
   const base = getBaseUrl();

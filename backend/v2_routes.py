@@ -15,6 +15,9 @@ from flask import g
 import jwt
 from flask import current_app
 from models import User
+from utils import moderate_post  # Make sure this is imported
+from openai import OpenAIError
+import openai
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -105,7 +108,16 @@ def get_posts_v2():
         page = int(request.args.get("page", 1))
         limit = int(request.args.get("limit", 50))
 
+        current_user = get_current_user_from_token()
+        print("🔍 User:", current_user.username if current_user else "None")
+        print("🔐 Is admin:", current_user.is_admin if current_user else "N/A")
+        is_admin = current_user.is_admin if current_user else False
+
         query = session.query(Post).options(joinedload(Post.user))
+
+        # 🛡️ Filter out unapproved posts for normal users
+        if not is_admin:
+            query = query.filter(Post.review_status == "approved")
 
         if category:
             query = query.filter(Post.category.ilike(category))
@@ -129,8 +141,6 @@ def get_posts_v2():
         posts = query.offset((page - 1) * limit).limit(limit).all()
 
         posts_data = []
-
-        current_user = get_current_user_from_token()
         for p in posts:
             title = p.title
             content = p.content
@@ -145,7 +155,6 @@ def get_posts_v2():
                     translated_flag = True
                     is_ai = getattr(cached, "is_ai_translation", True)
                 else:
-                    # 🟡 No cached translation: translate now and save
                     try:
                         title_trans, content_trans = translate_post(p.title, p.content, lang)
                         save_translation(
@@ -153,7 +162,7 @@ def get_posts_v2():
                             lang=lang,
                             title=title_trans,
                             content=content_trans,
-                            is_ai=True  # Make sure your save_translation() accepts this param
+                            is_ai=True
                         )
                         title = title_trans
                         content = content_trans
@@ -167,7 +176,6 @@ def get_posts_v2():
                 translated_flag = True
                 is_ai = False
 
-            # 🔽 Add this logic to check if user liked this post
             liked_by_user = False
             if current_user:
                 liked_by_user = any(l.user_id == current_user.id for l in p.liked_by)
@@ -184,7 +192,8 @@ def get_posts_v2():
                 "translated": translated_flag,
                 "is_ai_translation": is_ai,
                 "original_lang": p.original_lang,
-                "liked_by_current_user": liked_by_user  # ✅ New field
+                "liked_by_current_user": liked_by_user,
+                "review_status": p.review_status,
             })
 
         return jsonify({
@@ -199,7 +208,6 @@ def get_posts_v2():
         print("🔥 ERROR IN /posts:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
 
 
 
@@ -279,43 +287,52 @@ def add_post_v2(current_user):
     title = data.get("title", "")
     content = data.get("content", "")
     category = data.get("category", "")
-    ui_lang = data.get("lang", "en")  # UI language sent by frontend
+    ui_lang = data.get("lang", "en")
     date = datetime.now()
 
-    # 1. Detect the actual language of the submitted text
+    # 🌐 1. Detect the language
     try:
         original_lang = detect(f"{title} {content}")
     except Exception:
         original_lang = "und"
 
-    # 2. Save the original post
+    # 🧠 2. Moderate post using OpenAI Moderation API
+    try:
+        review_status = moderate_post(title, content)
+    except Exception as e:
+        print(f"❌ Moderation check failed: {e}")
+        review_status = "needs_review"
+
+    # 📦 3. Save the post
     post = Post(
         title=title,
         content=content,
         category=category,
         user_id=current_user.id,
         date=date,
-        original_lang=original_lang
+        original_lang=original_lang,
+        review_status=review_status
     )
     session.add(post)
     session.commit()
 
-    # 3. Auto-translate to English if needed
+    # 🌍 4. Translate to English if needed
     if original_lang != "en":
         print(f"🌍 Original post language: {original_lang}, translating to English...")
         title_en, content_en = translate_post(title, content, "en")
         save_translation(post.id, "en", title_en, content_en)
 
-    # 4. Warn the user if their UI language doesn't match detected language
-    if ui_lang != original_lang:
-        warning = f"⚠️ The text appears to be in {original_lang}, not {ui_lang}."
-        return jsonify({
-            "message": "Post added",
-            "post_id": post.id,
-            "warning": warning
-        }), 201
+    # ⚠️ 5. Optional UI-language mismatch warning
+    response = {
+        "message": "Post added successfully",
+        "post_id": post.id,
+        "review_status": review_status
+    }
 
-    return jsonify({"message": "Post added successfully", "post_id": post.id}), 201
+    if ui_lang != original_lang:
+        response["warning"] = f"⚠️ The text appears to be in {original_lang}, not {ui_lang}."
+
+    return jsonify(response), 201
 
 
 
@@ -643,9 +660,19 @@ def add_comment_v2(user, post_id):
     if not data or not data.get("text"):
         return jsonify({"error": "Comment text required"}), 400
 
+    # 🧠 Run moderation check
+    moderation_result = moderate_post("Comment", data["text"])
+
+    if moderation_result == "rejected":
+        return jsonify({"error": "Comment rejected due to harmful or inappropriate content."}), 403
+
+    if moderation_result == "needs_review":
+        return jsonify({"warning": "Comment submitted for review. It will be published after approval."}), 202
+
+    # ✅ Approved comment — save it
     comment = Comment(
         post_id=post.id,
-        author=user.username,  # ✅ real authenticated user
+        author=user.username,
         text=data["text"],
         date=datetime.now()
     )
@@ -656,7 +683,7 @@ def add_comment_v2(user, post_id):
     return jsonify({
         "message": "Comment added",
         "comment": {
-            "id": comment.id,  # ✅ Add this line
+            "id": comment.id,
             "author": comment.author,
             "text": comment.text,
             "date": comment.date.strftime("%B %d, %Y")
@@ -671,7 +698,7 @@ def get_comments_v2(post_id):
     if not post:
         return jsonify({"error": "Post not found"}), 404
 
-    comments = session.query(Comment).filter_by(post_id=post_id).all()
+    comments = session.query(Comment).filter_by(post_id=int(post_id)).all()
     return jsonify([
         {
             "id": c.id,

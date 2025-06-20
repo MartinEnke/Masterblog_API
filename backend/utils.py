@@ -1,9 +1,14 @@
 from flask import jsonify
-import os
-import json
 from models import Post, Comment
 from translations_db import session
 from datetime import datetime
+from dotenv import load_dotenv
+from openai import OpenAI
+import os
+
+load_dotenv()
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def validate_post_data(data):
@@ -59,6 +64,7 @@ def save_post(post_data):
     session.commit()
     return post.id
 
+
 def delete_post_db(post_id, current_user):
     """Delete a post from the database if the current user is the author."""
     post = session.query(Post).filter_by(id=post_id).first()
@@ -72,6 +78,7 @@ def delete_post_db(post_id, current_user):
     session.commit()
     return {"message": f"Post {post_id} deleted"}, 200
 
+
 def update_post_db(post_id, data):
     post = session.query(Post).filter_by(id=post_id).first()
     if post:
@@ -83,6 +90,7 @@ def update_post_db(post_id, data):
         return post
     return None
 
+
 def like_post_db(post_id):
     """Increment the like count of a post in the database."""
     post = session.query(Post).filter_by(id=post_id).first()
@@ -93,3 +101,35 @@ def like_post_db(post_id):
     session.commit()
     return {"message": f"Post {post_id} liked", "likes": post.likes}, 200
 
+
+def moderate_post(title, content):
+    """Moderate a post using gpt-4o-mini (educational-tier access)."""
+    prompt = (
+        "You are a strict content moderator.\n"
+        "Return ONLY one of: 'approved', 'rejected', or 'needs_review'.\n"
+        "'rejected' = offensive, harmful, or unsafe\n"
+        "'needs_review' = unclear or borderline\n"
+        "'approved' = safe and appropriate\n\n"
+        f"Title:\n{title}\n\nContent:\n{content}"
+    )
+
+    try:
+        print("🔍 Prompt being sent to GPT:\n", prompt)
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0
+        )
+
+        decision = response.choices[0].message.content.strip().lower()
+        print("🤖 Moderation decision:", decision)
+
+        if decision in ["approved", "rejected", "needs_review"]:
+            return decision
+
+        print("⚠️ Unexpected moderation result:", decision)
+        return "needs_review"
+
+    except Exception as e:
+        print(f"❌ Moderation check failed: {e}")
+        return "needs_review"

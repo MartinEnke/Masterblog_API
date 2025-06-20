@@ -29,7 +29,7 @@ def validate_registration(username, password):
 
 def generate_jwt(username):
     payload = {
-        "sub": username,
+        "sub": username.strip().lower(),
         "exp": datetime.utcnow() + timedelta(days=1)
     }
     token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm="HS256")
@@ -48,14 +48,16 @@ def decode_jwt(token):
 
 def register_user():
     data = request.get_json() or {}
-    ok, resp, code = validate_registration(data.get("username"), data.get("password"))
+    username = data.get("username", "").strip().lower()  # ✅ Normalize
+    ok, resp, code = validate_registration(username, data.get("password"))
     if not ok:
         return resp, code
     return {"message": "User registered successfully"}, code
 
 def login_user():
     data = request.get_json() or {}
-    ok, resp, code = validate_login(data.get("username"), data.get("password"))
+    username = data.get("username", "").strip().lower()  # ✅ Normalize
+    ok, resp, code = validate_login(username, data.get("password"))
     if not ok:
         return resp, code
 

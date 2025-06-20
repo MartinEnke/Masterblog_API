@@ -29,6 +29,7 @@ class Post(Base):
     date = Column(DateTime, default=datetime.utcnow)
     updated = Column(DateTime)
     original_lang = Column(String(10), default="en")
+    review_status = Column(String, default="approved")  # 🆕
 
     user = relationship("User", back_populates="posts")
     liked_by = relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
@@ -42,7 +43,7 @@ class Post(Base):
 class Comment(Base):
     __tablename__ = 'comments'
     id = Column(Integer, primary_key=True)
-    post_id = Column(Integer, ForeignKey('posts.id'))
+    post_id = Column(Integer, ForeignKey("posts.id"))
     author = Column(String)
     text = Column(String)
     date = Column(DateTime, default=datetime.utcnow)
