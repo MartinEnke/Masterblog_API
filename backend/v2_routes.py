@@ -18,6 +18,7 @@ from models import User
 from utils import moderate_post  # Make sure this is imported
 from openai import OpenAIError
 import openai
+from sqlalchemy import func
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -101,8 +102,8 @@ def get_posts_v2():
     print("✅ /api/v2/posts was called")
     try:
         lang = request.args.get("lang", "en")
-        sort_field = request.args.get("sort")
-        direction = request.args.get("direction", "asc")
+        sort_field = request.args.get("sort", "date")
+        direction = request.args.get("direction", "desc")
         category = request.args.get("category")
         categories = request.args.get("categories")
         page = int(request.args.get("page", 1))
@@ -125,17 +126,27 @@ def get_posts_v2():
             cat_list = [c.strip() for c in categories.split(",")]
             query = query.filter(Post.category.in_(cat_list))
 
-        if sort_field:
-            if sort_field == "author":
-                query = query.join(Post.user).order_by(
-                    User.username.desc() if direction == "desc" else User.username.asc()
+        if sort_field == "author":
+            query = query.join(Post.user).order_by(
+                User.username.desc() if direction == "desc" else User.username.asc()
+            )
+        elif sort_field == "likes":
+            query = (
+                query.outerjoin(Post.liked_by)
+                .group_by(Post.id, User.id)
+                .order_by(
+                    func.count().desc() if direction == "desc" else func.count()
+                )
+            )
+        else:
+            sort_column = getattr(Post, sort_field, None)
+            if sort_column is not None:
+                query = query.order_by(
+                    sort_column.desc() if direction == "desc" else sort_column.asc()
                 )
             else:
-                sort_column = getattr(Post, sort_field, None)
-                if sort_column is not None:
-                    query = query.order_by(
-                        sort_column.desc() if direction == "desc" else sort_column.asc()
-                    )
+                # Default fallback
+                query = query.order_by(Post.date.desc())
 
         total_posts = query.count()
         posts = query.offset((page - 1) * limit).limit(limit).all()
@@ -194,6 +205,7 @@ def get_posts_v2():
                 "original_lang": p.original_lang,
                 "liked_by_current_user": liked_by_user,
                 "review_status": p.review_status,
+                "is_owner": current_user and current_user.id == p.user_id
             })
 
         return jsonify({

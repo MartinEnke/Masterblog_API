@@ -5,7 +5,7 @@ conn = sqlite3.connect("backend/blog.db")
 cursor = conn.cursor()
 
 # Delete all translations with id >= 13
-cursor.execute("DELETE FROM translations WHERE id >= 0;")
+cursor.execute("DELETE FROM posts WHERE id >= 4;")
 print("🗑️ Deleted translations with ID >= 0")
 
 # # Delete all posts with id >= 5

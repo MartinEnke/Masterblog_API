@@ -57,7 +57,7 @@ def get_posts():
     posts = load_posts()
 
     sort_field = request.args.get("sort")
-    direction = request.args.get("direction", "asc")
+    direction = request.args.get("direction", "desc")
     category = request.args.get("category")
     categories = request.args.get("categories")
     page = int(request.args.get("page", 1))

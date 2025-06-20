@@ -216,8 +216,8 @@ function loadPosts() {
   const base = getBaseUrl();
   const lang = getCurrentLanguage();
   const category = document.getElementById("filter-category")?.value || "";
-  const sort = document.getElementById("sort-by")?.value || "";
-  const direction = document.getElementById("sort-direction")?.value || "asc";
+  const sort = document.getElementById("sort-field")?.value || "date";
+  const direction = document.getElementById("sort-direction")?.value || "desc";
 
   const url = `${base}/posts?category=${category}&sort=${sort}&direction=${direction}&lang=${lang}`;
   console.log("🌐 Final posts URL:", url);
@@ -328,10 +328,10 @@ function renderSinglePost(post) {
   };
   btnWrap.appendChild(likeBtn);
 
-  const currentUser = localStorage.getItem('username');
   const isAdmin = localStorage.getItem('isAdmin') === 'true';
+const isOwner = post.is_owner;
 
-  if (post.author === currentUser || isAdmin) {
+if (isOwner || isAdmin) {
   if (isOriginalLang || isAdmin) {
     // ✅ Admins can delete in any language
     const delBtn = document.createElement('button');
