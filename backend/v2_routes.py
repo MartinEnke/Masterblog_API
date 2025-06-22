@@ -126,32 +126,9 @@ def get_posts_v2():
             cat_list = [c.strip() for c in categories.split(",")]
             query = query.filter(Post.category.in_(cat_list))
 
-        if sort_field == "author":
-            query = query.join(Post.user).order_by(
-                User.username.desc() if direction == "desc" else User.username.asc()
-            )
-        elif sort_field == "likes":
-            query = (
-                query.outerjoin(Post.liked_by)
-                .group_by(Post.id, User.id)
-                .order_by(
-                    func.count().desc() if direction == "desc" else func.count()
-                )
-            )
-        else:
-            sort_column = getattr(Post, sort_field, None)
-            if sort_column is not None:
-                query = query.order_by(
-                    sort_column.desc() if direction == "desc" else sort_column.asc()
-                )
-            else:
-                # Default fallback
-                query = query.order_by(Post.date.desc())
-
-        total_posts = query.count()
-        posts = query.offset((page - 1) * limit).limit(limit).all()
-
+        posts = query.all()  # ✅ get all results so we can sort and paginate manually
         posts_data = []
+
         for p in posts:
             title = p.title
             content = p.content
@@ -208,11 +185,40 @@ def get_posts_v2():
                 "is_owner": current_user and current_user.id == p.user_id
             })
 
+        # ✅ Sort posts_data after it's fully built
+        if sort_field:
+            if sort_field not in ["title", "content", "likes", "date", "updated", "author"]:
+                return jsonify({"error": "Invalid sort field."}), 400
+            if direction not in ["asc", "desc"]:
+                return jsonify({"error": "Invalid direction."}), 400
+            reverse = direction == "desc"
+
+            if sort_field == "likes":
+                posts_data.sort(key=lambda p: p.get("likes", 0), reverse=reverse)
+            else:
+                if sort_field == "updated":
+                    posts_data.sort(
+                        key=lambda p: p.get("updated") or p.get("date") or datetime.min.isoformat(),
+                        reverse=reverse
+                    )
+                else:
+                    posts_data.sort(
+                        key=lambda p: (p.get(sort_field, "") or "").lower()
+                        if isinstance(p.get(sort_field), str) else p.get(sort_field, ""),
+                        reverse=reverse
+                    )
+
+        # ✅ Apply pagination AFTER sorting
+        total_posts = len(posts_data)
+        start = (page - 1) * limit
+        end = start + limit
+        paginated = posts_data[start:end]
+
         return jsonify({
             "page": page,
             "limit": limit,
             "total_posts": total_posts,
-            "posts": posts_data
+            "posts": paginated
         })
 
     except Exception as e:
@@ -220,6 +226,7 @@ def get_posts_v2():
         print("🔥 ERROR IN /posts:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 
 

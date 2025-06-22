@@ -4,9 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Quiet Almanac</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/styles.css">
-    <script type="text/javascript">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    .hidden { display: none; }
+    .ai-badge { font-style: italic; font-size: 0.8rem; background-color: #e0e0e0; padding: 2px 6px; border-radius: 4px; color: #444; }
+  </style>
+  <script type="text/javascript">
     function googleTranslateElementInit() {
       new google.translate.TranslateElement({
         pageLanguage: 'en',
@@ -16,167 +21,124 @@
       }, 'google_translate_element');
     }
   </script>
-  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
-<body>
-  <header class="banner">
-    <img src="/static/images/almanac.png" alt="Notes on the Miraculous Ordinary">
+<body class="bg-gray-100 min-h-screen p-4">
+
+  <!-- Header -->
+  <header class="flex justify-center mb-6">
+    <img src="/static/images/almanac.png" alt="Notes on the Miraculous Ordinary" class="w-full max-w-4xl rounded-lg shadow-lg">
   </header>
-<!-- 🌍 Google Translate Section (Centered) -->
-<div style="text-align: center; margin-top: 20px;">
-  <button onclick="loadGoogleTranslate()" style="padding: 8px 16px; font-size: 1rem;">
-    🌐 Use Google Translate
-  </button>
-  <div id="google_translate_element" style="display: none; margin-top: 10px;"></div>
-</div>
 
+  <!-- Google Translate -->
+  <div class="text-center mb-6">
+    <button onclick="loadGoogleTranslate()" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">
+      🌐 Use Google Translate
+    </button>
+    <div id="google_translate_element" class="mt-2 hidden"></div>
+  </div>
 
-  <main class="container">
-    <!-- 🔧 Top Bar -->
-    <section class="top-bar">
-      <input
-        type="text"
-        id="api-base-url"
-        class="styled-input"
-        placeholder="https://your‐host:port/api/v2"
-        value=""
-      >
-      <span id="load-posts-btn" class="text-button large" data-i18n="loadPosts" onclick="loadPosts()">Load Posts</span>
-
-      <select id="lang-select">
+  <!-- Main Container -->
+  <main class="bg-white max-w-5xl mx-auto p-6 rounded-lg shadow-md">
+    <!-- Top Bar -->
+    <section class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <input id="api-base-url" type="text" placeholder="https://your‐host:port/api/v2" value="" class="w-[300px] h-9 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm">
+      <span id="load-posts-btn" data-i18n="loadPosts" onclick="loadPosts()" class="text-blue-600 hover:text-blue-800 hover:bg-blue-100 transition px-4 py-2 rounded-md cursor-pointer">Load Posts</span>
+      <select id="lang-select" class="border border-gray-300 px-3 py-1.5 rounded-md text-sm">
         <option value="en">English</option>
         <option value="de">Deutsch</option>
         <option value="fr">Français</option>
         <option value="es">Español</option>
       </select>
-      <div class="top-bar-right">
-        <div id="user-info" class="user-info-pill"></div>
-        <span class="text-button large" id="auth-button" data-i18n="login" onclick="handleAuthClick()">Login</span>
-        <span class="text-button large" data-i18n="signup" onclick="openSignupModal()">Signup</span>
+      <div class="flex items-center gap-4 ml-auto">
+        <div id="user-info" class="text-green-800 font-semibold"></div>
+        <span class="text-blue-600 cursor-pointer" id="auth-button" data-i18n="login" onclick="handleAuthClick()">Login</span>
+        <span class="text-blue-600 cursor-pointer" data-i18n="signup" onclick="openSignupModal()">Signup</span>
       </div>
     </section>
 
-    <!-- 🧩 Filters -->
-    <section class="filter-bar">
-      <select id="filter-category" data-i18n-option>
-  <option value="">All Categories</option>
-</select>
-      <select id="sort-field" data-i18n-option>
-  <option value="">noSorting</option>
-  <option value="author" data-i18n-option="sortAuthor">Author</option>
-  <option value="title" data-i18n-option="sortTitle">Title</option>
-  <option value="likes" data-i18n-option="sortLikes">Likes</option>
-  <option value="date" data-i18n-option="sortDate">Date</option>
-  <option value="updated" data-i18n-option="sortUpdated">Last Updated</option>
-</select>
-      <select id="sort-direction" data-i18n-option>
-  <option value="asc" data-i18n-option="ascending">Ascending</option>
-  <option value="desc" data-i18n-option="descending">Descending</option>
-</select>
-      <span class="text-button" data-i18n="applyFilters" onclick="loadPosts()">Apply Filters</span>
-      <span class="text-button" data-i18n="addPost" onclick="openAddModal()">Add Post</span>
-      <input type="text" id="search-input" placeholder="Search author, title or content..." data-i18n-placeholder="searchPlaceholder">
+    <!-- Filters -->
+    <section class="flex flex-wrap items-center gap-4 mb-6">
+      <select id="filter-category" data-i18n-option class="border px-3 py-1.5 rounded-md text-sm">
+        <option value="">All Categories</option>
+      </select>
+      <select id="sort-field" data-i18n-option class="border px-3 py-1.5 rounded-md text-sm">
+        <option value="">noSorting</option>
+        <option value="author" data-i18n-option="sortAuthor">Author</option>
+        <option value="title" data-i18n-option="sortTitle">Title</option>
+        <option value="likes" data-i18n-option="sortLikes">Likes</option>
+        <option value="date" data-i18n-option="sortDate">Date</option>
+        <option value="updated" data-i18n-option="sortUpdated">Last Updated</option>
+      </select>
+      <select id="sort-direction" data-i18n-option class="border px-3 py-1.5 rounded-md text-sm">
+        <option value="asc" data-i18n-option="ascending">Ascending</option>
+        <option value="desc" data-i18n-option="descending">Descending</option>
+      </select>
+      <span class="text-blue-600 cursor-pointer" data-i18n="applyFilters" onclick="loadPosts()">Apply Filters</span>
+      <span class="text-blue-600 cursor-pointer" data-i18n="addPost" onclick="openAddModal()">Add Post</span>
+      <input type="text" id="search-input" placeholder="Search author, title or content..." data-i18n-placeholder="searchPlaceholder" class="flex-grow border px-3 py-1.5 rounded-md text-sm">
     </section>
 
-    <!-- 📬 Posts Container -->
+    <!-- Posts Container -->
     <section id="post-container"></section>
   </main>
 
-  <!-- 🔧 Modals -->
-<div id="update-modal" class="modal hidden">
-  <div class="modal-content">
-    <h2 data-i18n="editPost">✏️ Edit Post</h2>
-    <input type="text" id="edit-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title">
-    <textarea id="edit-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"></textarea>
-    <select id="edit-category"></select>
-    <div id="custom-category-wrapper-edit" style="display:none; margin-top:10px;">
-  <input type="text" id="custom-category-input-edit" placeholder="Enter custom category" />
-</div>
-    <div class="modal-buttons">
-      <span class="text-button" data-i18n="save" onclick="submitUpdate()">Save</span>
-      <span class="text-button" data-i18n="cancel" onclick="closeModal()">Cancel</span>
+  <!-- Modals -->
+  <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+      <h2 data-i18n="login" class="text-xl font-bold mb-4">🔐 Login</h2>
+      <input type="text" id="login-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+      <input type="password" id="login-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+      <div class="flex justify-end gap-3">
+        <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" data-i18n="login" onclick="submitLogin()">Login</span>
+        <span class="text-gray-600 bg-gray-200 px-4 py-2 rounded-md cursor-pointer" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+    <h2 data-i18n="addPost" class="text-xl font-bold mb-4">📝 Add Post</h2>
+    <input type="text" id="add-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+    <textarea id="add-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md min-h-[200px]"></textarea>
+    <select id="add-category" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md"></select>
+    <div id="custom-category-wrapper-add" class="hidden mb-4">
+      <input type="text" id="custom-category-input-add" placeholder="Enter custom category" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+    </div>
+    <div class="flex justify-end gap-3">
+      <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" data-i18n="save" onclick="submitAdd()">Save</span>
+      <span class="text-gray-600 bg-gray-200 px-4 py-2 rounded-md cursor-pointer" data-i18n="cancel" id="cancel-add-btn">Cancel</span>
     </div>
   </div>
 </div>
-
-<div id="add-modal" class="modal hidden">
-  <div class="modal-content">
-    <h2 data-i18n="addPost">📝 Add Post</h2>
-    <input type="text" id="add-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title">
-    <textarea id="add-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"></textarea>
-    <select id="add-category"></select>
-    <!-- Custom category input (hidden until selected) -->
-<div id="custom-category-wrapper-add" style="display:none; margin-top:10px;">
-  <input type="text" id="custom-category-input-add" placeholder="Enter custom category"
-         style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 5px;" />
-</div>
-    <div class="modal-buttons">
-      <span class="text-button" data-i18n="save" onclick="submitAdd()">Save</span>
-      <span class="text-button" data-i18n="cancel" id="cancel-add-btn">Cancel</span>
+  <div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+    <h2 data-i18n="signup" class="text-xl font-bold mb-4">📝 Signup</h2>
+    <input type="text" id="signup-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+    <input type="password" id="signup-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+    <div class="flex justify-end gap-3">
+      <button data-i18n="register" onclick="submitSignup()" class="text-white bg-blue-600 px-4 py-2 rounded-md">Register</button>
+      <button data-i18n="cancel" onclick="closeSignupModal()" class="text-gray-600 bg-gray-200 px-4 py-2 rounded-md">Cancel</button>
     </div>
   </div>
 </div>
-
-<div id="login-modal" class="modal hidden">
-  <div class="modal-content">
-    <h2 data-i18n="login">🔐 Login</h2>
-    <input type="text" id="login-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username">
-    <input type="password" id="login-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
-    <div class="modal-buttons">
-      <span class="text-button" data-i18n="login" onclick="submitLogin()">Login</span>
-      <span class="text-button" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
+<!-- Edit Modal -->
+<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+    <h2 data-i18n="editPost" class="text-xl font-bold mb-4">✏️ Edit Post</h2>
+    <input type="text" id="edit-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+    <textarea id="edit-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md min-h-[200px]"></textarea>
+    <select id="edit-category" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md"></select>
+    <div id="custom-category-wrapper-edit" class="hidden mb-4">
+      <input type="text" id="custom-category-input-edit" placeholder="Enter custom category" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+    </div>
+    <div class="flex justify-end gap-3">
+      <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" data-i18n="save" onclick="submitUpdate()">Save</span>
+      <span class="text-gray-600 bg-gray-200 px-4 py-2 rounded-md cursor-pointer" data-i18n="cancel" onclick="closeModal()">Cancel</span>
     </div>
   </div>
 </div>
-
-<div id="logout-modal" class="modal hidden">
-  <div class="modal-content">
-    <h2 data-i18n="logout">🚪 Logout</h2>
-    <p data-i18n="logoutConfirm">Are you sure you want to log out?</p>
-    <div class="modal-buttons">
-      <button data-i18n="yes" onclick="confirmLogout()">Yes, Logout</button>
-      <button data-i18n="cancel" onclick="closeLogoutModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div id="signup-modal" class="modal hidden">
-  <div class="modal-content">
-    <h2 data-i18n="signup">📝 Signup</h2>
-    <input type="text" id="signup-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username">
-    <input type="password" id="signup-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password">
-    <div class="modal-buttons">
-      <button data-i18n="register" onclick="submitSignup()">Register</button>
-      <button data-i18n="cancel" onclick="closeSignupModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div id="add-warning-modal" class="modal hidden">
-  <div class="modal-content">
-    <h2 data-i18n="loginRequired">⚠️ Login Required</h2>
-    <p data-i18n="loginToAdd">You need to be logged in to add a post.</p>
-    <div class="modal-buttons">
-      <span class="text-button" data-i18n="login" onclick="submitLogin()">Login</span>
-      <span class="text-button" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
-    </div>
-  </div>
-</div>
-
-<div id="alert-modal" class="modal hidden">
-  <div class="modal-content">
-    <p id="alert-message" data-i18n="mustBeLoggedIn">You must be logged in to add a post.</p>
-    <div class="modal-buttons">
-      <span class="text-button" data-i18n="login" onclick="handleAlertLogin()">Login</span>
-      <span class="text-button" data-i18n="cancel" onclick="closeAlertModal()">Cancel</span>
-    </div>
-  </div>
-</div>
-
-
-  <footer>
-    &copy; The Quiet Almanac {{ 2025 }}
-  </footer>
+  <footer class="text-center text-gray-400 text-sm mt-10">&copy; The Quiet Almanac {{ 2025 }}</footer>
 
   <script src="/static/i18n.js"></script>
   <script src="/static/main.js" defer></script>

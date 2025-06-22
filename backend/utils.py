@@ -1,5 +1,5 @@
 from flask import jsonify
-from models import Post, Comment
+from models import Post, Comment, PostLike
 from translations_db import session
 from datetime import datetime
 from dotenv import load_dotenv
@@ -25,10 +25,13 @@ def validate_post_data(data):
 
 
 def load_posts():
-    """Load all blog posts from the database as dicts."""
+    """Load all blog posts from the database as dicts, including dynamic like counts."""
     posts = session.query(Post).all()
     result = []
+
     for post in posts:
+        like_count = session.query(PostLike).filter_by(post_id=post.id).count()
+
         post_dict = {
             "id": post.id,
             "author": post.author.username if post.author else "Unknown",
@@ -37,7 +40,7 @@ def load_posts():
             "category": post.category,
             "date": post.date.strftime("%B %d, %Y") if post.date else None,
             "updated": post.updated.strftime("%B %d, %Y") if post.updated else None,
-            "likes": post.likes,
+            "likes": like_count,  # ✅ dynamically computed like count
             "comments": [
                 {
                     "author": c.author,
@@ -47,8 +50,11 @@ def load_posts():
                 for c in post.comments
             ]
         }
+
         result.append(post_dict)
+
     return result
+
 
 
 def save_post(post_data):

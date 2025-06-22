@@ -959,12 +959,12 @@ setupCustomCategoryInput("edit-category", "custom-category-wrapper-edit", "custo
   });
 
   translateModalPlaceholders();
-  document.getElementById('update-modal').classList.remove('hidden');
+  document.getElementById('edit-modal').classList.remove('hidden');
   updateAuthButton();
 }
 
 function closeModal() {
-  document.getElementById('update-modal').classList.add('hidden');
+  document.getElementById('edit-modal').classList.add('hidden');
 }
 
 window.closeAddModal = closeAddModal;
