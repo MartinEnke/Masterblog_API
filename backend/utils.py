@@ -105,12 +105,13 @@ def like_post_db(post_id):
 def moderate_post(title, content):
     """Moderate a post using gpt-4o-mini (educational-tier access)."""
     prompt = (
-        "You are a strict content moderator.\n"
-        "Return ONLY one of: 'approved', 'rejected', or 'needs_review'.\n"
-        "'rejected' = offensive, harmful, or unsafe\n"
-        "'needs_review' = unclear or borderline\n"
-        "'approved' = safe and appropriate\n\n"
-        f"Title:\n{title}\n\nContent:\n{content}"
+        '''You are a helpful but balanced content moderator.
+           Return ONLY one of: 'approved', 'rejected', or 'needs_review'.
+           'rejected' = clearly offensive, harmful, violent, or unsafe
+           'needs_review' = likely problematic but unclear — use this rarely
+           'approved' = appropriate or benign
+           Be generous with what is safe. Avoid flagging harmless or emotional expressions.'''
+           f"Title:\n{title}\n\nContent:\n{content}"
     )
 
     try:

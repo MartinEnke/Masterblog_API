@@ -421,19 +421,27 @@ function loadComments(postId) {
       const currentUser = localStorage.getItem("username");
       const isAdmin = localStorage.getItem("isAdmin") === "true";
 
+      console.log("🧪 currentUser from localStorage:", currentUser);
+      console.log("🧪 All comment authors:");
+
       comments.forEach(c => {
+        console.log("➡️", c.author);  // check if lowercase
+
+        const isOwner = (c.author || "").toLowerCase() === (currentUser || "").toLowerCase();
+
         const p = document.createElement('p');
         p.innerHTML = `
           <strong>${c.author}</strong>: ${c.text}
           <span style="font-size:.8em; color:#888">(${c.date})</span>
-          ${(c.author === currentUser || isAdmin) ?
-            `<span style="cursor:pointer; color:red; margin-left:10px" onclick="deleteComment(${c.id}, ${postId})">❌</span>`
+          ${isOwner || isAdmin
+            ? `<span style="cursor:pointer; color:red; margin-left:10px" onclick="deleteComment(${c.id}, ${postId})">❌</span>`
             : ''}
         `;
         list.appendChild(p);
       });
     });
 }
+
 
 /* ==========================================================================
    UTILS
@@ -571,11 +579,14 @@ function submitComment(postId) {
     const currentUser = localStorage.getItem('username');
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
+
     const c = d.comment;
+if (!c) return alert("Comment submitted, but awaiting review.");
 
     // 🛠️ This is the key rendering logic:
     const p = document.createElement('p');
-    const showDelete = currentUser && (c.author === currentUser || isAdmin);
+    const showDelete = currentUser && (c.author.toLowerCase() === currentUser.toLowerCase() || isAdmin);
+
 
     p.innerHTML = `
       <strong>${c.author}</strong>: ${c.text}
@@ -706,7 +717,8 @@ function submitLogin() {
     }
 
     saveToken(d.token);
-    localStorage.setItem('username', u);
+    localStorage.setItem('username', u.toLowerCase());
+
 
     // ✅ Try to fetch admin info before proceeding
     try {
