@@ -33,8 +33,12 @@ class Post(Base):
 
     user = relationship("User", back_populates="posts")
     liked_by = relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
-
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    translations = relationship(
+        "PostTranslation",
+        back_populates="post",
+        cascade="all, delete-orphan"
+    )
 
     @property
     def author(self):

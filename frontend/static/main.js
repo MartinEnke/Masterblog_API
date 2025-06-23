@@ -523,9 +523,17 @@ function submitAdd() {
       return r.json();
     })
     .then(() => {
-      document.getElementById("add-modal").classList.add("hidden");
-      loadPosts();
-    })
+  document.getElementById("add-modal").classList.add("hidden");
+
+  // 👇 Reload posts
+  loadPosts();
+
+  // 👇 Add new category to the list if it's not already there
+  if (!categories.includes(category)) {
+    categories.push(category);
+    categories.sort(); // Optional: keep it alphabetical
+  }
+})
     .catch(e => alert("Error: " + e));
 }
 

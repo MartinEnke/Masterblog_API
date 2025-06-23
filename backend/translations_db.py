@@ -1,6 +1,6 @@
 # translations_db.py
 from sqlalchemy import Column, Integer, String, UniqueConstraint, Boolean, ForeignKey
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 from db import Base, engine, session
 import os
 from dotenv import load_dotenv
@@ -21,8 +21,9 @@ class PostTranslation(Base):
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
     is_ai_translation = Column(Boolean, default=False)
-    original_post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
-
+    original_post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=True)
+    # 🔁 Relationship to Post model
+    post = relationship("Post", back_populates="translations")
     __table_args__ = (UniqueConstraint('post_id', 'lang', name='uix_post_lang'),)
 
 def init_db():
