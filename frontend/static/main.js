@@ -498,7 +498,7 @@ function submitAdd() {
   }
 
   const payload = {
-    title:   document.getElementById('add-title').value,
+    title: document.getElementById('add-title').value,
     content: document.getElementById('add-content').value,
     category
   };
@@ -506,20 +506,27 @@ function submitAdd() {
   fetch(`${base}/posts`, {
     method: 'POST',
     headers: {
-      'Content-Type':'application/json',
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${getToken()}`
     },
     body: JSON.stringify(payload)
   })
-  .then(r => {
-    if (!r.ok) return r.json().then(e => Promise.reject(e.error));
-    return r.json();
-  })
-  .then(() => {
-    document.getElementById("add-modal").classList.add("hidden");
-    loadPosts();
-  })
-  .catch(e => alert("Error: " + e));
+    .then(async r => {
+      if (!r.ok) {
+        const errData = await r.json();
+        const message = errData.error || "Unknown error";
+        if (r.status === 429 && errData.remaining_calls !== undefined) {
+          return Promise.reject(`🚫 ${message}\nRemaining moderation calls: ${errData.remaining_calls}`);
+        }
+        return Promise.reject(message);
+      }
+      return r.json();
+    })
+    .then(() => {
+      document.getElementById("add-modal").classList.add("hidden");
+      loadPosts();
+    })
+    .catch(e => alert("Error: " + e));
 }
 
 

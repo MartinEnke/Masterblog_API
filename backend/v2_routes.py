@@ -15,7 +15,7 @@ from flask import g
 import jwt
 from flask import current_app
 from models import User
-from utils import moderate_post  # Make sure this is imported
+from utils import can_call_openai, moderate_post
 from openai import OpenAIError
 import openai
 from sqlalchemy import func
@@ -31,8 +31,17 @@ def get_current_user_from_token():
     except Exception as e:
         print("❌ Invalid token:", e)
         return None
+
+def get_user_from_token_value(token):
+    try:
+        payload = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+        username = payload["sub"]
+        return session.query(User).filter_by(username=username).first()
+    except Exception as e:
+        print("❌ Invalid token:", e)
+        return None
 # -------------------------
-# 📚 Swagger schemas
+# Swagger schemas
 # -------------------------
 
 post_schema = {
@@ -50,7 +59,7 @@ post_schema = {
 }
 
 # -------------------------
-# 📘 GET /posts
+# GET /posts
 # -------------------------
 
 @v2.route("/posts", methods=["GET"])
@@ -246,6 +255,10 @@ def translate_individual_post(post_id):
             "lang": lang
         })
 
+    # 🛑 Rate-limit OpenAI calls
+    if not can_call_openai(limit=10):  # Or whatever per-hour limit you want
+        return jsonify({"error": "AI translation limit reached. Try again later."}), 429
+
     # 🧠 AI translation logic
     from translations_db import translate_post, save_translation
     print(f"🔁 Translating post {post_id} to {lang} using AI")
@@ -260,7 +273,7 @@ def translate_individual_post(post_id):
         "lang": lang
     })
 # -------------------------
-# 📝 POST /posts
+# POST /posts
 # -------------------------
 
 @v2.route("/posts", methods=["POST"])
@@ -303,26 +316,36 @@ def translate_individual_post(post_id):
 @limiter.limit("5 per minute")
 def add_post_v2(current_user):
     data = request.get_json()
-    title = data.get("title", "")
-    content = data.get("content", "")
-    category = data.get("category", "")
+    title = data.get("title", "").strip()
+    content = data.get("content", "").strip()
+    category = data.get("category", "").strip()
     ui_lang = data.get("lang", "en")
     date = datetime.now()
 
-    # 🌐 1. Detect the language
+    if not title or not content or not category:
+        return jsonify({"error": "Missing title, content or category"}), 400
+
+    # 🌐 1. Detect language
     try:
         original_lang = detect(f"{title} {content}")
     except Exception:
         original_lang = "und"
 
-    # 🧠 2. Moderate post using OpenAI Moderation API
+    # 🧠 2. Rate-limit OpenAI usage
+    if not can_call_openai(limit=10):
+        return jsonify({
+            "error": "AI moderation temporarily unavailable. Too many requests this hour. Try again later.",
+            "remaining_calls": 0
+        }), 429
+
+    # 🧠 3. Moderate content
     try:
         review_status = moderate_post(title, content)
     except Exception as e:
-        print(f"❌ Moderation check failed: {e}")
+        print(f"❌ Moderation error: {e}")
         review_status = "needs_review"
 
-    # 📦 3. Save the post
+    # 💾 4. Save to database
     post = Post(
         title=title,
         content=content,
@@ -335,13 +358,16 @@ def add_post_v2(current_user):
     session.add(post)
     session.commit()
 
-    # 🌍 4. Translate to English if needed
+    # 🌍 5. Translate to English if needed
     if original_lang != "en":
-        print(f"🌍 Original post language: {original_lang}, translating to English...")
-        title_en, content_en = translate_post(title, content, "en")
-        save_translation(post.id, "en", title_en, content_en)
+        print(f"🌍 Translating from {original_lang} to English...")
+        try:
+            title_en, content_en = translate_post(title, content, "en")
+            save_translation(post.id, "en", title_en, content_en)
+        except Exception as e:
+            print(f"⚠️ Translation failed: {e}")
 
-    # ⚠️ 5. Optional UI-language mismatch warning
+    # 📤 6. Build response
     response = {
         "message": "Post added successfully",
         "post_id": post.id,
@@ -352,6 +378,7 @@ def add_post_v2(current_user):
         response["warning"] = f"⚠️ The text appears to be in {original_lang}, not {ui_lang}."
 
     return jsonify(response), 201
+
 
 
 
@@ -679,6 +706,9 @@ def add_comment_v2(user, post_id):
     if not data or not data.get("text"):
         return jsonify({"error": "Comment text required"}), 400
 
+    if not can_call_openai(limit=10):
+        return jsonify({"error": "AI moderation limit reached. Try again later."}), 429
+
     # 🧠 Run moderation check
     moderation_result = moderate_post("Comment", data["text"])
 
@@ -747,7 +777,7 @@ def delete_comment(user, comment_id):
 
 
 # -------------------------
-# 🔐 POST /register
+# POST /register
 # -------------------------
 
 @v2.route("/register", methods=["POST"])
@@ -799,7 +829,7 @@ def register_v2():
 
 
 # -------------------------
-# 🔐 POST /login
+# POST /login
 # -------------------------
 
 @v2.route("/login", methods=["POST"])
@@ -859,6 +889,9 @@ def get_current_user(current_user):
         "is_admin": current_user.is_admin
     })
 
+# -------------------------
+# POST /login
+# -------------------------
 
 @v2.route("/secret", methods=["GET"])
 @token_required
@@ -898,3 +931,40 @@ def get_current_user(current_user):
 def secret_v2(current_user):
     """Protected route to test token-based authentication."""
     return jsonify({"message": f"Welcome, {current_user}!"}), 200
+
+
+# -------------------------
+# Admin Route for Viewing Usage
+# -------------------------
+
+@v2.route("/admin/openai-usage", methods=["GET"])
+@token_required
+@limiter.limit("3 per minute")
+def view_openai_usage(current_user):
+    if not current_user.is_admin:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    from utils import openai_usage_counter
+    from collections import defaultdict
+    import datetime
+
+    usage_summary = defaultdict(lambda: defaultdict(int))  # username -> hour -> count
+
+    for token, timestamps in openai_usage_counter.items():
+        # Get user from token
+        user = get_user_from_token_value(token)
+        username = user.username if user else "unknown"
+
+        for ts in timestamps:
+            dt = datetime.datetime.fromtimestamp(ts)
+            hour_key = dt.strftime("%Y-%m-%d %H:00")
+            usage_summary[username][hour_key] += 1
+
+    return jsonify(usage_summary)
+
+
+@v2.route("/ai-usage", methods=["GET"])
+def get_ai_usage_status():
+    from utils import openai_usage_counter, can_call_openai
+    remaining = max(0, 10 - sum(len(v) for v in openai_usage_counter.values()))
+    return jsonify({"remaining_calls": remaining})
