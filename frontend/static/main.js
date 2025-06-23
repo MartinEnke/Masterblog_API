@@ -280,18 +280,27 @@ function renderSinglePost(post) {
   div.innerHTML += `
     <h2 id="post-title-${post.id}">${post.title}</h2>
     <p id="post-content-${post.id}">${post.content}</p>
-    <p class="post-meta" data-i18n-by="${post.author}">${post.date || 'No date'} · <span data-i18n="by">by</span> ${post.author || 'Unknown'}</p>
+    <p class="post-meta mt-3" data-i18n-by="${post.author}">${post.date || 'No date'} · <span data-i18n="by">by</span> ${post.author || 'Unknown'}</p>
     ${post.updated
       ? `<p style="font-size:.9em;color:#777;margin-bottom:10px" data-i18n-updated="${post.updated}">
            <span data-i18n="updatedLabel">Updated:</span> ${post.updated}
          </p>`
       : ''}
-    <div class="comment-section" id="comments-${post.id}">
-      <h4 data-i18n="comments">Comments</h4>
-      <div id="comment-list-${post.id}"></div>
-      <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..."></textarea>
-      <button data-i18n="postComment" onclick="submitComment(${post.id})">Post Comment</button>
-    </div>
+    <div class="comment-section mt-4" id="comments-${post.id}">
+  <button class="toggle-comments-btn flex items-center gap-2 text-sm text-gray-700 font-semibold hover:text-gray-900 focus:outline-none bg-transparent hover:bg-transparent">
+
+    💬 <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
+
+  <div class="comments-container mt-3 hidden">
+    <div id="comment-list-${post.id}" class="space-y-2"></div>
+    <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..." class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"></textarea>
+    <button data-i18n="postComment" onclick="submitComment(${post.id})" class="comment-submit mt-2 px-4 py-2 bg-blue-600 text-white rounded text-sm">Post Comment</button>
+  </div>
+</div>
   `;
 
   const btnWrap = document.createElement('div');
@@ -332,28 +341,47 @@ function renderSinglePost(post) {
 const isOwner = post.is_owner;
 
 if (isOwner || isAdmin) {
-  if (isOriginalLang || isAdmin) {
-    // ✅ Admins can delete in any language
-    const delBtn = document.createElement('button');
-    delBtn.setAttribute("data-i18n", "deletePost");
-    delBtn.onclick = () => deletePost(post.id);
-    delBtn.textContent = UI_TRANSLATIONS[currentLang].deletePost || 'Delete';
-    btnWrap.appendChild(delBtn);
-  }
 
   if (isOriginalLang) {
-    // ✏️ Only show Edit if original language
-    const editBtn = document.createElement('button');
-    editBtn.setAttribute("data-i18n", "editPost");
-    editBtn.onclick = () => openEditModal(post);
-    editBtn.textContent = UI_TRANSLATIONS[currentLang].editPost || 'Edit';
-    btnWrap.appendChild(editBtn);
-  }
+  // ✏️ Only show Edit if original language
+  const editBtn = document.createElement('button');
+  editBtn.setAttribute("data-i18n", "editPost");
+  editBtn.onclick = () => openEditModal(post);
+  editBtn.textContent = UI_TRANSLATIONS[currentLang].editPost || 'Edit';
+  editBtn.className = 'text-sm text-blue-600 hover:text-blue-800 transition-colors bg-transparent hover:bg-transparent focus:bg-transparent focus:outline-none';
+  btnWrap.appendChild(editBtn);
+}
+
+if (isOriginalLang || isAdmin) {
+  // ✅ Admins can delete in any language
+  const delBtn = document.createElement('button');
+  delBtn.setAttribute("data-i18n", "deletePost");
+  delBtn.onclick = () => deletePost(post.id);
+  delBtn.textContent = UI_TRANSLATIONS[currentLang].deletePost || 'Delete';
+  delBtn.className = 'text-sm text-red-600 hover:text-red-800 transition-colors bg-transparent hover:bg-transparent focus:bg-transparent focus:outline-none';
+  btnWrap.appendChild(delBtn);
+}
+
+
+
 }
 
   div.appendChild(btnWrap);
-  loadComments(post.id);
-  container.appendChild(div);
+loadComments(post.id);
+container.appendChild(div);
+
+// 🛡️ Safe toggle setup
+const commentToggle = div.querySelector(`#comments-${post.id} .toggle-comments-btn`);
+const commentContainer = div.querySelector(`#comments-${post.id} .comments-container`);
+const icon = div.querySelector(`#comments-${post.id} .toggle-icon`);
+
+if (commentToggle && commentContainer && icon) {
+  commentToggle.addEventListener('click', () => {
+    commentContainer.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+  });
+}
+
 
   // 🌀 Lazy translation
   if (post.translated === false && currentLang !== "en") {
@@ -438,6 +466,8 @@ function loadComments(postId) {
             : ''}
         `;
         list.appendChild(p);
+        document.querySelector(`#comments-${postId} .comment-count`).textContent = comments.length;
+
       });
     });
 }
@@ -579,14 +609,11 @@ function submitComment(postId) {
     const currentUser = localStorage.getItem('username');
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
-
     const c = d.comment;
-if (!c) return alert("Comment submitted, but awaiting review.");
+    if (!c) return alert("Comment submitted, but awaiting review.");
 
-    // 🛠️ This is the key rendering logic:
     const p = document.createElement('p');
     const showDelete = currentUser && (c.author.toLowerCase() === currentUser.toLowerCase() || isAdmin);
-
 
     p.innerHTML = `
       <strong>${c.author}</strong>: ${c.text}
@@ -595,12 +622,20 @@ if (!c) return alert("Comment submitted, but awaiting review.");
     `;
     list.appendChild(p);
     document.getElementById(`comment-text-${postId}`).value = '';
+
+    // 🔼 Increment the comment count immediately
+    const countEl = document.querySelector(`#comments-${postId} .comment-count`);
+    if (countEl) {
+      const currentCount = parseInt(countEl.textContent || '0', 10);
+      countEl.textContent = currentCount + 1;
+    }
+
   })
   .catch(e => alert("Error: " + e));
 }
 
 
-function deleteComment(commentId) {
+function deleteComment(commentId, postId) {
   const base = getBaseUrl();
   const token = getToken();
 
@@ -624,7 +659,24 @@ function deleteComment(commentId) {
   })
   .then(data => {
     console.log("🧾 Delete success:", data);
-    loadPosts(); // reloads comments too
+
+    // Remove the comment from the DOM
+    const commentList = document.getElementById(`comment-list-${postId}`);
+    const commentElements = Array.from(commentList.children);
+    for (const el of commentElements) {
+      if (el.innerHTML.includes(`deleteComment(${commentId},`)) {
+        el.remove();
+        break;
+      }
+    }
+
+    // Decrement the comment count
+    const countEl = document.querySelector(`#comments-${postId} .comment-count`);
+    if (countEl) {
+      const currentCount = parseInt(countEl.textContent || '0', 10);
+      countEl.textContent = Math.max(currentCount - 1, 0);
+    }
+
   })
   .catch(err => console.error("❌ Delete failed:", err));
 }

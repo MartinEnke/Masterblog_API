@@ -5,6 +5,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
 import os
+from flask import request
+from flask_limiter.util import get_remote_address
 
 load_dotenv()
 
@@ -140,3 +142,29 @@ def moderate_post(title, content):
     except Exception as e:
         print(f"❌ Moderation check failed: {e}")
         return "needs_review"
+
+
+openai_usage_counter = {}
+
+def get_request_identity():
+    return request.headers.get("Authorization", "anonymous") or get_remote_address()
+
+def can_call_openai(limit=10):
+    """Allow only `limit` requests per hour per user/IP"""
+    from time import time
+    identity = get_request_identity()
+    now = time()
+
+    if identity not in openai_usage_counter:
+        openai_usage_counter[identity] = []
+
+    # Keep only timestamps within the last hour
+    openai_usage_counter[identity] = [
+        t for t in openai_usage_counter[identity] if now - t < 3600
+    ]
+
+    if len(openai_usage_counter[identity]) >= limit:
+        return False
+
+    openai_usage_counter[identity].append(now)
+    return True
