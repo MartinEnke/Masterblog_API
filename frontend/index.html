@@ -1,16 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Quiet Almanac</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/static/styles.css" />
+
   <style>
     body { font-family: 'Poppins', sans-serif; }
     .hidden { display: none; }
-    .ai-badge { font-style: italic; font-size: 0.8rem; background-color: #e0e0e0; padding: 2px 6px; border-radius: 4px; color: #444; }
+    .ai-badge {
+      font-style: italic;
+      font-size: 0.8rem;
+      background-color: #e0e0e0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #444;
+    }
   </style>
+
+  <!-- Google Translate -->
   <script type="text/javascript">
     function googleTranslateElementInit() {
       new google.translate.TranslateElement({
@@ -20,84 +37,133 @@
         autoDisplay: false
       }, 'google_translate_element');
     }
+    function loadGoogleTranslate() {
+      document.getElementById("google_translate_element").classList.remove("hidden");
+    }
   </script>
   <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
+
 <body class="bg-gray-100 min-h-screen p-4">
 
-  <!-- Header -->
-  <header class="flex justify-center mb-6">
-    <img src="/static/images/almanac.png" alt="Notes on the Miraculous Ordinary" class="w-full max-w-4xl rounded-lg shadow-lg">
-  </header>
+<!-- Header -->
+<header class="flex justify-center mb-6">
+  <img src="/static/images/almanac.png" alt="Notes on the Miraculous Ordinary" class="w-full max-w-4xl rounded-lg shadow-lg">
+</header>
 
-  <!-- Google Translate -->
-  <div class="text-center mb-6">
-    <button onclick="loadGoogleTranslate()" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">
-      🌐 Use Google Translate
-    </button>
-    <div id="google_translate_element" class="mt-2 hidden"></div>
-  </div>
+<!-- Google Translate Button -->
+<div class="text-center mb-6">
+  <button onclick="loadGoogleTranslate()" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">
+    🌐 Use Google Translate
+  </button>
+  <div id="google_translate_element" class="mt-2 hidden"></div>
+</div>
 
-  <!-- Main Container -->
-  <main class="bg-white max-w-5xl mx-auto p-6 rounded-lg shadow-md">
-    <!-- Top Bar -->
-    <section class="flex flex-wrap items-center justify-between gap-4 mb-6">
-      <input id="api-base-url" type="text" placeholder="https://your‐host:port/api/v2" value="" class="w-[300px] h-9 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm">
-      <span id="load-posts-btn" data-i18n="loadPosts" onclick="loadPosts()" class="text-blue-600 hover:text-blue-800 hover:bg-blue-100 transition px-4 py-2 rounded-md cursor-pointer">Load Posts</span>
-      <select id="lang-select" class="border border-gray-300 px-3 py-1.5 rounded-md text-sm">
+<!-- Main Container -->
+<main class="bg-white max-w-5xl mx-auto p-6 rounded-lg shadow-md">
+
+  <!-- Top Navigation -->
+  <section class="bg-white shadow-sm rounded-lg p-4 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <!-- Load & Add Buttons -->
+      <div class="flex gap-3">
+        <button id="load-posts-btn" onclick="loadPosts()" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md transition">Load Posts</button>
+        <button onclick="openAddModal()" data-i18n="addPost" class="text-sm font-medium text-green-700 hover:text-green-900 px-4 py-2 rounded-md transition">Add Post</button>
+      </div>
+
+      <!-- API Base URL (for development/debugging) -->
+      <input id="api-base-url" type="text" placeholder="https://your-host:port/api/v2" value="" class="w-[300px] h-9 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm">
+
+      <!-- Language Selector -->
+      <select id="lang-select" onchange="setLanguage(this.value)" class="text-sm border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
         <option value="en">English</option>
         <option value="de">Deutsch</option>
         <option value="fr">Français</option>
         <option value="es">Español</option>
       </select>
+
+      <!-- Auth Section -->
       <div class="flex items-center gap-4 ml-auto">
-        <div id="user-info" class="text-green-800 font-semibold"></div>
-        <span class="text-blue-600 cursor-pointer" id="auth-button" data-i18n="login" onclick="handleAuthClick()">Login</span>
-        <span class="text-blue-600 cursor-pointer" data-i18n="signup" onclick="openSignupModal()">Signup</span>
-      </div>
-    </section>
-
-    <!-- Filters -->
-    <section class="flex flex-wrap items-center gap-4 mb-6">
-      <select id="filter-category" data-i18n-option class="border px-3 py-1.5 rounded-md text-sm">
-        <option value="">All Categories</option>
-      </select>
-      <select id="sort-field" data-i18n-option class="border px-3 py-1.5 rounded-md text-sm">
-        <option value="">noSorting</option>
-        <option value="author" data-i18n-option="sortAuthor">Author</option>
-        <option value="title" data-i18n-option="sortTitle">Title</option>
-        <option value="likes" data-i18n-option="sortLikes">Likes</option>
-        <option value="date" data-i18n-option="sortDate">Date</option>
-        <option value="updated" data-i18n-option="sortUpdated">Last Updated</option>
-      </select>
-      <select id="sort-direction" data-i18n-option class="border px-3 py-1.5 rounded-md text-sm">
-        <option value="asc" data-i18n-option="ascending">Ascending</option>
-        <option value="desc" data-i18n-option="descending">Descending</option>
-      </select>
-      <span class="text-blue-600 cursor-pointer" data-i18n="applyFilters" onclick="loadPosts()">Apply Filters</span>
-      <span class="text-blue-600 cursor-pointer" data-i18n="addPost" onclick="openAddModal()">Add Post</span>
-      <input type="text" id="search-input" placeholder="Search author, title or content..." data-i18n-placeholder="searchPlaceholder" class="flex-grow border px-3 py-1.5 rounded-md text-sm">
-    </section>
-
-    <!-- Posts Container -->
-    <section id="post-container"></section>
-  </main>
-
-  <!-- Modals -->
-  <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
-      <h2 data-i18n="login" class="text-xl font-bold mb-4">🔐 Login</h2>
-      <input type="text" id="login-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
-      <input type="password" id="login-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
-      <div class="flex justify-end gap-3">
-        <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" data-i18n="login" onclick="submitLogin()">Login</span>
-        <span class="text-gray-600 bg-gray-200 px-4 py-2 rounded-md cursor-pointer" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
+        <div id="user-info" class="text-green-800 font-semibold text-sm"></div>
+        <button id="auth-button" onclick="handleAuthClick()" class="text-sm text-blue-600 hover:text-blue-800 transition" data-i18n="login">Login</button>
+        <button onclick="openSignupModal()" class="text-sm text-blue-600 hover:text-blue-800 transition" data-i18n="signup">Signup</button>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <!-- Filters & Search -->
+  <section class="bg-white shadow-sm rounded-lg p-4 mb-6">
+    <div class="flex flex-col gap-4">
+      <!-- Dropdowns -->
+      <div class="flex flex-col md:flex-row md:items-center md:gap-4">
+        <select id="filter-category" data-i18n-option onchange="loadPosts()" class="w-full md:w-[180px] text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+          <option value="">All Categories</option>
+        </select>
+
+        <div class="flex flex-col sm:flex-row gap-4 flex-1 mt-4 md:mt-0">
+          <select id="sort-field" data-i18n-option onchange="loadPosts()" class="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+            <option value="">noSorting</option>
+            <option value="author" data-i18n-option="sortAuthor">Author</option>
+            <option value="title" data-i18n-option="sortTitle">Title</option>
+            <option value="likes" data-i18n-option="sortLikes">Likes</option>
+            <option value="date" data-i18n-option="sortDate">Date</option>
+            <option value="updated" data-i18n-option="sortUpdated">Last Updated</option>
+          </select>
+
+          <select id="sort-direction" data-i18n-option onchange="loadPosts()" class="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+            <option value="asc" data-i18n-option="ascending">Ascending</option>
+            <option value="desc" data-i18n-option="descending">Descending</option>
+          </select>
+
+          <button onclick="loadPosts()" data-i18n="applyFilters" class="text-sm text-blue-600 hover:text-blue-800 px-4 py-2 rounded-md transition border border-blue-200">Apply Filters</button>
+        </div>
+      </div>
+
+      <div class="relative">
+        <input
+          type="text"
+          id="search-input"
+          oninput="loadPosts()"
+          data-i18n-placeholder="searchPlaceholder"
+          placeholder="Search author, title or content..."
+          class="w-full text-sm pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+        />
+        <div class="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">🔍</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Posts Container -->
+  <section id="post-container"></section>
+</main>
+
+<!-- Modals -->
+<div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
   <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+    <h2 data-i18n="login" class="text-xl font-bold mb-4">🔐 Login</h2>
+    <input type="text" id="login-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+    <input type="password" id="login-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+    <div class="flex justify-end gap-3">
+      <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" data-i18n="login" onclick="submitLogin()">Login</span>
+      <span class="text-gray-600 bg-gray-200 px-4 py-2 rounded-md cursor-pointer" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
+    </div>
+  </div>
+</div>
+
+<div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+    <h2 data-i18n="signup" class="text-xl font-bold mb-4">📝 Signup</h2>
+    <input type="text" id="signup-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+    <input type="password" id="signup-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
+    <div class="flex justify-end gap-3">
+      <button data-i18n="register" onclick="submitSignup()" class="text-white bg-blue-600 px-4 py-2 rounded-md">Register</button>
+      <button data-i18n="cancel" onclick="closeSignupModal()" class="text-gray-600 bg-gray-200 px-4 py-2 rounded-md">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-screen overflow-y-auto shadow-lg">
     <h2 data-i18n="addPost" class="text-xl font-bold mb-4">📝 Add Post</h2>
     <input type="text" id="add-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
     <textarea id="add-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md min-h-[200px]"></textarea>
@@ -111,20 +177,9 @@
     </div>
   </div>
 </div>
-  <div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
-    <h2 data-i18n="signup" class="text-xl font-bold mb-4">📝 Signup</h2>
-    <input type="text" id="signup-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
-    <input type="password" id="signup-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
-    <div class="flex justify-end gap-3">
-      <button data-i18n="register" onclick="submitSignup()" class="text-white bg-blue-600 px-4 py-2 rounded-md">Register</button>
-      <button data-i18n="cancel" onclick="closeSignupModal()" class="text-gray-600 bg-gray-200 px-4 py-2 rounded-md">Cancel</button>
-    </div>
-  </div>
-</div>
-<!-- Edit Modal -->
-<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+
+<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-screen overflow-y-auto shadow-lg">
     <h2 data-i18n="editPost" class="text-xl font-bold mb-4">✏️ Edit Post</h2>
     <input type="text" id="edit-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md">
     <textarea id="edit-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content" class="w-full mb-4 px-3 py-2 border border-gray-300 rounded-md min-h-[200px]"></textarea>
@@ -138,9 +193,12 @@
     </div>
   </div>
 </div>
-  <footer class="text-center text-gray-400 text-sm mt-10">&copy; The Quiet Almanac {{ 2025 }}</footer>
 
-  <script src="/static/i18n.js"></script>
-  <script src="/static/main.js" defer></script>
+<!-- Footer -->
+<footer class="text-center text-gray-400 text-sm mt-10">&copy; The Quiet Almanac 2025</footer>
+
+<!-- Scripts -->
+<script src="/static/i18n.js"></script>
+<script src="/static/main.js" defer></script>
 </body>
 </html>
