@@ -47,8 +47,12 @@
 <body class="bg-gray-100 min-h-screen p-4">
 
 <!-- Header -->
-<header class="flex justify-center mb-6">
-  <img src="/static/images/almanac.png" alt="Notes on the Miraculous Ordinary" class="w-full max-w-5xl rounded-lg shadow-lg">
+<!-- Banner as refresh (reloads full page) -->
+<header class="flex justify-center mb-6 cursor-pointer" onclick="location.reload()">
+  <img src="/static/images/almanac.png"
+       alt="Notes on the Miraculous Ordinary"
+       class="w-full max-w-5xl rounded-lg shadow-lg"
+  />
 </header>
 <!-- Language Translators Section -->
 <div class="flex flex-row flex-wrap items-center justify-center gap-8 mb-6 text-center">
@@ -85,47 +89,52 @@
 
   <!-- Top Navigation -->
   <section class="bg-white shadow-sm rounded-lg p-4 mb-6">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <!-- Load & Add Buttons -->
-      <div class="flex gap-3">
-        <!-- Just remove or comment out the button -->
-        <!-- <button id="load-posts-btn" onclick="loadPosts()" class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md transition">Load Posts</button> -->
-        <button
-  onclick="openAddModal()"
-  data-i18n="addPost"
-  class="text-base font-medium text-green-700 hover:text-green-900 px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors"
->
-  Add Post
-</button>
 
-      </div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+  <!-- Left: Signup + Auth -->
+  <div class="flex items-center gap-4 justify-start order-1 md:order-1 w-full md:w-auto">
+    <button
+      onclick="openSignupModal()"
+      class="text-base text-blue-700 hover:text-blue-900 bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+      data-i18n="signup">Signup</button>
 
-      <!-- API Base URL (for development/debugging) -->
-      <input
-  id="api-base-url"
-  type="text"
-  placeholder="https://your-host:port/api/v2"
-  value=""
-  class="hidden w-[300px] h-9 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm"
-/>
+    <button id="auth-button"
+      onclick="handleAuthClick()"
+      class="text-base text-blue-700 hover:text-blue-900 bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+      data-i18n="login">Login</button>
+
+    <div id="user-info" class="text-green-800 font-semibold text-base"></div>
+  </div>
+
+  <!-- Right: Load & Add buttons -->
+  <div class="flex items-center gap-3 justify-end order-2 md:order-2 w-full md:w-auto">
+    <!-- Hidden API base URL input -->
+    <input
+      id="api-base-url"
+      type="text"
+      placeholder="https://your-host:port/api/v2"
+      value=""
+      class="hidden w-[300px] h-9 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm"
+    />
+
+    <!-- Uncomment if needed
+    <button id="load-posts-btn"
+      onclick="loadPosts()"
+      class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md transition">
+      Load Posts
+    </button> -->
+
+    <button
+      onclick="openAddModal()"
+      data-i18n="addPost"
+      class="text-base font-medium text-green-700 hover:text-green-900 px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+    >
+      Add Post
+    </button>
+  </div>
+</div>
 
 
-
-      <!-- Auth Section -->
-      <div class="flex items-center gap-4 ml-auto">
-        <div id="user-info" class="text-green-800 font-semibold text-base"></div>
-        <button id="auth-button"
-  onclick="handleAuthClick()"
-  class="text-base text-blue-700 hover:text-blue-900 bg-transparent hover:bg-transparent focus:outline-none transition-colors"
-  data-i18n="login">Login</button>
-
-<button
-  onclick="openSignupModal()"
-  class="text-base text-blue-700 hover:text-blue-900 bg-transparent hover:bg-transparent focus:outline-none transition-colors"
-  data-i18n="signup">Signup</button>
-
-      </div>
-    </div>
   </section>
 
   <!-- Filters & Search -->

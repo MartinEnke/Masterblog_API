@@ -19,8 +19,39 @@ from utils import can_call_openai, moderate_post
 from openai import OpenAIError
 import openai
 from sqlalchemy import func
+import os, requests, base64
+from flask import Blueprint, request, jsonify, send_file
+from io import BytesIO
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
+
+
+HUME_KEY = os.getenv("HUME_KEY")  # set in .env
+
+@v2.route("/generate-tts", methods=["POST"])
+def gen_tts_hume():
+    text = request.json.get("text", "")
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    url = "https://api.hume.ai/v0/tts"  # Octave TTS endpoint :contentReference[oaicite:2]{index=2}
+    payload = {"utterances": [{"text": text}]}
+
+    resp = requests.post(url, json=payload, headers={
+        "X-Hume-Api-Key": HUME_KEY,
+        "Content-Type": "application/json"
+    })
+
+    if not resp.ok:
+        print("Hume TTS error:", resp.text)
+        return jsonify({"error": resp.text}), resp.status_code
+
+    data = resp.json()
+    audio_b64 = data["generations"][0]["audio"]
+    mp3_bytes = base64.b64decode(audio_b64)
+    return send_file(BytesIO(mp3_bytes), mimetype="audio/mpeg")
+
+
 
 def get_current_user_from_token():
     token = request.headers.get("Authorization", "").replace("Bearer ", "")
@@ -968,3 +999,5 @@ def get_ai_usage_status():
     from utils import openai_usage_counter, can_call_openai
     remaining = max(0, 10 - sum(len(v) for v in openai_usage_counter.values()))
     return jsonify({"remaining_calls": remaining})
+
+

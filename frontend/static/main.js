@@ -378,6 +378,74 @@ function renderSinglePost(post) {
       .catch(err => console.warn("Translation failed for post", post.id, err));
   }
 
+
+  // 🎧 Read Aloud button (Hume TTS)
+  // Demo Limited Usage
+const hasUsedTTS = localStorage.getItem('hasUsedTTS') === 'true';
+const isLoggedIn = !!getToken();
+
+if (isLoggedIn) {
+  const ttsWrap = document.createElement('div');
+  ttsWrap.className = 'flex gap-4 mt-3 items-center';
+
+  if (!hasUsedTTS) {
+    const readBtn = document.createElement('button');
+    readBtn.textContent = '🔊 Read Aloud (Demo)';
+    readBtn.className = 'text-sm text-purple-600 hover:text-purple-800';
+    readBtn.onclick = async () => {
+      try {
+        const resp = await fetch('/api/v2/generate-tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: `${post.title}. ${post.content}` })
+        });
+
+        if (!resp.ok) throw new Error('TTS request failed');
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        window.currentTTS = audio;
+        audio.play();
+
+        localStorage.setItem('hasUsedTTS', 'true');
+
+        // After playback, replace with the upgrade message
+        readBtn.remove();
+        stopBtn.remove();
+        const msg = document.createElement('span');
+        msg.textContent = "✅ You've used your demo listen. Upgrade required for more.";
+        msg.className = 'text-xs text-gray-500';
+        ttsWrap.appendChild(msg);
+
+      } catch (e) {
+        console.error('TTS error:', e);
+        alert('Demo read aloud failed.');
+      }
+    };
+
+    const stopBtn = document.createElement('button');
+    stopBtn.textContent = '⏹ Stop';
+    stopBtn.className = 'text-sm text-gray-600 ml-3';
+    stopBtn.onclick = () => {
+      if (window.currentTTS) {
+        window.currentTTS.pause();
+        window.currentTTS.currentTime = 0;
+      }
+    };
+
+    ttsWrap.appendChild(readBtn);
+    ttsWrap.appendChild(stopBtn);
+  } else {
+    const msg = document.createElement('span');
+    msg.textContent = "⚠️ You've used your demo listen. Upgrade required for more.";
+    msg.className = 'text-xs text-gray-500';
+    ttsWrap.appendChild(msg);
+  }
+
+  div.appendChild(ttsWrap);
+}
+
+
   // 💬 Load comments
   loadComments(post.id);
 }
@@ -408,7 +476,9 @@ function searchPosts() {
 function loadComments(postId) {
   fetch(`${getBaseUrl()}/posts/${postId}/comments`)
     .then(res => res.json())
-    .then(comments => {
+    .then(data => {
+      const comments = data.comments || [];  // ✅ Fix here
+
       const list = document.getElementById(`comment-list-${postId}`);
       list.innerHTML = '';
 
@@ -419,7 +489,7 @@ function loadComments(postId) {
       console.log("🧪 All comment authors:");
 
       comments.forEach(c => {
-        console.log("➡️", c.author);  // check if lowercase
+        console.log("➡️", c.author);
 
         const isOwner = (c.author || "").toLowerCase() === (currentUser || "").toLowerCase();
 
@@ -433,9 +503,9 @@ function loadComments(postId) {
         `;
         list.appendChild(p);
         document.querySelector(`#comments-${postId} .comment-count`).textContent = comments.length;
-
       });
-    });
+    })
+    .catch(err => console.error("Error loading comments:", err));
 }
 
 
