@@ -257,7 +257,10 @@ function renderSinglePost(post) {
   const currentLang = getCurrentLanguage();
   const isTranslatedCopy = post.translated === true && post.is_ai_translation === true;
   const isOriginalLang = post.original_lang === currentLang;
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  const isOwner = post.is_owner;
 
+  // 🧠 AI Translated badge
   if (isTranslatedCopy && !isOriginalLang) {
     const badge = document.createElement('div');
     badge.className = 'ai-badge';
@@ -287,22 +290,21 @@ function renderSinglePost(post) {
          </p>`
       : ''}
     <div class="comment-section mt-4" id="comments-${post.id}">
-  <button class="toggle-comments-btn flex items-center gap-2 text-sm text-gray-700 font-semibold hover:text-gray-900 focus:outline-none bg-transparent hover:bg-transparent">
-
-    💬 <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-    </svg>
-  </button>
-
-  <div class="comments-container mt-3 hidden">
-    <div id="comment-list-${post.id}" class="space-y-2"></div>
-    <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..." class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"></textarea>
-    <button data-i18n="postComment" onclick="submitComment(${post.id})" class="comment-submit mt-2 px-4 py-2 bg-blue-600 text-white rounded text-sm">Post Comment</button>
-  </div>
-</div>
+      <button class="toggle-comments-btn flex items-center gap-2 text-sm text-gray-700 font-semibold hover:text-gray-900 focus:outline-none bg-transparent hover:bg-transparent">
+        💬 <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div class="comments-container mt-3 hidden">
+        <div id="comment-list-${post.id}" class="space-y-2"></div>
+        <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..." class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"></textarea>
+        <button data-i18n="postComment" onclick="submitComment(${post.id})" class="comment-submit mt-2 px-4 py-2 bg-blue-600 text-white rounded text-sm">Post Comment</button>
+      </div>
+    </div>
   `;
 
+  // 🧩 Action buttons (Edit/Delete)
   const btnWrap = document.createElement('div');
   Object.assign(btnWrap.style, {
     display: 'flex',
@@ -326,62 +328,48 @@ function renderSinglePost(post) {
     })
       .then(r => r.json())
       .then(d => {
-        console.log("✅ Like response:", d);
-        if (d.likes !== undefined && typeof d.liked_by_current_user === "boolean") {
-          document.getElementById(`like-count-${post.id}`).textContent = d.likes;
-          document.getElementById(`like-heart-${post.id}`).textContent = d.liked_by_current_user ? '❤️' : '🤍';
-          likeBtn.className = d.liked_by_current_user ? 'liked' : '';
-        }
+        document.getElementById(`like-count-${post.id}`).textContent = d.likes;
+        document.getElementById(`like-heart-${post.id}`).textContent = d.liked_by_current_user ? '❤️' : '🤍';
+        likeBtn.className = d.liked_by_current_user ? 'liked' : '';
       })
       .catch(console.error);
   };
   btnWrap.appendChild(likeBtn);
 
-  const isAdmin = localStorage.getItem('isAdmin') === 'true';
-const isOwner = post.is_owner;
+  // ✏️ Edit button (only if owner & original language)
+  if (isOwner && isOriginalLang) {
+    const editBtn = document.createElement('button');
+    editBtn.setAttribute("data-i18n", "editPost");
+    editBtn.onclick = () => openEditModal(post);
+    editBtn.textContent = UI_TRANSLATIONS[currentLang].editPost || 'Edit';
+    editBtn.className = 'text-sm text-blue-600 hover:text-blue-800 transition-colors bg-transparent hover:bg-transparent focus:bg-transparent focus:outline-none';
+    btnWrap.appendChild(editBtn);
+  }
 
-if (isOwner || isAdmin) {
-
-  if (isOriginalLang) {
-  // ✏️ Only show Edit if original language
-  const editBtn = document.createElement('button');
-  editBtn.setAttribute("data-i18n", "editPost");
-  editBtn.onclick = () => openEditModal(post);
-  editBtn.textContent = UI_TRANSLATIONS[currentLang].editPost || 'Edit';
-  editBtn.className = 'text-sm text-blue-600 hover:text-blue-800 transition-colors bg-transparent hover:bg-transparent focus:bg-transparent focus:outline-none';
-  btnWrap.appendChild(editBtn);
-}
-
-if (isOriginalLang || isAdmin) {
-  // ✅ Admins can delete in any language
-  const delBtn = document.createElement('button');
-  delBtn.setAttribute("data-i18n", "deletePost");
-  delBtn.onclick = () => deletePost(post.id);
-  delBtn.textContent = UI_TRANSLATIONS[currentLang].deletePost || 'Delete';
-  delBtn.className = 'text-sm text-red-600 hover:text-red-800 transition-colors bg-transparent hover:bg-transparent focus:bg-transparent focus:outline-none';
-  btnWrap.appendChild(delBtn);
-}
-
-
-
-}
+  // 🗑️ Delete button (owner OR admin)
+  if (isOwner || isAdmin) {
+    const delBtn = document.createElement('button');
+    delBtn.setAttribute("data-i18n", "deletePost");
+    delBtn.onclick = () => deletePost(post.id);
+    delBtn.textContent = UI_TRANSLATIONS[currentLang].deletePost || 'Delete';
+    delBtn.className = 'text-sm text-red-600 hover:text-red-800 transition-colors bg-transparent hover:bg-transparent focus:bg-transparent focus:outline-none';
+    btnWrap.appendChild(delBtn);
+  }
 
   div.appendChild(btnWrap);
-loadComments(post.id);
-container.appendChild(div);
+  container.appendChild(div);
 
-// 🛡️ Safe toggle setup
-const commentToggle = div.querySelector(`#comments-${post.id} .toggle-comments-btn`);
-const commentContainer = div.querySelector(`#comments-${post.id} .comments-container`);
-const icon = div.querySelector(`#comments-${post.id} .toggle-icon`);
+  // 🛡️ Comments toggle
+  const commentToggle = div.querySelector(`#comments-${post.id} .toggle-comments-btn`);
+  const commentContainer = div.querySelector(`#comments-${post.id} .comments-container`);
+  const icon = div.querySelector(`#comments-${post.id} .toggle-icon`);
 
-if (commentToggle && commentContainer && icon) {
-  commentToggle.addEventListener('click', () => {
-    commentContainer.classList.toggle('hidden');
-    icon.classList.toggle('rotate-180');
-  });
-}
-
+  if (commentToggle && commentContainer && icon) {
+    commentToggle.addEventListener('click', () => {
+      commentContainer.classList.toggle('hidden');
+      icon.classList.toggle('rotate-180');
+    });
+  }
 
   // 🌀 Lazy translation
   if (post.translated === false && currentLang !== "en") {
@@ -413,6 +401,9 @@ if (commentToggle && commentContainer && icon) {
       })
       .catch(err => console.warn("Translation failed for post", post.id, err));
   }
+
+  // 💬 Load comments
+  loadComments(post.id);
 }
 
 
@@ -970,6 +961,7 @@ function openAddModal() {
       return;
     }
 
+    // ✅ Clear all input fields
     document.getElementById('add-title').value = '';
     document.getElementById('add-content').value = '';
 
@@ -988,6 +980,10 @@ function openAddModal() {
     const customOption = new Option("➕ Enter Custom Category...", "custom");
     customOption.id = "custom-category-option";
     dropdown.appendChild(customOption);
+
+    // ✅ Reset the custom category input
+    document.getElementById("custom-category-input-add").value = '';
+    document.getElementById("custom-category-wrapper-add").classList.add("hidden");
 
     // ✅ Show input only if "custom" is selected
     setupCustomCategoryInput("add-category", "custom-category-wrapper-add", "custom-category-input-add");

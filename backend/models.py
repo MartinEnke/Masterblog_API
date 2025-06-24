@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Bool
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 from db import Base
+from translations_db import PostTranslation
 
 
 class User(Base):
