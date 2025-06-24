@@ -247,7 +247,7 @@ function renderSinglePost(post) {
   const div = document.createElement('div');
   div.className = 'post';
   Object.assign(div.style, {
-    padding: '15px',
+    padding: '40px 20px 20px 20px', // extra top padding for badge
     border: '1px solid #ccc',
     marginBottom: '20px',
     borderRadius: '8px',
@@ -260,27 +260,7 @@ function renderSinglePost(post) {
   const isAdmin = localStorage.getItem('isAdmin') === 'true';
   const isOwner = post.is_owner;
 
-  // 🧠 AI Translated badge
-  if (isTranslatedCopy && !isOriginalLang) {
-    const badge = document.createElement('div');
-    badge.className = 'ai-badge';
-    badge.setAttribute('data-i18n', 'aiTranslated');
-    badge.textContent = UI_TRANSLATIONS[currentLang].aiTranslated || 'AI-translated';
-    Object.assign(badge.style, {
-      position: 'absolute',
-      top: '10px',
-      right: '10px',
-      backgroundColor: '#e0e0e0',
-      padding: '3px 8px',
-      borderRadius: '5px',
-      fontSize: '0.8em',
-      color: '#444',
-      fontStyle: 'italic'
-    });
-    div.appendChild(badge);
-  }
-
-  div.innerHTML += `
+  div.innerHTML = `
     <h2 id="post-title-${post.id}">${post.title}</h2>
     <p id="post-content-${post.id}">${post.content}</p>
     <p class="post-meta mt-3" data-i18n-by="${post.author}">${post.date || 'No date'} · <span data-i18n="by">by</span> ${post.author || 'Unknown'}</p>
@@ -303,6 +283,15 @@ function renderSinglePost(post) {
       </div>
     </div>
   `;
+
+  // 🧠 AI Translated badge (overlay, now with space)
+  if (isTranslatedCopy && !isOriginalLang) {
+    const badge = document.createElement('div');
+    badge.className = 'ai-badge';
+    badge.setAttribute('data-i18n', 'aiTranslated');
+    badge.textContent = UI_TRANSLATIONS[currentLang].aiTranslated || 'AI-translated';
+    div.appendChild(badge);
+  }
 
   // 🧩 Action buttons (Edit/Delete)
   const btnWrap = document.createElement('div');
@@ -336,7 +325,7 @@ function renderSinglePost(post) {
   };
   btnWrap.appendChild(likeBtn);
 
-  // ✏️ Edit button (only if owner & original language)
+  // ✏️ Edit button
   if (isOwner && isOriginalLang) {
     const editBtn = document.createElement('button');
     editBtn.setAttribute("data-i18n", "editPost");
@@ -346,7 +335,7 @@ function renderSinglePost(post) {
     btnWrap.appendChild(editBtn);
   }
 
-  // 🗑️ Delete button (owner OR admin)
+  // 🗑️ Delete button
   if (isOwner || isAdmin) {
     const delBtn = document.createElement('button');
     delBtn.setAttribute("data-i18n", "deletePost");
@@ -359,11 +348,10 @@ function renderSinglePost(post) {
   div.appendChild(btnWrap);
   container.appendChild(div);
 
-  // 🛡️ Comments toggle
+  // 💬 Comments toggle
   const commentToggle = div.querySelector(`#comments-${post.id} .toggle-comments-btn`);
   const commentContainer = div.querySelector(`#comments-${post.id} .comments-container`);
   const icon = div.querySelector(`#comments-${post.id} .toggle-icon`);
-
   if (commentToggle && commentContainer && icon) {
     commentToggle.addEventListener('click', () => {
       commentContainer.classList.toggle('hidden');
@@ -371,10 +359,9 @@ function renderSinglePost(post) {
     });
   }
 
-  // 🌀 Lazy translation
+  // 🌀 Lazy translation fetch
   if (post.translated === false && currentLang !== "en") {
-    const base = getBaseUrl();
-    fetch(`${base}/posts/${post.id}/translate?lang=${currentLang}`)
+    fetch(`${getBaseUrl()}/posts/${post.id}/translate?lang=${currentLang}`)
       .then(r => r.json())
       .then(translated => {
         updatePostDom(post.id, translated.title, translated.content);
@@ -384,17 +371,6 @@ function renderSinglePost(post) {
         badge.className = 'ai-badge';
         badge.setAttribute('data-i18n', 'aiTranslated');
         badge.textContent = UI_TRANSLATIONS[currentLang].aiTranslated || 'AI-translated';
-        Object.assign(badge.style, {
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
-          backgroundColor: '#e0e0e0',
-          padding: '3px 8px',
-          borderRadius: '5px',
-          fontSize: '0.8em',
-          color: '#444',
-          fontStyle: 'italic'
-        });
 
         const postDiv = document.getElementById(`post-title-${post.id}`).closest('.post');
         postDiv.appendChild(badge);
@@ -405,7 +381,6 @@ function renderSinglePost(post) {
   // 💬 Load comments
   loadComments(post.id);
 }
-
 
 
 function searchPosts() {
