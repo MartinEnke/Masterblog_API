@@ -31,6 +31,15 @@ app = Flask(
     static_folder=os.path.join(FRONTEND, "static"),
     template_folder=FRONTEND
 )
+
+# Load config values
+app.config["ENV"] = os.getenv("ENV")
+app.config["EMAIL_FROM"] = os.getenv("EMAIL_FROM")
+app.config["SMTP_SERVER"] = os.getenv("SMTP_SERVER")
+app.config["SMTP_PORT"] = int(os.getenv("SMTP_PORT", 587))  # ensure int
+app.config["SMTP_USERNAME"] = os.getenv("SMTP_USERNAME")
+app.config["SMTP_PASSWORD"] = os.getenv("SMTP_PASSWORD")
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 app.register_blueprint(v2_blueprint, url_prefix="/api/v2")
 app.config['SWAGGER'] = {

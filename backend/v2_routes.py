@@ -22,6 +22,7 @@ from sqlalchemy import func
 import os, requests, base64
 from flask import Blueprint, request, jsonify, send_file
 from io import BytesIO
+from notifications import send_email
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -734,7 +735,12 @@ def like_post(current_user, post_id):
 
         session.commit()
         print(message)
-
+        if liked_by_user and post.user and post.user.email and post.user.id != current_user.id:
+            send_email(
+                to_email=post.user.email,
+                subject="❤️ Someone liked your post",
+                body=f"{current_user.username} liked your post: {post.title}"
+            )
         return jsonify({
             "message": message,
             "likes": len(post.liked_by),
@@ -780,6 +786,13 @@ def add_comment_v2(user, post_id):
 
     session.add(comment)
     session.commit()
+    # After saving the comment
+    if post.user and post.user.email:
+        send_email(
+            to_email=post.user.email,
+            subject="📬 New comment on your post",
+            body=f"{user.username} commented on your post '{post.title}':\n\n{data['text']}"
+        )
 
     return jsonify({
         "message": "Comment added",

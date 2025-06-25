@@ -16,13 +16,13 @@ def validate_login(username, password):
         return False, {"error": "Invalid username or password"}, 401
     return True, {}, 200
 
-def validate_registration(username, password):
+def validate_registration(username, password, email=None):
     existing_user = session.query(User).filter_by(username=username).first()
     if existing_user:
         return False, {"error": "User already exists"}, 400
 
     hashed_pw = generate_password_hash(password)
-    new_user = User(username=username, password=hashed_pw)
+    new_user = User(username=username, password=hashed_pw, email=email)
     session.add(new_user)
     session.commit()
     return True, {}, 201
@@ -48,8 +48,9 @@ def decode_jwt(token):
 
 def register_user():
     data = request.get_json() or {}
-    username = data.get("username", "").strip().lower()  # ✅ Normalize
-    ok, resp, code = validate_registration(username, data.get("password"))
+    username = data.get("username", "").strip().lower()
+    email = data.get("email", "").strip().lower() or None  # Optional
+    ok, resp, code = validate_registration(username, data.get("password"), email=email)
     if not ok:
         return resp, code
     return {"message": "User registered successfully"}, code
