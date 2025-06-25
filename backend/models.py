@@ -2,8 +2,8 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
-from db import Base
-from translations_db import PostTranslation
+from backend.db import Base
+
 
 
 class User(Base):
@@ -13,6 +13,7 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     password = Column(String)
     is_admin = Column(Boolean, default=False)
+    tts_demo_used = Column(Boolean, default=False)
 
     posts = relationship("Post", back_populates="user")
     likes = relationship("PostLike", back_populates="user")

@@ -1,7 +1,7 @@
 # translations_db.py
 from sqlalchemy import Column, Integer, String, UniqueConstraint, Boolean, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
-from db import Base, engine, session
+from backend.db import Base, engine, session
 import os
 from dotenv import load_dotenv
 from openai import OpenAI

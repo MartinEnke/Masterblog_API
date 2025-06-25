@@ -1,5 +1,7 @@
 /* static/main.js */
 
+// Global variable to avoid redundant checks
+let hasUsedTTSDemo = null;
 /* ==========================================================================
    GLOBAL VARIABLES
    ========================================================================== */
@@ -153,15 +155,51 @@ function saveToken(token) {
 function getToken() {
   return localStorage.getItem('authToken') || '';
 }
+
 function clearToken() {
+  const username = localStorage.getItem("username");
+  if (username) {
+    localStorage.removeItem(`ttsUsed_${username}`);
+  }
+
   localStorage.removeItem('authToken');
   localStorage.removeItem('username');
+  localStorage.removeItem('isAdmin');
+}
+
+async function checkTTSStatus() {
+  const username = localStorage.getItem("username");
+  if (!username) return false;
+
+  // Cached value
+  const cached = localStorage.getItem(`ttsUsed_${username}`);
+  if (cached !== null) {
+    hasUsedTTSDemo = cached === "true";
+    return hasUsedTTSDemo;
+  }
+
+  // Otherwise, fetch from backend
+  try {
+    const resp = await fetch('/api/v2/tts-demo-status', {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    const data = await resp.json();
+    hasUsedTTSDemo = data.used_demo === true;
+
+    // ✅ Store it per user
+    localStorage.setItem(`ttsUsed_${username}`, hasUsedTTSDemo);
+    return hasUsedTTSDemo;
+  } catch (err) {
+    console.warn("TTS check failed", err);
+    return false;
+  }
 }
 
 /* ==========================================================================
    INITIALIZATION
    ========================================================================== */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+console.log("🚀 DOM loaded");
 document.getElementById("cancel-add-btn")
     ?.addEventListener("click", () => {
       document.getElementById("add-modal").classList.add("hidden");
@@ -196,8 +234,12 @@ document.getElementById("cancel-add-btn")
   }
 
   // Initialize core app behavior
-  loadCategories();
-  loadPosts();
+  // Step 1: Check TTS status before loading posts
+await checkTTSStatus();  // sets hasUsedTTSDemo properly
+
+// Step 2: Now load categories and posts
+loadCategories();
+loadPosts();
   updateAuthButton();
   updateUserInfo();
 
@@ -381,70 +423,79 @@ function renderSinglePost(post) {
 
   // 🎧 Read Aloud button (Hume TTS)
   // Demo Limited Usage
-const hasUsedTTS = localStorage.getItem('hasUsedTTS') === 'true';
-const isLoggedIn = !!getToken();
+  const isLoggedIn = !!getToken();
 
-if (isLoggedIn) {
-  const ttsWrap = document.createElement('div');
-  ttsWrap.className = 'flex gap-4 mt-3 items-center';
+  if (isLoggedIn) {
+    const ttsWrap = document.createElement('div');
+    ttsWrap.className = 'flex gap-4 mt-3 items-center';
 
-  if (!hasUsedTTS) {
-    const readBtn = document.createElement('button');
-    readBtn.textContent = '🔊 Read Aloud (Demo)';
-    readBtn.className = 'text-sm text-purple-600 hover:text-purple-800';
-    readBtn.onclick = async () => {
-      try {
-        const resp = await fetch('/api/v2/generate-tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: `${post.title}. ${post.content}` })
-        });
-
-        if (!resp.ok) throw new Error('TTS request failed');
-        const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        window.currentTTS = audio;
-        audio.play();
-
-        localStorage.setItem('hasUsedTTS', 'true');
-
-        // After playback, replace with the upgrade message
-        readBtn.remove();
-        stopBtn.remove();
-        const msg = document.createElement('span');
-        msg.textContent = "✅ You've used your demo listen. Upgrade required for more.";
-        msg.className = 'text-xs text-gray-500';
-        ttsWrap.appendChild(msg);
-
-      } catch (e) {
-        console.error('TTS error:', e);
-        alert('Demo read aloud failed.');
-      }
+    const insertUsedDemoMessage = () => {
+      const msg = document.createElement('span');
+      msg.textContent = "⚠️ You've used your demo listen. Upgrade required for more.";
+      msg.className = 'text-xs text-gray-500';
+      ttsWrap.innerHTML = ''; // Clear existing children
+      ttsWrap.appendChild(msg);
     };
 
-    const stopBtn = document.createElement('button');
-    stopBtn.textContent = '⏹ Stop';
-    stopBtn.className = 'text-sm text-gray-600 ml-3';
-    stopBtn.onclick = () => {
-      if (window.currentTTS) {
-        window.currentTTS.pause();
-        window.currentTTS.currentTime = 0;
-      }
+    const createTTSButtons = () => {
+      const readBtn = document.createElement('button');
+      readBtn.textContent = '🔊 Read Aloud (Demo)';
+      readBtn.className = 'text-sm text-purple-600 hover:text-purple-800';
+
+      const stopBtn = document.createElement('button');
+      stopBtn.textContent = '⏹ Stop';
+      stopBtn.className = 'text-sm text-gray-600 ml-3';
+
+      readBtn.onclick = async () => {
+        if (hasUsedTTSDemo) return insertUsedDemoMessage();
+
+        try {
+          const resp = await fetch('/api/v2/generate-tts', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getToken()}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: `${post.title}. ${post.content}` })
+          });
+
+          if (!resp.ok) throw new Error('TTS request failed');
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          window.currentTTS = audio;
+          audio.play();
+
+          // Replace buttons with message
+          hasUsedTTSDemo = true;
+          insertUsedDemoMessage();
+        } catch (e) {
+          console.error('TTS error:', e);
+          alert('Demo read aloud failed.');
+        }
+      };
+
+      stopBtn.onclick = () => {
+        if (window.currentTTS) {
+          window.currentTTS.pause();
+          window.currentTTS.currentTime = 0;
+        }
+      };
+
+      ttsWrap.appendChild(readBtn);
+      ttsWrap.appendChild(stopBtn);
     };
 
-    ttsWrap.appendChild(readBtn);
-    ttsWrap.appendChild(stopBtn);
+    // ✅ Just check and render based on global hasUsedTTSDemo
+  if (hasUsedTTSDemo) {
+    insertUsedDemoMessage();
   } else {
-    const msg = document.createElement('span');
-    msg.textContent = "⚠️ You've used your demo listen. Upgrade required for more.";
-    msg.className = 'text-xs text-gray-500';
-    ttsWrap.appendChild(msg);
+    createTTSButtons();
   }
 
+  // ✅ Finally, append this block to the post container
   div.appendChild(ttsWrap);
 }
-
 
   // 💬 Load comments
   loadComments(post.id);
@@ -930,12 +981,6 @@ function updateAuthButton() {
   } else {
     btn.textContent = strings.login || 'Login';
   }
-}
-
-function clearToken() {
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('username');
-  localStorage.removeItem('isAdmin');
 }
 
 function handleAuthClick() {
