@@ -199,55 +199,63 @@ async function checkTTSStatus() {
    INITIALIZATION
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', async () => {
-console.log("🚀 DOM loaded");
-document.getElementById("cancel-add-btn")
-    ?.addEventListener("click", () => {
-      document.getElementById("add-modal").classList.add("hidden");
-    });
   console.log("🚀 DOM fully loaded. Starting app.");
 
-  // 🔁 Wire up "Apply Filters" button
-  const btn = document.getElementById("load-posts-btn");
-  if (btn) {
-    btn.addEventListener("click", loadPosts);
+  // 🔘 Cancel button for Add Post modal
+  document.getElementById("cancel-add-btn")?.addEventListener("click", () => {
+    document.getElementById("add-modal").classList.add("hidden");
+  });
+
+  // 🔁 "Apply Filters" button
+  const loadBtn = document.getElementById("load-posts-btn");
+  if (loadBtn) {
+    loadBtn.addEventListener("click", loadPosts);
   } else {
     console.warn("⚠️ Couldn't find #load-posts-btn in DOM.");
   }
 
-  // Base URL handling
-  document.getElementById('api-base-url').value = getBaseUrl();
-  document.getElementById('api-base-url')
-    .addEventListener('change', storeBaseUrl);
+  // 🌐 Set base API URL input
+  const baseInput = document.getElementById('api-base-url');
+  baseInput.value = getBaseUrl();
+  baseInput.addEventListener('change', storeBaseUrl);
 
-  // 🌐 Apply UI translations on load
-  applyUITranslations();
-
-  // 🌐 Set up language dropdown
+  // 🌐 Set language dropdown and update translations
   const langSelect = document.getElementById("lang-select");
   if (langSelect) {
     langSelect.value = getCurrentLanguage();
     langSelect.addEventListener("change", e => {
       localStorage.setItem("lang", e.target.value);
-      applyUITranslations();  // ✅ Update UI strings
-      loadPosts();            // ✅ Load posts in new language
+      applyUITranslations();
+      loadPosts();
     });
   }
 
-  // Initialize core app behavior
-  // Step 1: Check TTS status before loading posts
-await checkTTSStatus();  // sets hasUsedTTSDemo properly
+  // 🌍 Apply translations immediately
+  applyUITranslations();
 
-// Step 2: Now load categories and posts
-loadCategories();
-loadPosts();
+  // 🔊 TTS: check if demo already used
+  await checkTTSStatus(); // sets `hasUsedTTSDemo`
+
+  // 📂 Load categories and posts
+  loadCategories();
+  loadPosts();
+
+  // 🔐 Update login/logout button and user info
   updateAuthButton();
   updateUserInfo();
 
-  // 🔍 Search on Enter
-  document.getElementById('search-input')
-    .addEventListener('keydown', e => {
+  // 📧 Show email notification input if logged in
+  if (getToken()) {
+    document.getElementById("email-section")?.classList.remove("hidden");
+  }
+
+  // 🔍 Search on Enter key
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') searchPosts();
     });
+  }
 });
 
 

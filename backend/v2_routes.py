@@ -104,6 +104,8 @@ def get_user(current_user):
     }), 200
 
 
+from sqlalchemy.exc import IntegrityError
+
 @v2.route("/user/email", methods=["PUT"])
 @token_required
 def update_email(current_user):
@@ -114,9 +116,13 @@ def update_email(current_user):
         return jsonify({"error": "Invalid email address"}), 400
 
     current_user.email = new_email
-    session.commit()
 
-    return jsonify({"message": "Email updated", "email": new_email}), 200
+    try:
+        session.commit()
+        return jsonify({"message": "Email updated", "email": new_email}), 200
+    except IntegrityError:
+        session.rollback()
+        return jsonify({"error": "This email is already in use."}), 409
 # -------------------------
 # Swagger schemas
 # -------------------------
