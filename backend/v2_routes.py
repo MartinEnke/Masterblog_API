@@ -22,6 +22,8 @@ import os, requests, base64
 from flask import Blueprint, request, jsonify, send_file
 from io import BytesIO
 from notifications import send_email
+import html
+import re
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -110,6 +112,11 @@ from sqlalchemy.exc import IntegrityError
 def update_email(current_user):
     data = request.get_json()
     new_email = data.get("email")
+
+    # Improved format check
+    email_pattern = r"^[^@]+@[^@]+\.[^@]+$"
+    if not new_email or not re.match(email_pattern, new_email) or len(new_email) > 254:
+        return jsonify({"error": "Invalid email address"}), 400
 
     if not new_email or "@" not in new_email:
         return jsonify({"error": "Invalid email address"}), 400
@@ -398,36 +405,40 @@ def translate_individual_post(post_id):
 @limiter.limit("5 per minute")
 def add_post_v2(current_user):
     data = request.get_json()
-    title = data.get("title", "").strip()
-    content = data.get("content", "").strip()
-    category = data.get("category", "").strip()
+
+    # ✅ 1. Validate input before doing anything else
+    error = validate_post_data(data)
+    if error:
+        return jsonify(error), 400
+
+    # ✅ 2. Sanitize and prepare fields
+    title = html.escape(data["title"].strip())
+    content = html.escape(data["content"].strip())
+    category = data["category"].strip()
     ui_lang = data.get("lang", "en")
     date = datetime.now()
 
-    if not title or not content or not category:
-        return jsonify({"error": "Missing title, content or category"}), 400
-
-    # 🌐 1. Detect language
+    # 🌐 3. Detect original language
     try:
         original_lang = detect(f"{title} {content}")
     except Exception:
         original_lang = "und"
 
-    # 🧠 2. Rate-limit OpenAI usage
+    # ⛔ 4. Rate-limit OpenAI moderation
     if not can_call_openai(limit=10):
         return jsonify({
             "error": "AI moderation temporarily unavailable. Too many requests this hour. Try again later.",
             "remaining_calls": 0
         }), 429
 
-    # 🧠 3. Moderate content
+    # 🤖 5. Moderate content using OpenAI
     try:
         review_status = moderate_post(title, content)
     except Exception as e:
         print(f"❌ Moderation error: {e}")
         review_status = "needs_review"
 
-    # 💾 4. Save to database
+    # 💾 6. Save post to database
     post = Post(
         title=title,
         content=content,
@@ -440,26 +451,39 @@ def add_post_v2(current_user):
     session.add(post)
     session.commit()
 
-    # 🌍 5. Translate to English if needed
+    # 🌍 7. Translate to English if needed (optional for future UI)
     if original_lang != "en":
-        print(f"🌍 Translating from {original_lang} to English...")
         try:
+            print(f"🌍 Translating post {post.id} from {original_lang} to English")
             title_en, content_en = translate_post(title, content, "en")
             save_translation(post.id, "en", title_en, content_en)
         except Exception as e:
             print(f"⚠️ Translation failed: {e}")
 
-    # 📤 6. Build response
+    # ✅ 8. Respond to client
     response = {
-        "message": "Post added successfully",
         "post_id": post.id,
         "review_status": review_status
     }
+
+    if review_status == "approved":
+        response["message"] = "✅ Post added successfully and is now visible to others."
+    elif review_status == "needs_review":
+        response["message"] = (
+            "⚠️ Your post has been flagged for review and is not yet public. "
+            "Please be mindful of sensitive or unclear language."
+        )
+    else:  # rejected
+        response["message"] = (
+            "🚫 Your post contains inappropriate or harmful language and has been rejected. "
+            "It will not be visible to others. Please review our content guidelines."
+        )
 
     if ui_lang != original_lang:
         response["warning"] = f"⚠️ The text appears to be in {original_lang}, not {ui_lang}."
 
     return jsonify(response), 201
+
 
 
 
@@ -536,25 +560,73 @@ def update_post_v2(current_user, post_id):
     if error:
         return jsonify(error), 400
 
-    post.title = data["title"]
-    post.content = data["content"]
-    post.category = data["category"]
-    post.updated = datetime.now()
+    # ✅ Sanitize inputs
+    title = html.escape(data["title"].strip())
+    content = html.escape(data["content"].strip())
+    category = data["category"].strip()
+    ui_lang = data.get("lang", "en")
 
+    # 🌐 Detect language
+    try:
+        original_lang = detect(f"{title} {content}")
+    except Exception:
+        original_lang = "und"
+
+    # ⛔ Rate-limit OpenAI
+    if not can_call_openai(limit=10):
+        return jsonify({
+            "error": "AI moderation temporarily unavailable. Too many requests this hour. Try again later.",
+            "remaining_calls": 0
+        }), 429
+
+    # 🤖 Moderate content
+    try:
+        review_status = moderate_post(title, content)
+    except Exception as e:
+        print(f"❌ Moderation error: {e}")
+        review_status = "needs_review"
+
+    # 💾 Update post
+    post.title = title
+    post.content = content
+    post.category = category
+    post.updated = datetime.now()
+    post.review_status = review_status
+    post.original_lang = original_lang
     session.commit()
-    return jsonify({
-        "message": "Post updated",
-        "post": {
-            "id": post.id,
-            "author": post.author,
-            "title": post.title,
-            "content": post.content,
-            "category": post.category,
-            "date": post.date.strftime("%B %d, %Y") if post.date else None,
-            "updated": post.updated.strftime("%B %d, %Y") if post.updated else None,
-            "likes": len(post.liked_by)
-        }
-    }), 200
+
+    # 🌍 Translate if needed
+    if original_lang != "en":
+        try:
+            print(f"🌍 Translating updated post {post.id} from {original_lang} to English")
+            title_en, content_en = translate_post(title, content, "en")
+            save_translation(post.id, "en", title_en, content_en)
+        except Exception as e:
+            print(f"⚠️ Translation failed: {e}")
+
+    # ✅ Build response
+    response = {
+        "post_id": post.id,
+        "review_status": review_status
+    }
+
+    if review_status == "approved":
+        response["message"] = "✅ Post updated and remains publicly visible."
+    elif review_status == "needs_review":
+        response["message"] = (
+            "⚠️ Your updated post has been flagged for review. It is temporarily hidden from the public."
+        )
+    else:  # rejected
+        response["message"] = (
+            "🚫 Your post contains inappropriate or harmful language and has been rejected. "
+            "It will not be visible to others. Please review our content guidelines."
+        )
+
+    if ui_lang != original_lang:
+        response["warning"] = f"⚠️ The text appears to be in {original_lang}, not {ui_lang}."
+
+    return jsonify(response), 200
+
 
 
 @v2.route("/posts/<int:post_id>", methods=["DELETE"])

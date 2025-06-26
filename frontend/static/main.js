@@ -600,18 +600,27 @@ function submitAdd() {
       }
       return r.json();
     })
-    .then(() => {
-  document.getElementById("add-modal").classList.add("hidden");
+    .then(data => {
+      document.getElementById("add-modal").classList.add("hidden");
 
-  // 👇 Reload posts
-  loadPosts();
+      // ✅ Show moderation message (if any)
+      if (data.message && data.review_status) {
+        const type = data.review_status === "approved" ? "success"
+                   : data.review_status === "needs_review" ? "warning"
+                   : "error";
 
-  // 👇 Add new category to the list if it's not already there
-  if (!categories.includes(category)) {
-    categories.push(category);
-    categories.sort(); // Optional: keep it alphabetical
-  }
-})
+        showToast(data.message, type);
+      }
+
+      // 👇 Reload posts
+      loadPosts();
+
+      // 👇 Add new category to the list if it's not already there
+      if (!categories.includes(category)) {
+        categories.push(category);
+        categories.sort();
+      }
+    })
     .catch(e => alert("Error: " + e));
 }
 
@@ -625,7 +634,7 @@ function submitUpdate() {
   }
 
   const payload = {
-    title:   document.getElementById('edit-title').value,
+    title: document.getElementById('edit-title').value,
     content: document.getElementById('edit-content').value,
     category
   };
@@ -633,19 +642,55 @@ function submitUpdate() {
   fetch(`${base}/posts/${postToEditId}`, {
     method: 'PUT',
     headers: {
-      'Content-Type':'application/json',
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${getToken()}`
     },
     body: JSON.stringify(payload)
   })
-  .then(r => {
-    if (!r.ok) return r.json().then(e => Promise.reject(e.error));
-    return r.json();
-  })
-  .then(() => { closeModal(); loadPosts(); })
-  .catch(e => alert("Error: " + e));
+    .then(async r => {
+      if (!r.ok) {
+        const errData = await r.json();
+        const message = errData.error || "Unknown error";
+        if (r.status === 429 && errData.remaining_calls !== undefined) {
+          return Promise.reject(`🚫 ${message}\nRemaining moderation calls: ${errData.remaining_calls}`);
+        }
+        return Promise.reject(message);
+      }
+      return r.json();
+    })
+    .then(data => {
+      closeModal();
+
+      // ✅ Show moderation result message (if available)
+      if (data.message && data.review_status) {
+        const type = data.review_status === "approved" ? "success"
+                   : data.review_status === "needs_review" ? "warning"
+                   : "error";
+
+        showToast(data.message, type);
+      }
+
+      // 🔁 Reload updated posts
+      loadPosts();
+
+      // 🧠 Optionally update category list
+      if (!categories.includes(category)) {
+        categories.push(category);
+        categories.sort();
+      }
+    })
+    .catch(e => alert("Error: " + e));
 }
 
+
+function showToast(message, type = "info") {
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 5000);
+}
 
 function deletePost(postId) {
   const base = getBaseUrl();

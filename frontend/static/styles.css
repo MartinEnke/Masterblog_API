@@ -266,6 +266,56 @@ button:hover, .text-button:hover {
   color: #1f2937;
 }
 
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  color: var(--text-color);
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+  font-weight: 500;
+  font-size: 0.95rem;
+  z-index: 9999;
+  min-width: 280px;
+  max-width: 80%;
+  text-align: center;
+  transition: var(--transition);
+  opacity: 0.95;
+}
+
+.toast.success {
+  border-left: 4px solid #4caf50;
+  background-color: #ecfdf5;
+}
+
+.toast.warning {
+  border-left: 4px solid #f59e0b;
+  background-color: #fff7ed;
+}
+
+.toast.error {
+  border-left: 4px solid #ef4444;
+  background-color: #fef2f2;
+}
+
+.toast {
+  animation: fadeInSlide 0.3s ease-out;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 0.95;
+    transform: translateX(-50%) translateY(0);
+  }
+}
 /* ========================================================================
    COMMENTS
    ======================================================================== */

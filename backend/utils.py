@@ -7,22 +7,27 @@ from openai import OpenAI
 import os
 from flask import request
 from flask_limiter.util import get_remote_address
-
+import re
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def validate_post_data(data):
-    """Validates required fields in a post dictionary."""
     if not data:
         return {"error": "Enter a title, content, and category"}
-    if not data.get("title"):
-        return {"error": "Enter a title"}
-    if not data.get("content"):
-        return {"error": "Enter content"}
-    if not data.get("category"):
-        return {"error": "Enter a category"}
+
+    title = data.get("title", "").strip()
+    content = data.get("content", "").strip()
+    category = data.get("category", "").strip()
+
+    if not (3 <= len(title) <= 100):
+        return {"error": "Title must be 3–150 characters"}
+    if not (10 <= len(content) <= 2000):
+        return {"error": "Content must be 10–2000 characters"}
+    if not re.match(r"^[\w\s\-]{1,50}$", category):
+        return {"error": "Invalid category (only letters, numbers, dashes allowed)"}
+
     return None
 
 
