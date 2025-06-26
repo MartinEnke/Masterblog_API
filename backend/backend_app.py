@@ -3,7 +3,6 @@ from datetime import datetime
 from flask import Flask, request, jsonify, render_template
 from auth import register_user, login_user, token_required
 from flask_limiter.util import get_remote_address
-from v2_routes import v2
 from flasgger import Swagger
 from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data
 from rate_limit import limiter
