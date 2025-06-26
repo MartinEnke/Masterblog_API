@@ -887,6 +887,8 @@ function submitLogin() {
         } else {
           localStorage.removeItem('isAdmin');
         }
+        // ✅ ADD THIS to show email input
+        showEmailSection(user);
       } else {
         console.warn("Warning: Failed to fetch /me. Status:", res.status);
       }
@@ -952,6 +954,8 @@ function submitSignup() {
         } else {
           localStorage.removeItem('isAdmin');
         }
+        // ✅ ADD THIS to show email input
+        showEmailSection(user);
       }
     } catch (err) {
       console.warn("Warning: Couldn't fetch /me:", err);
@@ -964,7 +968,6 @@ function submitSignup() {
   })
   .catch(e => alert("Signup error: " + e.message));
 }
-
 
 
 
@@ -989,6 +992,8 @@ function handleAuthClick() {
     updateAuthButton();
     updateUserInfo();
     loadPosts();
+    // ✅ Hide email section
+    document.getElementById('email-section').classList.add('hidden');
   } else {
     openLoginModal();           // Show login modal if not logged in
   }
@@ -998,6 +1003,49 @@ function updateUserInfo() {
   document.getElementById('user-info')
     .textContent = u?`Welcome, ${u}!`:'';
 }
+
+
+function showEmailSection(user) {
+  const emailSection = document.getElementById('email-section');
+  const emailInput = document.getElementById('email-input');
+  const emailMsg = document.getElementById('email-msg');
+
+  emailInput.value = user.email || '';
+  emailSection.classList.remove('hidden');
+
+  document.getElementById('save-email-btn').onclick = async () => {
+    const newEmail = emailInput.value.trim();
+    if (!newEmail.includes("@")) {
+      emailMsg.textContent = "❌ Invalid email.";
+      emailMsg.className = "text-xs text-red-600 ml-2";
+      return;
+    }
+
+    try {
+      const resp = await fetch('/api/v2/user/email', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${getToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: newEmail })
+      });
+
+      const data = await resp.json();
+      if (resp.ok) {
+        emailMsg.textContent = "✅ Email saved.";
+        emailMsg.className = "text-xs text-green-600 ml-2";
+      } else {
+        emailMsg.textContent = "❌ " + data.error;
+        emailMsg.className = "text-xs text-red-600 ml-2";
+      }
+    } catch (err) {
+      console.error("Error updating email:", err);
+      emailMsg.textContent = "❌ Network error.";
+    }
+  };
+}
+
 
 /* ==========================================================================
    MODAL HELPERS

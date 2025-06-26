@@ -93,6 +93,30 @@ def get_user_from_token_value(token):
     except Exception as e:
         print("❌ Invalid token:", e)
         return None
+
+
+@v2.route("/user", methods=["GET"])
+@token_required
+def get_user(current_user):
+    return jsonify({
+        "username": current_user.username,
+        "email": current_user.email
+    }), 200
+
+
+@v2.route("/user/email", methods=["PUT"])
+@token_required
+def update_email(current_user):
+    data = request.get_json()
+    new_email = data.get("email")
+
+    if not new_email or "@" not in new_email:
+        return jsonify({"error": "Invalid email address"}), 400
+
+    current_user.email = new_email
+    session.commit()
+
+    return jsonify({"message": "Email updated", "email": new_email}), 200
 # -------------------------
 # Swagger schemas
 # -------------------------
