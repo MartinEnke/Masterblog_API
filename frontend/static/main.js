@@ -423,79 +423,62 @@ function renderSinglePost(post) {
 
   // 🎧 Read Aloud button (Hume TTS)
   // Demo Limited Usage
-  const isLoggedIn = !!getToken();
+  const ttsWrap = document.createElement('div');
+ttsWrap.className = 'flex gap-4 mt-3 items-center';
 
-  if (isLoggedIn) {
-    const ttsWrap = document.createElement('div');
-    ttsWrap.className = 'flex gap-4 mt-3 items-center';
+const insertUsedDemoMessage = () => {
+  const msg = document.createElement('span');
+  msg.textContent = "⚠️ You've used your demo listen. Upgrade required for more.";
+  msg.className = 'text-xs text-gray-500';
+  ttsWrap.innerHTML = ''; // Clear existing children
+  ttsWrap.appendChild(msg);
+};
 
-    const insertUsedDemoMessage = () => {
-      const msg = document.createElement('span');
-      msg.textContent = "⚠️ You've used your demo listen. Upgrade required for more.";
-      msg.className = 'text-xs text-gray-500';
-      ttsWrap.innerHTML = ''; // Clear existing children
-      ttsWrap.appendChild(msg);
-    };
+const readBtn = document.createElement('button');
+readBtn.textContent = '🔊 Read Aloud (Demo)';
+readBtn.className = 'text-sm text-purple-600 hover:text-purple-800';
 
-    const createTTSButtons = () => {
-      const readBtn = document.createElement('button');
-      readBtn.textContent = '🔊 Read Aloud (Demo)';
-      readBtn.className = 'text-sm text-purple-600 hover:text-purple-800';
-
-      const stopBtn = document.createElement('button');
-      stopBtn.textContent = '⏹ Stop';
-      stopBtn.className = 'text-sm text-gray-600 ml-3';
-
-      readBtn.onclick = async () => {
-        if (hasUsedTTSDemo) return insertUsedDemoMessage();
-
-        try {
-          const resp = await fetch('/api/v2/generate-tts', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${getToken()}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ text: `${post.title}. ${post.content}` })
-          });
-
-          if (!resp.ok) throw new Error('TTS request failed');
-          const blob = await resp.blob();
-          const url = URL.createObjectURL(blob);
-          const audio = new Audio(url);
-          window.currentTTS = audio;
-          audio.play();
-
-          // Replace buttons with message
-          hasUsedTTSDemo = true;
-          insertUsedDemoMessage();
-        } catch (e) {
-          console.error('TTS error:', e);
-          alert('Demo read aloud failed.');
-        }
-      };
-
-      stopBtn.onclick = () => {
-        if (window.currentTTS) {
-          window.currentTTS.pause();
-          window.currentTTS.currentTime = 0;
-        }
-      };
-
-      ttsWrap.appendChild(readBtn);
-      ttsWrap.appendChild(stopBtn);
-    };
-
-    // ✅ Just check and render based on global hasUsedTTSDemo
-  if (hasUsedTTSDemo) {
-    insertUsedDemoMessage();
-  } else {
-    createTTSButtons();
+readBtn.onclick = async () => {
+  const token = getToken();
+  if (!token) {
+    openLoginModal(); // 🔐 Show login modal if not logged in
+    return;
   }
 
-  // ✅ Finally, append this block to the post container
-  div.appendChild(ttsWrap);
-}
+  if (hasUsedTTSDemo) {
+    insertUsedDemoMessage();
+    return;
+  }
+
+  try {
+    const resp = await fetch('/api/v2/generate-tts', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ text: `${post.title}. ${post.content}` })
+    });
+
+    if (!resp.ok) throw new Error('TTS request failed');
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    window.currentTTS = audio;
+    audio.play();
+
+    // Mark demo used
+    hasUsedTTSDemo = true;
+    insertUsedDemoMessage();
+  } catch (e) {
+    console.error('TTS error:', e);
+    alert('Demo read aloud failed.');
+  }
+};
+
+// Initial render
+ttsWrap.appendChild(readBtn);
+div.appendChild(ttsWrap);
 
   // 💬 Load comments
   loadComments(post.id);

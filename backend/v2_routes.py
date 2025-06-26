@@ -836,16 +836,19 @@ def get_comments_v2(post_id):
     if not post:
         return jsonify({"error": "Post not found"}), 404
 
-    comments = session.query(Comment).filter_by(post_id=int(post_id)).all()
-    return jsonify([
+    comments = session.query(Comment).filter_by(post_id=post_id).all()
+
+    return jsonify({"comments": [
         {
             "id": c.id,
             "author": c.author,
             "text": c.text,
-            "date": c.date.strftime("%B %d, %Y") if c.date else ""  # ✅ Safe fallback
+            "date": c.date.strftime("%B %d, %Y") if c.date else ""
         }
         for c in comments
-    ])
+    ]})
+
+
 
 
 @v2.route("/comments/<int:comment_id>", methods=["DELETE"])
