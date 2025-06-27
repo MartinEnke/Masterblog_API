@@ -38,7 +38,7 @@ def gen_tts_hume(current_user):
         return jsonify({"error": "No text provided"}), 400
 
     if current_user.tts_demo_used:
-        return jsonify({"error": "TTS demo already used"}), 403  # ⛔ Prevent re-use
+        return jsonify({"error": "TTS demo already used"}), 403
 
     print(f"🔊 Generating TTS for user: {current_user.username}")
 
@@ -56,11 +56,11 @@ def gen_tts_hume(current_user):
             print("❌ Hume TTS error:", resp.text)
             return jsonify({"error": resp.text}), resp.status_code
 
-        # ✅ Store demo usage if not already set
+        # ✅ Mark demo used and commit
         if not current_user.tts_demo_used:
             current_user.tts_demo_used = True
             session.commit()
-            print(f"✅ Marked tts_demo_used = True for {current_user.username}")
+            session.expire_all()  # 🔥 Force refresh of session objects
 
         data = resp.json()
         audio_b64 = data["generations"][0]["audio"]
@@ -77,6 +77,7 @@ def gen_tts_hume(current_user):
 @v2.route("/tts-demo-status", methods=["GET"])
 @token_required
 def tts_demo_status(current_user):
+    session.refresh(current_user)
     return jsonify({"used_demo": current_user.tts_demo_used})
 
 def get_current_user_from_token():
