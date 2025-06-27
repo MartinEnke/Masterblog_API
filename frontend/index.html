@@ -154,16 +154,17 @@
         <div class="flex flex-col sm:flex-row gap-4 flex-1 mt-4 md:mt-0">
           <select id="sort-field" data-i18n-option onchange="loadPosts()" class="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
             <option value="">noSorting</option>
+            <option value="date" data-i18n-option="sortDate">Date</option>
             <option value="author" data-i18n-option="sortAuthor">Author</option>
             <option value="title" data-i18n-option="sortTitle">Title</option>
             <option value="likes" data-i18n-option="sortLikes">Likes</option>
-            <option value="date" data-i18n-option="sortDate">Date</option>
             <option value="updated" data-i18n-option="sortUpdated">Last Updated</option>
           </select>
 
           <select id="sort-direction" data-i18n-option onchange="loadPosts()" class="flex-1 text-sm px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
-            <option value="asc" data-i18n-option="ascending">Ascending</option>
             <option value="desc" data-i18n-option="descending">Descending</option>
+            <option value="asc" data-i18n-option="ascending">Ascending</option>
+
           </select>
 
           <button
