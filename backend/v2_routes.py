@@ -37,6 +37,9 @@ def gen_tts_hume(current_user):
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
+    if current_user.tts_demo_used:
+        return jsonify({"error": "TTS demo already used"}), 403  # ⛔ Prevent re-use
+
     print(f"🔊 Generating TTS for user: {current_user.username}")
 
     # Hume API request
