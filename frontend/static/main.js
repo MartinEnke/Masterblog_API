@@ -77,9 +77,9 @@ function applyUITranslations() {
   document.querySelectorAll("textarea[id^='comment-text-']").forEach(textarea => {
     textarea.placeholder = strings.commentPlaceholder || "Add a comment...";
   });
-  document.querySelectorAll(".comment-section button").forEach(btn => {
-    btn.textContent = strings.postComment || "Post Comment";
-  });
+  document.querySelectorAll(".comment-submit").forEach(btn => {
+  btn.textContent = strings.postComment || "Post Comment";
+});
 
   // Welcome message
   const username = localStorage.getItem("username");
@@ -355,13 +355,11 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
     : ''}
   <div class="comment-section mt-4" id="comments-${post.id}">
     <button class="toggle-comments-btn flex items-center gap-2 text-sm text-gray-700 font-semibold hover:text-gray-900 focus:outline-none bg-transparent hover:bg-transparent">
-  💬 <span data-i18n="comments">Comments</span>
-  <span class="comment-count text-gray-500">(0)</span>
+  💬 <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+  </svg>
 </button>
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-      </svg>
-    </button>
     <div class="comments-container mt-3 hidden">
       <div id="comment-list-${post.id}" class="space-y-2"></div>
       <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..." class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"></textarea>
@@ -598,7 +596,7 @@ const commentCount = data.comment_count || comments.length;
       });
 
       const countEl = document.querySelector(`#comments-${postId} .comment-count`);
-      if (countEl) countEl.textContent = `(${commentCount})`;
+      if (countEl) countEl.textContent = commentCount;
     })
     .catch(err => {
       console.error(`🔥 Error loading comments for post ${postId}:`, err);
