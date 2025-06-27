@@ -1097,6 +1097,7 @@ def login_v2():
 def get_current_user(current_user):
     return jsonify({
         "username": current_user.username,
+        "email": current_user.email,
         "is_admin": current_user.is_admin
     })
 

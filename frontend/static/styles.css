@@ -114,6 +114,12 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+.burning-orange {
+  color: #FF4F00;
+}
+.burning-orange:hover {
+  color: #ff7133; /* optional: a lighter hover tone */
+}
 /* ========================================================================
    FILTER BAR
    ======================================================================== */

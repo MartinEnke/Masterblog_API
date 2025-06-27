@@ -1078,14 +1078,23 @@ function updateAuthButton() {
 
 function handleAuthClick() {
   if (getToken()) {
-    clearToken();                // ✅ clears auth, username, admin
+    clearToken();
     updateAuthButton();
     updateUserInfo();
     loadPosts();
-    // ✅ Hide email section
+
+    // ✅ Hide and reset email section
     document.getElementById('email-section').classList.add('hidden');
+    document.getElementById('email-input').value = '';
+    document.getElementById('email-msg').textContent = '';
+
+    const btn = document.getElementById('save-email-btn');
+    btn.textContent = translate('save') || 'Save';
+    btn.classList.remove('text-green-600');
+    btn.classList.add('text-black', 'hover:text-gray-800');
+
   } else {
-    openLoginModal();           // Show login modal if not logged in
+    openLoginModal();
   }
 }
 function updateUserInfo() {
@@ -1100,8 +1109,13 @@ function showEmailSection(user) {
   const emailInput = document.getElementById('email-input');
   const emailMsg = document.getElementById('email-msg');
 
-  emailInput.value = user.email || '';
   emailSection.classList.remove('hidden');
+
+  // Delay setting the input value to avoid overwrite from DOM re-rendering
+  setTimeout(() => {
+    console.log("✅ Setting email input value to:", user.email);
+    emailInput.value = user.email || '';
+  }, 0);
 
   document.getElementById('save-email-btn').onclick = async () => {
     const newEmail = emailInput.value.trim();
@@ -1135,6 +1149,7 @@ function showEmailSection(user) {
     }
   };
 }
+
 
 function saveEmail() {
   const input = document.getElementById("email-input");
