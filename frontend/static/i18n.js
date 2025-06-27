@@ -42,7 +42,21 @@ const UI_TRANSLATIONS = {
     loginRequired: "Login Required",
     loginToAdd: "You need to be logged in to add a post.",
     mustBeLoggedIn: "You must be logged in to add a post.",
-    yes: "Yes"
+    yes: "Yes",
+    infoTitle: "🧠 Welcome to the Multilingual Blog App",
+    infoIntro: "This is a portfolio project showcasing AI-assisted blog translation, moderation, and multilingual support.",
+    infoFeaturesTitle: "What this app can do:",
+    infoFeature1: "✅ Multilingual UI and AI-powered post translations (EN, DE, FR, ES)",
+    infoFeature2: "✅ Dynamic translation caching for performance",
+    infoFeature3: "✅ Create, edit, and delete posts with authentication",
+    infoFeature4: "✅ Token-based login/logout and user session control",
+    infoFeature5: "✅ Email notifications when your post gets liked or commented",
+    infoFeature6: "✅ Comments system with live updates",
+    infoFeature7: "✅ AI moderation to detect harmful content",
+    infoFeature8: "✅ Prevents abuse with title/content length checks and post repetition limits",
+    infoFeature9: "✅ Text-to-speech (TTS) demo for reading posts aloud (one-time usage)",
+    infoFeature10: "⚠️ Categories and comments are not yet translated",
+    infoClose: "Got it!"
   },
   de: {
     loadPosts: "Beiträge laden",
@@ -84,7 +98,21 @@ const UI_TRANSLATIONS = {
     loginRequired: "Anmeldung erforderlich",
     loginToAdd: "Du musst angemeldet sein, um einen Beitrag hinzuzufügen.",
     mustBeLoggedIn: "Du musst angemeldet sein, um einen Beitrag zu erstellen.",
-    yes: "Ja"
+    yes: "Ja",
+    infoTitle: "🧠 Willkommen in der mehrsprachigen Blog-App",
+    infoIntro: "Dies ist ein Portfolio-Projekt zur Demonstration von KI-gestützter Übersetzung, Moderation und Mehrsprachigkeit.",
+    infoFeaturesTitle: "Was diese App kann:",
+    infoFeature1: "✅ Mehrsprachige Oberfläche und KI-gestützte Beitragsübersetzung (EN, DE, FR, ES)",
+    infoFeature2: "✅ Dynamisches Caching von Übersetzungen für bessere Leistung",
+    infoFeature3: "✅ Beiträge erstellen, bearbeiten und löschen mit Authentifizierung",
+    infoFeature4: "✅ Token-basierte Anmeldung/Abmeldung und Sitzungsverwaltung",
+    infoFeature5: "✅ E-Mail-Benachrichtigungen bei Likes oder Kommentaren",
+    infoFeature6: "✅ Kommentarsystem mit Live-Aktualisierung",
+    infoFeature7: "✅ KI-Moderation erkennt schädliche Inhalte",
+    infoFeature8: "✅ Missbrauchsschutz durch Längen- und Wiederholungsbeschränkung bei Beiträgen",
+    infoFeature9: "✅ Text-to-Speech (TTS) Demo zum Vorlesen (einmalige Nutzung)",
+    infoFeature10: "⚠️ Kategorien und Kommentare werden noch nicht übersetzt",
+    infoClose: "Verstanden!"
   },
   fr: {
     loadPosts: "Charger les articles",
@@ -126,7 +154,21 @@ const UI_TRANSLATIONS = {
     loginRequired: "Connexion requise",
     loginToAdd: "Vous devez être connecté pour ajouter un article.",
     mustBeLoggedIn: "Vous devez être connecté pour publier un article.",
-    yes: "Oui"
+    yes: "Oui",
+    infoTitle: "🧠 Bienvenue sur l'application de blog multilingue",
+    infoIntro: "Il s'agit d'un projet portfolio démontrant la traduction assistée par IA, la modération de contenu et la prise en charge multilingue.",
+    infoFeaturesTitle: "Ce que cette application peut faire :",
+    infoFeature1: "✅ Interface multilingue et traduction automatique des articles (EN, DE, FR, ES)",
+    infoFeature2: "✅ Mise en cache dynamique des traductions pour de meilleures performances",
+    infoFeature3: "✅ Créer, modifier et supprimer des articles avec authentification",
+    infoFeature4: "✅ Connexion/déconnexion basée sur des jetons et gestion de session",
+    infoFeature5: "✅ Notifications par e-mail lors d’un like ou commentaire",
+    infoFeature6: "✅ Système de commentaires avec mise à jour en temps réel",
+    infoFeature7: "✅ Modération IA pour détecter le contenu nocif",
+    infoFeature8: "✅ Protection contre les abus via des limites de longueur et de fréquence",
+    infoFeature9: "✅ Démo Text-to-Speech (TTS) pour lire les articles à voix haute (une seule fois)",
+    infoFeature10: "⚠️ Les catégories et commentaires ne sont pas encore traduits",
+    infoClose: "Compris !"
   },
   es: {
     loadPosts: "Cargar publicaciones",
@@ -168,7 +210,21 @@ const UI_TRANSLATIONS = {
     loginRequired: "Se requiere inicio de sesión",
     loginToAdd: "Debes iniciar sesión para agregar una publicación.",
     mustBeLoggedIn: "Debes iniciar sesión para publicar una entrada.",
-    yes: "Sí"
+    yes: "Sí",
+    infoTitle: "🧠 Bienvenido a la aplicación de blog multilingüe",
+    infoIntro: "Este es un proyecto de portafolio que demuestra traducción automática asistida por IA, moderación de contenido y soporte multilingüe.",
+    infoFeaturesTitle: "Lo que puede hacer esta aplicación:",
+    infoFeature1: "✅ Interfaz multilingüe y traducción automática de publicaciones (EN, DE, FR, ES)",
+    infoFeature2: "✅ Caché dinámico de traducciones para mejorar el rendimiento",
+    infoFeature3: "✅ Crear, editar y eliminar publicaciones con autenticación",
+    infoFeature4: "✅ Inicio/cierre de sesión con tokens y control de sesión",
+    infoFeature5: "✅ Notificaciones por correo electrónico cuando alguien da like o comenta",
+    infoFeature6: "✅ Sistema de comentarios con actualizaciones en tiempo real",
+    infoFeature7: "✅ Moderación IA para detectar contenido dañino",
+    infoFeature8: "✅ Prevención de abuso mediante restricciones de longitud y repetición",
+    infoFeature9: "✅ Demostración de texto a voz (TTS) para leer en voz alta (una sola vez)",
+    infoFeature10: "⚠️ Las categorías y los comentarios aún no se traducen",
+    infoClose: "¡Entendido!"
   }
 };
 

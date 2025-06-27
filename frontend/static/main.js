@@ -232,6 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 🌍 Apply translations immediately
   applyUITranslations();
+  showInfoModalIfNeeded();
 
   // 🔊 TTS: check if demo already used
   await checkTTSStatus(); // sets `hasUsedTTSDemo`
@@ -1195,24 +1196,31 @@ function openEditModal(post) {
   const strings = UI_TRANSLATIONS[currentLang];
 
   const dd = document.getElementById('edit-category');
-// Append "custom" option
-const customOption = new Option("➕ Enter Custom Category...", "custom");
-customOption.id = "custom-category-option";
-dd.appendChild(customOption);
 
-// Enable dynamic field
-setupCustomCategoryInput("edit-category", "custom-category-wrapper-edit", "custom-category-input-edit");
+  // ✅ Reset dropdown and insert translated "Select Category" placeholder
   dd.innerHTML = `<option value="">${strings.selectCategory || "Select Category"}</option>`;
+
+  // ✅ Add all categories with translation (fallback to raw if not found)
   categories.forEach(cat => {
-    const o = new Option(cat, cat);
-    if (cat.toLowerCase() === post.category.toLowerCase()) o.selected = true;
-    dd.appendChild(o);
+    const translated = strings[cat] || cat;
+    const option = new Option(translated, cat);
+    if (cat.toLowerCase() === post.category.toLowerCase()) option.selected = true;
+    dd.appendChild(option);
   });
+
+  // ✅ Append custom option
+  const customOption = new Option("➕ Enter Custom Category...", "custom");
+  customOption.id = "custom-category-option";
+  dd.appendChild(customOption);
+
+  // ✅ Enable dynamic custom input field toggle
+  setupCustomCategoryInput("edit-category", "custom-category-wrapper-edit", "custom-category-input-edit");
 
   translateModalPlaceholders();
   document.getElementById('edit-modal').classList.remove('hidden');
   updateAuthButton();
 }
+
 
 function closeModal() {
   document.getElementById('edit-modal').classList.add('hidden');
@@ -1241,6 +1249,70 @@ function setupCustomCategoryInput(dropdownId, inputWrapperId, inputFieldId) {
   });
 }
 
+function renderInfoModal() {
+  const lang = getCurrentLanguage();
+  const strings = UI_TRANSLATIONS[lang];
+
+  // Remove if already exists
+  document.getElementById("info-modal")?.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "info-modal";
+  modal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+
+  const content = document.createElement("div");
+  content.className = "bg-white rounded-lg shadow-lg p-6 max-w-xl w-full";
+
+  content.innerHTML = `
+  <div class="flex justify-between items-start mb-4">
+    <h2 class="text-xl font-semibold">${strings.infoTitle}</h2>
+    <select id="info-lang-select" class="ml-4 text-sm border border-gray-300 rounded-md px-2 py-1">
+      <option value="en">English</option>
+      <option value="de">Deutsch</option>
+      <option value="fr">Français</option>
+      <option value="es">Español</option>
+    </select>
+  </div>
+
+  <p class="mb-4">${strings.infoIntro}</p>
+  <h3 class="text-md font-semibold mb-2">${strings.infoFeaturesTitle}</h3>
+  <ul class="list-disc list-inside mb-4">
+    ${[...Array(10)].map((_, i) => `<li>${strings[`infoFeature${i + 1}`] || ""}</li>`).join("")}
+  </ul>
+  <button id="info-close-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">${strings.infoClose}</button>
+`;
+  // Set dropdown to current language
+const langSelect = content.querySelector("#info-lang-select");
+langSelect.value = getCurrentLanguage();
+
+langSelect.addEventListener("change", (e) => {
+  const newLang = e.target.value;
+  localStorage.setItem("lang", newLang);
+  applyUITranslations();
+  renderInfoModal(); // Re-render modal with new language
+});
+
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+
+  document.getElementById("info-close-btn").addEventListener("click", () => {
+    sessionStorage.setItem("infoSeen", "true");
+    modal.remove();
+  });
+}
+
+function showInfoModalIfNeeded() {
+  const infoSeen = sessionStorage.getItem("infoSeen");
+  if (!infoSeen) {
+    renderInfoModal();
+  }
+}
+
+
+function forceShowInfoModal() {
+  sessionStorage.removeItem("infoSeen");
+  renderInfoModal(); // directly show it
+}
 // Wire up buttons
 document.getElementById('auth-button').onclick = handleAuthClick;
 document.getElementById('add-save-btn')?.addEventListener('click', submitAdd);
