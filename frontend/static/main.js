@@ -1136,6 +1136,59 @@ function showEmailSection(user) {
   };
 }
 
+function saveEmail() {
+  const input = document.getElementById("email-input");
+  const button = document.getElementById("save-email-btn");
+  const msg = document.getElementById("email-msg");
+  const email = input.value.trim();
+
+  if (!email.includes("@")) {
+    msg.textContent = "❌ Invalid email.";
+    msg.className = "text-xs text-red-600 ml-2";
+    return;
+  }
+
+  fetch("/api/v2/user/email", {
+    method: "PUT",
+    headers: {
+      "Authorization": `Bearer ${getToken()}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ email })
+  })
+    .then(async (resp) => {
+      let data;
+      try {
+        data = await resp.json();
+      } catch (jsonErr) {
+        throw new Error("Invalid JSON response from server.");
+      }
+
+      if (resp.ok) {
+        msg.textContent = "";
+        button.textContent = `${translate("saved")}`;
+        button.removeAttribute("data-i18n");
+        button.classList.remove("text-black", "hover:text-gray-800");
+        button.classList.add("text-green-600");
+
+        setTimeout(() => {
+          button.setAttribute("data-i18n", "save");
+          applyUITranslations();
+          button.classList.remove("text-green-600");
+          button.classList.add("text-black", "hover:text-gray-800");
+        }, 2000);
+      } else {
+        msg.textContent = "❌ " + (data.error || "Error");
+        msg.className = "text-xs text-red-600 ml-2";
+      }
+    })
+    .catch((err) => {
+      console.error("🧨 Caught error:", err);
+      msg.textContent = "❌ Network or JSON error.";
+      msg.className = "text-xs text-red-600 ml-2";
+    });
+}
+
 
 /* ==========================================================================
    MODAL HELPERS

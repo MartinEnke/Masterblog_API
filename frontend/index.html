@@ -90,64 +90,70 @@
   <!-- Top Navigation -->
   <section class="bg-white shadow-sm rounded-lg p-4 mb-6">
 
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-  <!-- Left: Signup + Auth -->
-  <div class="flex items-center gap-4 justify-start order-1 md:order-1 w-full md:w-auto">
-    <button
-      onclick="openSignupModal()"
-      class="text-base text-blue-700 hover:text-blue-900 bg-transparent hover:bg-transparent focus:outline-none transition-colors"
-      data-i18n="signup">Signup</button>
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-    <button id="auth-button"
-      onclick="handleAuthClick()"
-      class="text-base text-blue-700 hover:text-blue-900 bg-transparent hover:bg-transparent focus:outline-none transition-colors"
-      data-i18n="login">Login</button>
+    <!-- Left: Signup + Login + Welcome -->
+    <div class="flex items-center gap-4 justify-start order-1 md:order-1 w-full md:w-auto">
+      <button
+        onclick="openSignupModal()"
+        class="text-base text-blue-700 hover:text-blue-900 bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+        data-i18n="signup">Signup</button>
 
-    <div id="user-info" class="text-green-800 font-semibold text-base"></div>
-  </div>
+      <button
+        id="auth-button"
+        onclick="handleAuthClick()"
+        class="text-base text-blue-700 hover:text-blue-900 bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+        data-i18n="login">Login</button>
 
-  <!-- Right: Load & Add buttons -->
-  <div class="flex items-center gap-3 justify-end order-2 md:order-2 w-full md:w-auto">
-    <!-- Hidden API base URL input -->
-    <input
-      id="api-base-url"
-      type="text"
-      placeholder="https://your-host:port/api/v2"
-      value=""
-      class="hidden w-[300px] h-9 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm"
-    />
-    <button
-  onclick="forceShowInfoModal()"
-  data-i18n="info"
-  class="text-base text-gray-700 hover:text-gray-900 px-2 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors"
-  title="Info"
->
-  Infoℹ️
-</button>
-    <!-- Uncomment if needed
-    <button id="load-posts-btn"
-      onclick="loadPosts()"
-      class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md transition">
-      Load Posts
-    </button> -->
+      <div id="user-info" class="text-green-800 font-semibold text-base"></div>
+    </div>
 
-    <button
-      onclick="openAddModal()"
-      data-i18n="addPost"
-      class="text-base font-medium text-green-700 hover:text-green-900 px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors"
-    >
-      Add Post
-    </button>
-  </div>
-</div>
-<div id="email-section" class="hidden mt-4 p-2 border rounded">
-  <label for="email-input" class="text-sm">📧 Your email for notifications:</label>
-  <input type="email" id="email-input" class="border px-2 py-1 rounded text-sm" placeholder="you@example.com" />
-  <button id="save-email-btn" class="ml-2 bg-purple-600 text-white text-sm px-3 py-1 rounded">Save</button>
-  <span id="email-msg" class="text-xs text-green-600 ml-2"></span>
+    <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 order-2 w-full md:w-auto">
+  <input
+    id="email-input"
+    type="email"
+    placeholder="you@example.com"
+    class="flex-1 p-2 border rounded text-sm w-full sm:w-auto"
+  />
+  <button
+    id="save-email-btn"
+    data-i18n="save"
+    class="text-base font-medium text-black hover:text-gray-800 px-2 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+    onclick="saveEmail()">
+    Save
+  </button>
+  <span id="email-msg" class="text-xs ml-2"></span>
 </div>
 
-  </section>
+    <!-- Right: Info + Add Post -->
+    <div class="flex items-center gap-3 justify-end order-3 w-full md:w-auto">
+      <input
+        id="api-base-url"
+        type="text"
+        placeholder="https://your-host:port/api/v2"
+        value=""
+        class="hidden w-[300px] h-9 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm"
+      />
+
+      <button
+        onclick="forceShowInfoModal()"
+        data-i18n="info"
+        class="text-base text-gray-700 hover:text-gray-900 px-2 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+        title="Info">
+        INFO
+      </button>
+
+      <button
+        onclick="openAddModal()"
+        data-i18n="addPost"
+        class="text-base font-medium text-green-700 hover:text-green-900 px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors">
+        Add Post
+      </button>
+    </div>
+  </div>
+
+</section>
+
 
   <!-- Filters & Search -->
   <section class="bg-white shadow-sm rounded-lg p-4 mb-6">

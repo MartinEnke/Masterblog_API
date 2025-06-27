@@ -32,6 +32,7 @@ const UI_TRANSLATIONS = {
     content: "Content",
     category: "Category",
     save: "Save",
+    saved: "Saved",
     cancel: "Cancel",
     update: "Update",
     titlePlaceholder: "Title",
@@ -89,6 +90,7 @@ const UI_TRANSLATIONS = {
     content: "Inhalt",
     category: "Kategorie",
     save: "Speichern",
+    saved: "Gespeichert",
     cancel: "Abbrechen",
     update: "Aktualisieren",
     titlePlaceholder: "Titel",
@@ -146,6 +148,7 @@ const UI_TRANSLATIONS = {
     content: "Contenu",
     category: "Catégorie",
     save: "Enregistrer",
+    saved: "Enregistré",
     cancel: "Annuler",
     update: "Mettre à jour",
     titlePlaceholder: "Titre",
@@ -203,6 +206,7 @@ const UI_TRANSLATIONS = {
     content: "Contenido",
     category: "Categoría",
     save: "Guardar",
+    saved: "Guardado",
     cancel: "Cancelar",
     update: "Actualizar",
     titlePlaceholder: "Título",
@@ -280,6 +284,11 @@ function applyUITranslations() {
   }
 }
 
+function translate(key) {
+  const lang = getCurrentLanguage();
+  const strings = UI_TRANSLATIONS[lang] || {};
+  return strings[key] || key;
+}
 // Apply translations when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   applyUITranslations();

@@ -111,18 +111,15 @@ def get_user(current_user):
 
 from sqlalchemy.exc import IntegrityError
 
+
 @v2.route("/user/email", methods=["PUT"])
 @token_required
 def update_email(current_user):
     data = request.get_json()
     new_email = data.get("email")
 
-    # Improved format check
     email_pattern = r"^[^@]+@[^@]+\.[^@]+$"
     if not new_email or not re.match(email_pattern, new_email) or len(new_email) > 254:
-        return jsonify({"error": "Invalid email address"}), 400
-
-    if not new_email or "@" not in new_email:
         return jsonify({"error": "Invalid email address"}), 400
 
     current_user.email = new_email
@@ -133,6 +130,7 @@ def update_email(current_user):
     except IntegrityError:
         session.rollback()
         return jsonify({"error": "This email is already in use."}), 409
+
 # -------------------------
 # Swagger schemas
 # -------------------------
