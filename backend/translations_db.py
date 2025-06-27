@@ -64,9 +64,16 @@ def translate_text(text, lang):
 
 def translate_post(title, content, target_lang):
     prompt = (
-        f"Translate the following blog post as it is (not more, not less) to {target_lang.upper()}:\n\n"
+        f"Translate the following blog post into {target_lang.upper()}.\n\n"
+        f"- Translate both the title and the content fully, even if they contain technical or stylized phrases.\n"
+        f"- Do not skip words that seem like proper nouns unless they are truly universal (e.g., 'AI').\n"
+        f"- Do not add explanations, credits, usernames, or translator notes.\n"
+        f"- Do not expand short phrases or poetic lines.\n"
+        f"- Maintain brevity, tone, and sentence structure.\n"
+        f"- Your output must **only** include the translated title and content.\n\n"
         f"Title:\n{title}\n\nContent:\n{content}"
     )
+
 
     try:
         response = client.chat.completions.create(
