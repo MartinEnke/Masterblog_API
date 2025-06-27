@@ -90,6 +90,21 @@ function applyUITranslations() {
     userInfo.textContent = "";
   }
 
+  // Post metadata: Updated / by
+  document.querySelectorAll(".updated-label").forEach(el => {
+    el.textContent = strings.updatedLabel || "Updated:";
+  });
+
+  document.querySelectorAll(".by-label").forEach(el => {
+    el.textContent = strings.by || "by";
+  });
+
+  // Read Aloud TTS button
+  const ttsButton = document.querySelector("#read-aloud-button");
+  if (ttsButton) {
+    ttsButton.textContent = strings.readAloud || "Read Aloud (Demo)";
+  }
+
   // 🔁 Also update the auth button text (Login/Logout)
   updateAuthButton();
 }
@@ -309,7 +324,7 @@ async function loadPosts() {
 /**
  * Renders a single post card, showing Edit/Delete only to the author.
  */
-function renderSinglePost(post) {
+function renderSinglePost(post, hasUsedTTSDemo = false) {
   const container = document.getElementById('post-container');
   const div = document.createElement('div');
   div.className = 'post';
@@ -328,28 +343,35 @@ function renderSinglePost(post) {
   const isOwner = post.is_owner;
 
   div.innerHTML = `
-    <h2 id="post-title-${post.id}">${post.title}</h2>
-    <p id="post-content-${post.id}">${post.content}</p>
-    <p class="post-meta mt-3" data-i18n-by="${post.author}">${post.date || 'No date'} · <span data-i18n="by">by</span> ${post.author || 'Unknown'}</p>
-    ${post.updated
-      ? `<p style="font-size:.9em;color:#777;margin-bottom:10px" data-i18n-updated="${post.updated}">
-           <span data-i18n="updatedLabel">Updated:</span> ${post.updated}
-         </p>`
-      : ''}
-    <div class="comment-section mt-4" id="comments-${post.id}">
-      <button class="toggle-comments-btn flex items-center gap-2 text-sm text-gray-700 font-semibold hover:text-gray-900 focus:outline-none bg-transparent hover:bg-transparent">
-        💬 <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div class="comments-container mt-3 hidden">
-        <div id="comment-list-${post.id}" class="space-y-2"></div>
-        <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..." class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"></textarea>
-        <button data-i18n="postComment" onclick="submitComment(${post.id})" class="comment-submit mt-2 px-4 py-2 bg-blue-600 text-white rounded text-sm">Post Comment</button>
-      </div>
+  <h2 id="post-title-${post.id}">${post.title}</h2>
+  <p id="post-content-${post.id}">${post.content}</p>
+  <p class="post-meta mt-3">
+    ${post.date || 'No date'} · <span class="by-label">by</span> ${post.author || 'Unknown'}
+  </p>
+  ${post.updated
+    ? `<p style="font-size:.9em;color:#777;margin-bottom:10px">
+         <span class="updated-label">Updated:</span> ${post.updated}
+       </p>`
+    : ''}
+  <div class="comment-section mt-4" id="comments-${post.id}">
+    <button class="toggle-comments-btn flex items-center gap-2 text-sm text-gray-700 font-semibold hover:text-gray-900 focus:outline-none bg-transparent hover:bg-transparent">
+  💬 <span data-i18n="comments">Comments</span>
+  <span class="comment-count text-gray-500">(0)</span>
+</button>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+    <div class="comments-container mt-3 hidden">
+      <div id="comment-list-${post.id}" class="space-y-2"></div>
+      <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..." class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"></textarea>
+      <button onclick="submitComment(${post.id})" class="comment-submit mt-2 px-4 py-2 bg-blue-600 text-white rounded text-sm">
+  <span data-i18n="postComment">Post Comment</span>
+</button>
     </div>
-  `;
+  </div>
+`;
+  applyUITranslations();
 
   // 🧠 AI Translated badge (overlay, now with space)
   if (isTranslatedCopy && !isOriginalLang) {
@@ -460,8 +482,8 @@ function renderSinglePost(post) {
   };
 
   const readBtn = document.createElement('button');
-  readBtn.textContent = '🔊 Read Aloud (Demo)';
-  readBtn.className = 'text-sm text-purple-600 hover:text-purple-800';
+readBtn.innerHTML = `<span data-i18n="readAloud">${UI_TRANSLATIONS[currentLang].readAloud || 'Read Aloud (Demo)'}</span>`;
+readBtn.className = 'text-sm text-purple-600 hover:text-purple-800';
 
   readBtn.onclick = async () => {
     const token = getToken();
@@ -501,10 +523,14 @@ function renderSinglePost(post) {
   };
 
   ttsWrap.appendChild(readBtn);
-  div.appendChild(ttsWrap);
+div.appendChild(ttsWrap);
+applyUITranslations(div);
 
-  // 💬 Load comments
-  loadComments(post.id);
+// ✅ Add the post element to the DOM first!
+container.appendChild(div);
+
+// 💬 Load comments (which will also update count later)
+loadComments(post.id);
 }
 
 
@@ -531,24 +557,34 @@ function searchPosts() {
 }
 
 function loadComments(postId) {
-  fetch(`${getBaseUrl()}/posts/${postId}/comments`)
-    .then(res => res.json())
+  const url = `/api/v2/posts/${postId}/comments`;
+  console.log(`📨 Fetching comments from: ${url}`);
+
+  fetch(url)
+    .then(res => {
+      if (!res.ok) {
+        console.error(`❌ Failed to fetch comments for post ${postId}:`, res.status);
+        return { comments: [] };
+      }
+      return res.json();
+    })
     .then(data => {
-      const comments = data.comments || [];  // ✅ Fix here
+      const comments = data.comments || [];
+const commentCount = data.comment_count || comments.length;
 
       const list = document.getElementById(`comment-list-${postId}`);
+      if (!list) {
+        console.warn(`⚠️ Could not find #comment-list-${postId} in DOM`);
+        return;
+      }
+
       list.innerHTML = '';
 
-      const currentUser = localStorage.getItem("username");
+      const currentUser = localStorage.getItem("username") || "";
       const isAdmin = localStorage.getItem("isAdmin") === "true";
 
-      console.log("🧪 currentUser from localStorage:", currentUser);
-      console.log("🧪 All comment authors:");
-
       comments.forEach(c => {
-        console.log("➡️", c.author);
-
-        const isOwner = (c.author || "").toLowerCase() === (currentUser || "").toLowerCase();
+        const isOwner = (c.author || "").toLowerCase() === currentUser.toLowerCase();
 
         const p = document.createElement('p');
         p.innerHTML = `
@@ -559,11 +595,16 @@ function loadComments(postId) {
             : ''}
         `;
         list.appendChild(p);
-        document.querySelector(`#comments-${postId} .comment-count`).textContent = comments.length;
       });
+
+      const countEl = document.querySelector(`#comments-${postId} .comment-count`);
+      if (countEl) countEl.textContent = `(${commentCount})`;
     })
-    .catch(err => console.error("Error loading comments:", err));
+    .catch(err => {
+      console.error(`🔥 Error loading comments for post ${postId}:`, err);
+    });
 }
+
 
 
 /* ==========================================================================
@@ -1253,64 +1294,72 @@ function renderInfoModal() {
   const lang = getCurrentLanguage();
   const strings = UI_TRANSLATIONS[lang];
 
-  // Remove if already exists
+  // Remove existing modal
   document.getElementById("info-modal")?.remove();
 
+  // Overlay
   const modal = document.createElement("div");
   modal.id = "info-modal";
-  modal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+  modal.className = "fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50";
 
+  // Modal Content
   const content = document.createElement("div");
-  content.className = "bg-white rounded-lg shadow-lg p-6 max-w-xl w-full";
+  content.className = `
+    bg-white bg-opacity-90 backdrop-blur-md text-gray-800
+    rounded-xl shadow-2xl p-8 max-w-2xl w-full
+    font-serif text-sm leading-relaxed
+  `;
 
   content.innerHTML = `
-  <div class="flex justify-between items-start mb-4">
-    <h2 class="text-xl font-semibold">${strings.infoTitle}</h2>
-    <select id="info-lang-select" class="ml-4 text-sm border border-gray-300 rounded-md px-2 py-1">
-      <option value="en">English</option>
-      <option value="de">Deutsch</option>
-      <option value="fr">Français</option>
-      <option value="es">Español</option>
-    </select>
-  </div>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg md:text-xl font-semibold">${strings.infoTitle}</h2>
+      <select id="info-lang-select" class="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-gray-700">
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+      </select>
+    </div>
 
-  <p class="mb-4">${strings.infoIntro}</p>
-  <h3 class="text-md font-semibold mb-2">${strings.infoFeaturesTitle}</h3>
-  <ul class="list-disc list-inside mb-4">
-    ${[...Array(10)].map((_, i) => `<li>${strings[`infoFeature${i + 1}`] || ""}</li>`).join("")}
-  </ul>
-  <button id="info-close-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">${strings.infoClose}</button>
-`;
-  // Set dropdown to current language
-const langSelect = content.querySelector("#info-lang-select");
-langSelect.value = getCurrentLanguage();
+    <p class="mb-4">${strings.infoIntro}</p>
 
-langSelect.addEventListener("change", (e) => {
-  const newLang = e.target.value;
+    <h3 class="text-md font-semibold mb-2">${strings.infoFeaturesTitle}</h3>
+    <ul class="list-none space-y-2 mb-6">
+      ${[...Array(10)].map((_, i) => {
+        const feature = strings[`infoFeature${i + 1}`];
+        return feature ? `<li class="flex items-start"><span class="mr-2 text-blue-500">&rarr;</span> <span>${feature}</span></li>` : '';
+      }).join('')}
+    </ul>
 
-  // Save selected language
-  localStorage.setItem("lang", newLang);
-
-  // Also update the main page language dropdown so everything stays in sync
-  const mainSelect = document.getElementById("lang-select");
-  if (mainSelect) mainSelect.value = newLang;
-
-  // Update UI translations and reload posts
-  applyUITranslations();
-  loadPosts();
-
-  // Re-render modal in new language
-  renderInfoModal();
-});
+    <div class="text-right">
+      <button id="info-close-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+        ${strings.infoClose}
+      </button>
+    </div>
+  `;
 
   modal.appendChild(content);
   document.body.appendChild(modal);
 
+  // Language switcher sync
+  const langSelect = document.getElementById("info-lang-select");
+  langSelect.value = lang;
+  langSelect.addEventListener("change", (e) => {
+    const newLang = e.target.value;
+    localStorage.setItem("lang", newLang);
+    document.getElementById("lang-select").value = newLang;
+    applyUITranslations();
+    loadPosts();
+    renderInfoModal(); // Re-render in new lang
+  });
+
+  // Close
   document.getElementById("info-close-btn").addEventListener("click", () => {
     sessionStorage.setItem("infoSeen", "true");
     modal.remove();
   });
 }
+
 
 function showInfoModalIfNeeded() {
   const infoSeen = sessionStorage.getItem("infoSeen");

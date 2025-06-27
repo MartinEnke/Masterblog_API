@@ -24,7 +24,7 @@
 }
 
 body {
-  background-color: var(--bg-light);
+  background-color: #111118;
   color: var(--text-color);
   margin: 0;
   padding: 20px 0;
@@ -42,18 +42,15 @@ body {
 }
 
 .banner img {
-  width: 100%;
-  max-width: 80%;
-  height: auto;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* ========================================================================
    CONTAINER
    ======================================================================== */
 .container {
-  background-color: var(--bg-white);
+
   width: 80%;
   padding: 24px;
   border-radius: var(--radius);

@@ -912,14 +912,15 @@ def add_comment_v2(user, post_id):
 
 @v2.route("/posts/<int:post_id>/comments", methods=["GET"])
 @limiter.exempt
+@v2.route("/posts/<int:post_id>/comments", methods=["GET"])
+@limiter.exempt
 def get_comments_v2(post_id):
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return jsonify({"error": "Post not found"}), 404
 
     comments = session.query(Comment).filter_by(post_id=post_id).all()
-
-    return jsonify({"comments": [
+    comment_data = [
         {
             "id": c.id,
             "author": c.author,
@@ -927,7 +928,12 @@ def get_comments_v2(post_id):
             "date": c.date.strftime("%B %d, %Y") if c.date else ""
         }
         for c in comments
-    ]})
+    ]
+
+    return jsonify({
+        "comments": comment_data,
+        "comment_count": len(comment_data)  # or use .count() if more efficient
+    })
 
 
 
