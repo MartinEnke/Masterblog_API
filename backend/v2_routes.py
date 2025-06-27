@@ -749,34 +749,68 @@ def get_categories_v2():
 @limiter.limit("10 per minute")
 def search_posts_v2():
     query = (
-            request.args.get("q") or
-            request.args.get("title") or
-            request.args.get("content") or
-            ""
+        request.args.get("q") or
+        request.args.get("title") or
+        request.args.get("content") or
+        ""
     ).strip().lower()
+    lang = request.args.get("lang", "en")
+
     if not query:
         return jsonify({"error": "Missing query parameter `q`"}), 400
 
-    posts = session.query(Post).options(joinedload(Post.user)).all()
-    results = [
-        {
-            "id": p.id,
-            "author": p.user.username,
-            "title": p.title,
-            "content": p.content,
-            "category": p.category,
-            "date": p.date.strftime("%B %d, %Y") if p.date else None,
-            "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
-            "likes": len(p.liked_by)
-        }
-        for p in posts
-        if query in p.title.lower() or query in p.content.lower() or query in p.user.username.lower()
-    ]
+    posts = session.query(Post).options(
+        joinedload(Post.user),
+        joinedload(Post.translations)
+    ).all()
+
+    results = []
+
+    for post in posts:
+        author_match = query in (post.user.username or "").lower()
+
+        # Defaults to original
+        result_title = post.title
+        result_content = post.content
+
+        matched = False
+
+        # First check translated version if not in original language
+        if lang != "en":
+            for t in post.translations:
+                if t.lang == lang:
+                    if query in (t.title or "").lower() or query in (t.content or "").lower():
+                        result_title = t.title
+                        result_content = t.content
+                        matched = True
+                        break
+
+        # Check original if no match yet
+        if not matched:
+            if (
+                query in (post.title or "").lower()
+                or query in (post.content or "").lower()
+                or author_match
+            ):
+                matched = True
+
+        if matched:
+            results.append({
+                "id": post.id,
+                "author": post.user.username,
+                "title": result_title,
+                "content": result_content,
+                "category": post.category,
+                "date": post.date.strftime("%B %d, %Y") if post.date else None,
+                "updated": post.updated.strftime("%B %d, %Y") if post.updated else None,
+                "likes": len(post.liked_by)
+            })
 
     if not results:
         return jsonify({"error": f"No posts found matching '{query}'"}), 404
 
     return jsonify(results)
+
 
 @v2.route("/posts/<int:post_id>/like", methods=["POST"])
 @swag_from({
