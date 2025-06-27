@@ -1287,9 +1287,20 @@ langSelect.value = getCurrentLanguage();
 
 langSelect.addEventListener("change", (e) => {
   const newLang = e.target.value;
+
+  // Save selected language
   localStorage.setItem("lang", newLang);
+
+  // Also update the main page language dropdown so everything stays in sync
+  const mainSelect = document.getElementById("lang-select");
+  if (mainSelect) mainSelect.value = newLang;
+
+  // Update UI translations and reload posts
   applyUITranslations();
-  renderInfoModal(); // Re-render modal with new language
+  loadPosts();
+
+  // Re-render modal in new language
+  renderInfoModal();
 });
 
   modal.appendChild(content);
