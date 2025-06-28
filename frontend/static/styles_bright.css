@@ -24,8 +24,8 @@
 }
 
 body {
-  background-color: #000;
-  color: #fff; /* Invert text globally */
+  background-color: #111118;
+  color: var(--text-color);
   margin: 0;
   padding: 20px 0;
   height: 100vh;
@@ -134,24 +134,21 @@ body {
 #search-input {
   padding: 10px 12px;
   font-size: 15px;
-  border: 1px solid white;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  background-color: #1f1f1f;
-  color: white;
-  box-shadow: none;
+  background-color: #fff;
+  box-shadow: var(--shadow);
 }
 
 /* ========================================================================
    POSTS
    ======================================================================== */
 .post {
-  background-color: #000;
-  color: #fff;
-  border: 1px solid #fff;
+  background-color: var(--bg-white);
   border-radius: var(--radius);
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow);
   transition: var(--transition);
 }
 
@@ -162,20 +159,20 @@ body {
 
 .post h2 {
   font-size: 1.5rem;
-  color: #fff;
+  color: var(--text-color);
   margin-bottom: 10px;
 }
 
 .post p {
   font-size: 1rem;
-  color: #e5e5e5;
+  color: var(--muted-text);
   line-height: 1.6;
 }
 
 .post-meta {
   font-style: italic;
   font-size: 0.9rem;
-  color: #aaa;
+  color: #6b7280;
 }
 
 .post .post-meta {
@@ -332,18 +329,22 @@ button:hover, .text-button:hover {
 }
 
 .comment-block {
-  background: #111;
-  border-left: 3px solid #fff;
+  background: #fafafa;
+  border-left: 3px solid #d1d5db;
   border-radius: 6px;
   padding: 10px;
   margin-top: 10px;
-  color: #fff;
 }
 
 .comment-input {
-  background: #000;
-  color: #fff;
-  border: 1px solid #fff;
+  width: 100%;
+  height: 60px;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 0.95rem;
+  background: #f3f4f6;
+  resize: vertical;
 }
 
 .comment-submit {
