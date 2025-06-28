@@ -24,7 +24,7 @@
 }
 
 body {
-  background-color: #000;
+  background-color: #14151c;
   color: #fff; /* Invert text globally */
   margin: 0;
   padding: 20px 0;
@@ -108,12 +108,11 @@ body {
 }
 
 #user-info {
-  font-weight: 500;
-  background: #5d9f8d;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: white !important;
+  color: white !important;
 }
-
 .burning-orange {
   color: #FF4F00;
 }

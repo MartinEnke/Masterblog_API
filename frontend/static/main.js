@@ -327,7 +327,7 @@ async function loadPosts() {
 function renderSinglePost(post, hasUsedTTSDemo = false) {
   const container = document.getElementById('post-container');
   const div = document.createElement('div');
-  div.className = 'post';
+  div.className = 'post bg-page';
   Object.assign(div.style, {
     padding: '40px 20px 20px 20px', // extra top padding for badge
     border: '1px solid #ccc',
@@ -1067,6 +1067,7 @@ function submitSignup() {
 
 function updateAuthButton() {
   const btn = document.getElementById('auth-button');
+  const signupBtn = document.getElementById('signup-button');
   if (!btn) return;
 
   const token = getToken();
@@ -1075,8 +1076,10 @@ function updateAuthButton() {
 
   if (token && token.length > 10) {
     btn.textContent = strings.logout || 'Logout';
+    if (signupBtn) signupBtn.style.display = "none";  // ✅ hide signup
   } else {
     btn.textContent = strings.login || 'Login';
+    if (signupBtn) signupBtn.style.display = "inline-block";  // ✅ show signup
   }
 }
 
@@ -1208,7 +1211,19 @@ function saveEmail() {
     });
 }
 
+function toggleEmailDropdown() {
+  const dropdown = document.getElementById('email-section');
+  dropdown.classList.toggle('hidden');
+}
 
+document.addEventListener('click', (event) => {
+  const wrapper = document.getElementById('email-wrapper');
+  const dropdown = document.getElementById('email-section');
+
+  if (wrapper && dropdown && !wrapper.contains(event.target)) {
+    dropdown.classList.add('hidden');
+  }
+});
 /* ==========================================================================
    MODAL HELPERS
    ========================================================================== */
@@ -1443,6 +1458,8 @@ function forceShowInfoModal() {
   sessionStorage.removeItem("infoSeen");
   renderInfoModal(); // directly show it
 }
+
+
 // Wire up buttons
 document.getElementById('auth-button').onclick = handleAuthClick;
 document.getElementById('add-save-btn')?.addEventListener('click', submitAdd);
