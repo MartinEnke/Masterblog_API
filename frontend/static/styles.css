@@ -384,3 +384,11 @@ footer {
     width: 100%;
   }
 }
+
+.read-tts-btn:focus,
+.read-tts-btn:focus-visible,
+.read-tts-btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+  background: none !important;
+}

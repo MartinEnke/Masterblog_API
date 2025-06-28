@@ -469,7 +469,7 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
   // 🎧 Read Aloud button (Hume TTS)
   // Demo Limited Usage
   const ttsWrap = document.createElement('div');
-  ttsWrap.className = 'flex gap-4 mt-3 items-center';
+  ttsWrap.className = 'flex gap-4 mt-3 items-center ml-4';
 
   const insertUsedDemoMessage = () => {
     const msg = document.createElement('span');
@@ -481,7 +481,11 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
 
   const readBtn = document.createElement('button');
 readBtn.innerHTML = `<span data-i18n="readAloud">${UI_TRANSLATIONS[currentLang].readAloud || 'Read Aloud (Demo)'}</span>`;
-readBtn.className = 'text-sm text-purple-600 hover:text-purple-800';
+readBtn.className = 'text-sm font-medium text-green-700 hover:text-green-900 px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors';
+
+
+
+
 
   readBtn.onclick = async () => {
     const token = getToken();
