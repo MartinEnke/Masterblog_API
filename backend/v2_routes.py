@@ -229,19 +229,23 @@ def get_posts_v2():
         posts = query.all()  # ✅ get all results so we can sort and paginate manually
         posts_data = []
 
+        search_term = request.args.get("q", "").strip().lower()
+
         for p in posts:
+            # Default values
             title = p.title
             content = p.content
             is_ai = False
             translated_flag = False
 
+            # 🌐 Load translation if needed
             if lang != p.original_lang:
-                cached = get_translation(p.id, lang)
-                if cached:
-                    title = cached.title
-                    content = cached.content
+                translation = get_translation(p.id, lang)
+                if translation:
+                    title = translation.title
+                    content = translation.content
                     translated_flag = True
-                    is_ai = getattr(cached, "is_ai_translation", True)
+                    is_ai = getattr(translation, "is_ai_translation", True)
                 else:
                     try:
                         title_trans, content_trans = translate_post(p.title, p.content, lang)
@@ -262,7 +266,11 @@ def get_posts_v2():
                         is_ai = False
             else:
                 translated_flag = True
-                is_ai = False
+
+            # 🔍 Apply search on FINAL text (whether translated or original)
+            if search_term:
+                if search_term not in title.lower() and search_term not in content.lower():
+                    continue
 
             liked_by_user = False
             if current_user:
@@ -275,6 +283,7 @@ def get_posts_v2():
                 "content": content,
                 "category": p.category,
                 "date": p.date.strftime("%B %d, %Y") if p.date else None,
+                "date_sort": p.date.isoformat() if p.date else None,
                 "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
                 "likes": len(p.liked_by),
                 "translated": translated_flag,
@@ -287,26 +296,35 @@ def get_posts_v2():
 
         # ✅ Sort posts_data after it's fully built
         if sort_field:
-            if sort_field not in ["title", "content", "likes", "date", "updated", "author"]:
+            valid_fields = ["title", "content", "likes", "date", "updated", "author"]
+            if sort_field not in valid_fields:
                 return jsonify({"error": "Invalid sort field."}), 400
             if direction not in ["asc", "desc"]:
                 return jsonify({"error": "Invalid direction."}), 400
+
             reverse = direction == "desc"
 
             if sort_field == "likes":
                 posts_data.sort(key=lambda p: p.get("likes", 0), reverse=reverse)
+
+            elif sort_field == "updated":
+                posts_data.sort(
+                    key=lambda p: p.get("updated") or p.get("date_sort") or datetime.min.isoformat(),
+                    reverse=reverse
+                )
+
+            elif sort_field == "date":
+                posts_data.sort(
+                    key=lambda p: p.get("date_sort") or datetime.min.isoformat(),
+                    reverse=reverse
+                )
+
             else:
-                if sort_field == "updated":
-                    posts_data.sort(
-                        key=lambda p: p.get("updated") or p.get("date") or datetime.min.isoformat(),
-                        reverse=reverse
-                    )
-                else:
-                    posts_data.sort(
-                        key=lambda p: (p.get(sort_field, "") or "").lower()
-                        if isinstance(p.get(sort_field), str) else p.get(sort_field, ""),
-                        reverse=reverse
-                    )
+                posts_data.sort(
+                    key=lambda p: (p.get(sort_field, "") or "").lower()
+                    if isinstance(p.get(sort_field), str) else p.get(sort_field, ""),
+                    reverse=reverse
+                )
 
         # ✅ Apply pagination AFTER sorting
         total_posts = len(posts_data)

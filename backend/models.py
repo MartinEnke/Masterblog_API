@@ -1,7 +1,7 @@
 # models.py
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship, declarative_base
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.db import Base
 
 
@@ -29,7 +29,7 @@ class Post(Base):
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     category = Column(String, nullable=False)
-    date = Column(DateTime, default=datetime.utcnow)
+    date = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated = Column(DateTime)
     original_lang = Column(String(10), default="en")
     review_status = Column(String, default="approved")  # 🆕
