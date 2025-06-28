@@ -1199,17 +1199,36 @@ function saveEmail() {
           button.classList.remove("text-green-600");
           button.classList.add("text-black", "hover:text-gray-800");
         }, 2000);
+
+        // ✅ Hide dropdown after 1 second
+        setTimeout(() => {
+          const dropdown = document.getElementById('email-section');
+          if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+          }
+        }, 1000);
       } else {
         msg.textContent = "❌ " + (data.error || "Error");
         msg.className = "text-xs text-red-600 ml-2";
       }
-    })
+    }) // 👈 this closing bracket was missing!
     .catch((err) => {
       console.error("🧨 Caught error:", err);
       msg.textContent = "❌ Network or JSON error.";
       msg.className = "text-xs text-red-600 ml-2";
     });
 }
+
+
+document.getElementById('email-input').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    const inputVal = e.target.value.trim();
+    if (inputVal && inputVal.includes('@')) {
+      e.preventDefault(); // prevent form submission if inside a form
+      saveEmail();
+    }
+  }
+});
 
 function toggleEmailDropdown() {
   const dropdown = document.getElementById('email-section');
