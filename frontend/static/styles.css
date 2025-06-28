@@ -32,6 +32,11 @@ body {
   transition: var(--transition);
 }
 
+button:focus, button:active {
+  background-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
 /* ========================================================================
    HEADER / BANNER
    ======================================================================== */
@@ -135,7 +140,7 @@ body {
   font-size: 15px;
   border: 1px solid white;
   border-radius: 8px;
-  background-color: #1f1f1f;
+  background-color: #000000;
   color: white;
   box-shadow: none;
 }
@@ -161,7 +166,7 @@ body {
 
 .post h2 {
   font-size: 1.5rem;
-  color: #fff;
+  color: #6aa8a0;
   margin-bottom: 10px;
 }
 
@@ -172,15 +177,15 @@ body {
 }
 
 .post-meta {
-  font-style: italic;
+
   font-size: 0.9rem;
-  color: #aaa;
+  color: #ffffff; /* ← or just 'white' */
 }
 
 .post .post-meta {
   font-style: italic;
   font-size: 0.9rem;
-  color: #1b2299; /* Tailwind's gray-500 */
+  color: #ffffff; /* Tailwind's gray-500 */
 }
 
 .post {
@@ -194,13 +199,20 @@ body {
   top: 10px;
   right: 10px;
   font-size: 0.7em;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: #6aa8a0;
   color: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(2px);
   padding: 2px 6px;
   border-radius: 5px;
   font-style: italic;
   z-index: 10;
+}
+
+.liked {
+  background-color: transparent !important;
+  color: #6aa8a0 !important; /* Optional: Give liked button a custom color */
+  border: none !important;
+  box-shadow: none !important;
 }
 /* ========================================================================
    BUTTONS
@@ -337,6 +349,8 @@ button:hover, .text-button:hover {
   padding: 10px;
   margin-top: 10px;
   color: #fff;
+  font-size: 13px; /* or 13px if preferred */
+  line-height: 1.4;
 }
 
 .comment-input {
@@ -359,6 +373,11 @@ button:hover, .text-button:hover {
   background-color: #e5e7eb;
 }
 
+#post-container p.comment-line {
+  font-size: 13px;
+  color: white;
+  margin-bottom: 6px;
+}
 /* ========================================================================
    FOOTER
    ======================================================================== */

@@ -354,8 +354,8 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
        </p>`
     : ''}
   <div class="comment-section mt-4" id="comments-${post.id}">
-    <button class="toggle-comments-btn flex items-center gap-2 text-sm text-gray-700 font-semibold hover:text-gray-900 focus:outline-none bg-transparent hover:bg-transparent">
-  💬 <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
+    <button class="toggle-comments-btn flex items-center gap-2 text-sm text-[#6aa8a0] font-semibold hover:text-[#6aa8a0] focus:outline-none bg-transparent hover:bg-transparent">
+  <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
   </svg>
@@ -363,7 +363,10 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
     <div class="comments-container mt-3 hidden">
       <div id="comment-list-${post.id}" class="space-y-2"></div>
       <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..." class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"></textarea>
-      <button onclick="submitComment(${post.id})" class="comment-submit mt-2 px-4 py-2 bg-blue-600 text-white rounded text-sm">
+      <button
+  onclick="submitComment(${post.id})"
+  class="comment-submit mt-2 text-[#fdf7d5] hover:text-[#4e857e] text-sm font-medium bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+>
   <span data-i18n="postComment">Post Comment</span>
 </button>
     </div>
@@ -391,8 +394,12 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
 
   // ❤️ Like button
   const likeBtn = document.createElement('button');
-  likeBtn.id = `like-btn-${post.id}`;
-  likeBtn.className = post.liked_by_current_user ? 'liked' : '';
+likeBtn.id = `like-btn-${post.id}`;
+likeBtn.className = `
+  flex items-center gap-1 text-white text-sm
+  bg-transparent hover:bg-transparent focus:outline-none active:bg-transparent
+  transition-colors ${post.liked_by_current_user ? 'liked' : ''}
+`.trim();
   likeBtn.innerHTML = `
     <span id="like-heart-${post.id}" style="font-size: 1.2em;">${post.liked_by_current_user ? '❤️' : '🤍'}</span>
     <span id="like-count-${post.id}">${post.likes || 0}</span>
@@ -472,20 +479,16 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
   ttsWrap.className = 'flex gap-4 mt-3 items-center ml-4';
 
   const insertUsedDemoMessage = () => {
-    const msg = document.createElement('span');
-    msg.textContent = "⚠️ You've used your demo listen. Upgrade required for more.";
-    msg.className = 'text-xs text-gray-500';
-    ttsWrap.innerHTML = ''; // Clear existing children
-    ttsWrap.appendChild(msg);
-  };
+  const msg = document.createElement('span');
+  msg.textContent = translate("ttsUsedUp");
+  msg.className = 'text-xs text-gray-500';
+  ttsWrap.innerHTML = ''; // Clear existing children
+  ttsWrap.appendChild(msg);
+};
 
   const readBtn = document.createElement('button');
 readBtn.innerHTML = `<span data-i18n="readAloud">${UI_TRANSLATIONS[currentLang].readAloud || 'Read Aloud (Demo)'}</span>`;
-readBtn.className = 'text-sm font-medium text-green-700 hover:text-green-900 px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors';
-
-
-
-
+readBtn.className = 'text-sm font-medium text-[#fdf7d5] hover:text-[#4e857e] px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors';
 
   readBtn.onclick = async () => {
     const token = getToken();
@@ -589,6 +592,7 @@ const commentCount = data.comment_count || comments.length;
         const isOwner = (c.author || "").toLowerCase() === currentUser.toLowerCase();
 
         const p = document.createElement('p');
+        p.className = 'comment-line';
         p.innerHTML = `
           <strong>${c.author}</strong>: ${c.text}
           <span style="font-size:.8em; color:#888">(${c.date})</span>
@@ -809,6 +813,7 @@ function submitComment(postId) {
     if (!c) return alert("Comment submitted, but awaiting review.");
 
     const p = document.createElement('p');
+    p.className = 'comment-line';
     const showDelete = currentUser && (c.author.toLowerCase() === currentUser.toLowerCase() || isAdmin);
 
     p.innerHTML = `
