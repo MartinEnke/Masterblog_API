@@ -3,6 +3,7 @@
 // Global variable to avoid redundant checks
 let hasUsedTTSDemo = null;
 let notificationsEnabled = false; // default (could be replaced with user.notifications_enabled from backend)
+
 /* ==========================================================================
    GLOBAL VARIABLES
    ========================================================================== */
@@ -1200,6 +1201,7 @@ function saveEmail() {
       button.classList.add("text-green-600");
 
       // ✅ Set notificationsEnabled true
+
       notificationsEnabled = true;
       updateNotificationToggleText();
 
@@ -1237,6 +1239,27 @@ function isValidEmail(email) {
 }
 
 async function toggleNotifications() {
+  const toggleBtn = document.getElementById("notification-toggle");
+  const emailInput = document.getElementById("email-input");
+  const email = emailInput?.value.trim();
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    toggleBtn.textContent = "Enter email first";
+    toggleBtn.classList.add("text-red-600");
+    toggleBtn.classList.remove("text-black");
+
+    // Optionally open the dropdown to guide the user
+    const dropdown = document.getElementById('email-section');
+    if (dropdown) dropdown.classList.remove('hidden');
+
+    setTimeout(() => {
+      updateNotificationToggleText();
+      toggleBtn.classList.remove("text-red-600");
+      toggleBtn.classList.add("text-black");
+    }, 2000);
+    return;
+  }
+
   const newState = !notificationsEnabled;
 
   try {
@@ -1264,11 +1287,15 @@ async function toggleNotifications() {
 
 function updateNotificationToggleText() {
   const toggleBtn = document.getElementById("notification-toggle");
-  if (notificationsEnabled) {
-    toggleBtn.textContent = "Notifications ON";
-  } else {
-    toggleBtn.textContent = "Get notified on likes & comments";
+
+  if (!document.getElementById("email-input").value.trim()) {
+    toggleBtn.textContent = "Enter email to enable notifications";
+    return;
   }
+
+  toggleBtn.textContent = notificationsEnabled
+    ? "Notifications ON"
+    : "Get notified on likes & comments";
 }
 
 document.getElementById('email-input').addEventListener('keydown', function (e) {
