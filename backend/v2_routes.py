@@ -117,23 +117,31 @@ def get_user(current_user):
 @token_required
 def update_email(current_user):
     data = request.get_json()
-    new_email = data.get("email", "").strip()
+    new_email = data.get("email")
+    notify_pref = data.get("notifications_enabled")  # 👈 optional toggle from frontend
 
-    try:
-        # 🧠 Validate + normalize email
-        valid = validate_email(new_email)
-        normalized_email = valid.email
-    except EmailNotValidError as e:
-        return jsonify({"error": str(e)}), 400
+    # Validate email format
+    email_pattern = r"^[^@]+@[^@]+\.[^@]+$"
+    if not new_email or not re.match(email_pattern, new_email) or len(new_email) > 254:
+        return jsonify({"error": "Invalid email address"}), 400
 
-    current_user.email = normalized_email
+    # ✅ Save email and optional notification preference
+    current_user.email = new_email
+    if notify_pref is not None:
+        current_user.notifications_enabled = bool(notify_pref)
 
     try:
         session.commit()
-        return jsonify({"message": "Email updated", "email": normalized_email}), 200
+        return jsonify({
+            "message": "Email updated",
+            "email": new_email,
+            "notifications_enabled": current_user.notifications_enabled
+        }), 200
     except IntegrityError:
         session.rollback()
         return jsonify({"error": "This email is already in use."}), 409
+
+
 
 # -------------------------
 # Swagger schemas
@@ -896,7 +904,13 @@ def like_post(current_user, post_id):
         print(message)
 
         # ✅ Notify post author (non-blocking)
-        if liked_by_user and post.user and post.user.email and post.user.id != current_user.id:
+        if (
+                liked_by_user
+                and post.user
+                and post.user.email
+                and post.user.notifications_enabled  # ✅ user wants notifications
+                and post.user.id != current_user.id
+        ):
             Thread(
                 target=send_email,
                 args=(
@@ -954,7 +968,12 @@ def add_comment_v2(current_user, post_id):
     session.commit()
 
     # ✅ Notify post author (non-blocking)
-    if post.user and post.user.email and post.user.id != current_user.id:
+    if (
+            post.user
+            and post.user.email
+            and post.user.notifications_enabled  # ✅ user wants notifications
+            and post.user.id != current_user.id
+    ):
         Thread(
             target=send_email,
             args=(

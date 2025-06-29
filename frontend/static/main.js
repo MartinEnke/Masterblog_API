@@ -2,6 +2,7 @@
 
 // Global variable to avoid redundant checks
 let hasUsedTTSDemo = null;
+let notificationsEnabled = true; // default (could be replaced with user.notifications_enabled from backend)
 /* ==========================================================================
    GLOBAL VARIABLES
    ========================================================================== */
@@ -1227,6 +1228,9 @@ function showEmailSection(user) {
       }, 2000);
     }
   };
+  // ✅ Set notification toggle state from user and update UI text
+    notificationsEnabled = user.notifications_enabled ?? true;
+  toggleNotifications();
 }
 
 
@@ -1300,6 +1304,37 @@ function saveEmail() {
 function isValidEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
+}
+
+function toggleNotifications() {
+  const toggleText = document.getElementById("notification-toggle");
+  notificationsEnabled = !notificationsEnabled;
+
+  toggleText.textContent = notificationsEnabled
+    ? translate("notificationsOn")  // e.g. "🔔 Get notified on likes & comments"
+    : translate("notificationsOff"); // e.g. "🔕 Notifications off — click to enable"
+
+  // 🔄 Also update the backend!
+  const email = document.getElementById("email-input").value.trim();
+
+  fetch("/api/v2/user/email", {
+    method: "PUT",
+    headers: {
+      "Authorization": `Bearer ${getToken()}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      email,
+      notifications_enabled: notificationsEnabled
+    })
+  }).then(async (resp) => {
+    if (!resp.ok) {
+      const data = await resp.json();
+      console.warn("❌ Notification toggle failed:", data.error || "unknown error");
+    }
+  }).catch(err => {
+    console.error("❌ Network error while toggling notifications:", err);
+  });
 }
 
 

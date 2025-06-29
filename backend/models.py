@@ -14,7 +14,8 @@ class User(Base):
     password = Column(String)
     is_admin = Column(Boolean, default=False)
     tts_demo_used = Column(Boolean, default=False)
-    email = Column(String, unique=True, nullable=True)
+    email = Column(String(254), unique=True, nullable=True)
+    notifications_enabled = Column(Boolean, default=True)
 
     posts = relationship("Post", back_populates="user")
     likes = relationship("PostLike", back_populates="user")
