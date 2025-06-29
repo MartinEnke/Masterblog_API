@@ -15,7 +15,8 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     tts_demo_used = Column(Boolean, default=False)
     email = Column(String(254), unique=True, nullable=True)
-    notifications_enabled = Column(Boolean, default=True)
+    notifications_enabled = Column(Boolean, default=False, nullable=False)
+
 
     posts = relationship("Post", back_populates="user")
     likes = relationship("PostLike", back_populates="user")

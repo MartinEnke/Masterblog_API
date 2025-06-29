@@ -33,6 +33,7 @@ const UI_TRANSLATIONS = {
     category: "Category",
     save: "Save",
     saved: "Saved",
+    invalid: "Invalid",
     emailExample: "you@example.com",
     cancel: "Cancel",
     update: "Update",
@@ -47,7 +48,9 @@ const UI_TRANSLATIONS = {
     yes: "Yes",
     readAloud: "Read Aloud (Demo)",
     ttsUsedUp: "⚠️ You've used your demo listen. Upgrade required for more.",
-    "noEmailSet": "Please enter your email first",
+    "getnotif": "Get notified on likes & comments",   // when no email stored
+    "noEmailSet": "Please save email first",    // when user tries toggle without email
+    "invalid": "Invalid",
     "notificationsOn": "Notifications ON",
     "notificationsOff": "Notifications disabled — click to enable",
     infoTitle: "Welcome,",

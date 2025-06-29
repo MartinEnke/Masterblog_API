@@ -2,8 +2,7 @@
 
 // Global variable to avoid redundant checks
 let hasUsedTTSDemo = null;
-let notificationsEnabled = false; // default (could be replaced with user.notifications_enabled from backend)
-
+let currentUser = {}; // ✅ empty object
 /* ==========================================================================
    GLOBAL VARIABLES
    ========================================================================== */
@@ -264,8 +263,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 📧 Show email notification input if logged in
   if (getToken()) {
-    document.getElementById("email-section")?.classList.remove("hidden");
+  // ✅ Fetch current user data on load
+  try {
+    const resp = await fetch("/api/v2/user", {
+      headers: { "Authorization": `Bearer ${getToken()}` }
+    });
+    if (resp.ok) {
+      const user = await resp.json();
+
+      // ✅ Step 2: Populate currentUser
+      currentUser.email = user.email;
+      currentUser.notifications_enabled = user.notifications_enabled;
+      notificationsEnabled = currentUser.notifications_enabled;
+      updateNotificationToggleText();
+
+      // Optional: auto-show email section
+      // showEmailSection(user);
+    }
+  } catch (err) {
+    console.error("❌ Failed to load user data on init:", err);
   }
+}
 
   // 🔍 Search on Enter key
   const searchInput = document.getElementById('search-input');
@@ -1012,7 +1030,12 @@ function submitLogin() {
           localStorage.removeItem('isAdmin');
         }
         // ✅ ADD THIS to show email input
-        showEmailSection(user);
+        const freshUser = await fetch("/api/v2/user", {
+  headers: { Authorization: `Bearer ${getToken()}` }
+}).then(r => r.json());
+
+showEmailSection(freshUser);
+
       } else {
         console.warn("Warning: Failed to fetch /me. Status:", res.status);
       }
@@ -1079,7 +1102,12 @@ function submitSignup() {
           localStorage.removeItem('isAdmin');
         }
         // ✅ ADD THIS to show email input
-        showEmailSection(user);
+        const freshUser = await fetch("/api/v2/user", {
+  headers: { Authorization: `Bearer ${getToken()}` }
+}).then(r => r.json());
+
+showEmailSection(freshUser);
+
       }
     } catch (err) {
       console.warn("Warning: Couldn't fetch /me:", err);
@@ -1142,18 +1170,27 @@ function updateUserInfo() {
 
 
 function showEmailSection(user) {
+  console.log("🧪 showEmailSection() called with user:", user);
+  console.log("→ user.email:", user.email);
+  console.log("→ user.notifications_enabled:", user.notifications_enabled);
+
   const emailSection = document.getElementById('email-section');
   const emailInput = document.getElementById('email-input');
   const saveBtn = document.getElementById('save-email-btn');
-  const notificationToggle = document.getElementById("notification-toggle");
+
+  emailInput.value = user.email || '';
+
+  // ✅ Save to global state
+  currentUser.email = user.email;
+  currentUser.notifications_enabled = !!user.notifications_enabled;
+  notificationsEnabled = currentUser.notifications_enabled;
+
+  // 🧪 Debug here too
+  console.log("✔️ Assigned to currentUser:", currentUser);
+
+  updateNotificationToggleText();
 
   emailSection.classList.remove('hidden');
-
-  setTimeout(() => {
-    emailInput.value = user.email || '';
-    notificationsEnabled = user.notifications_enabled === 1;
-    updateNotificationToggleText();
-  }, 0);
 
   saveBtn.onclick = () => {
     saveEmail();
@@ -1192,45 +1229,57 @@ function saveEmail() {
     },
     body: JSON.stringify({ email })
   })
-  .then(async (resp) => {
-    if (resp.ok) {
-      msg.textContent = "";
-      button.textContent = translate("saved");
-      button.removeAttribute("data-i18n");
-      button.classList.remove("text-black", "hover:text-gray-800");
-      button.classList.add("text-green-600");
+    .then(async (resp) => {
+      if (resp.status === 401) {
+        msg.textContent = "⚠️ Signup or Login first.";
+        msg.className = "text-xs text-yellow-600 ml-2";
+        return;
+      }
 
-      // ✅ Set notificationsEnabled true
+      let data = {};
+      try {
+        data = await resp.json();
+      } catch {
+        console.warn("⚠️ No JSON in response");
+      }
 
-      notificationsEnabled = true;
-      updateNotificationToggleText();
+      if (resp.ok) {
+        msg.textContent = "";
+        button.textContent = translate("saved");
+        button.removeAttribute("data-i18n");
+        button.classList.remove("text-black", "hover:text-gray-800");
+        button.classList.add("text-green-600");
 
-      setTimeout(() => {
-        button.setAttribute("data-i18n", "save");
-        applyUITranslations();
-        button.classList.remove("text-green-600");
-        button.classList.add("text-black", "hover:text-gray-800");
-      }, 2000);
+        // ✅ Update global state
+        currentUser.email = data.email;
+        currentUser.notifications_enabled = data.notifications_enabled;
+        notificationsEnabled = data.notifications_enabled;
+        updateNotificationToggleText();
 
-      setTimeout(() => {
-        const dropdown = document.getElementById('email-section');
-        if (dropdown && !dropdown.classList.contains('hidden')) {
-          dropdown.classList.add('hidden');
-        }
-      }, 1000);
-    } else {
-      const data = await resp.json();
-      console.warn("Server rejected email save:", data.error);
-      msg.textContent = `❌ ${data.error || translate("error")}`;
+        setTimeout(() => {
+  if (currentUser.email?.trim()) {
+    updateNotificationToggleText();
+  }
+  toggleBtn.classList.remove("text-red-600");
+  toggleBtn.classList.add("text-black");
+}, 2000);
+
+        setTimeout(() => {
+          document.getElementById('email-section')?.classList.add('hidden');
+        }, 1000);
+      } else {
+        msg.textContent = `❌ ${data.error || translate("error")}`;
+        msg.className = "text-xs text-red-600 ml-2";
+      }
+    })
+    .catch((err) => {
+      console.error("🧨 Email save error:", err);
+      msg.textContent = "❌ Something went wrong.";
       msg.className = "text-xs text-red-600 ml-2";
-    }
-  })
-  .catch((err) => {
-    console.error("🧨 Email save error:", err);
-    msg.textContent = "❌ Network error.";
-    msg.className = "text-xs text-red-600 ml-2";
-  });
+    });
 }
+
+
 
 
 function isValidEmail(email) {
@@ -1244,7 +1293,7 @@ async function toggleNotifications() {
   const email = emailInput?.value.trim();
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    toggleBtn.textContent = "Enter email first";
+    toggleBtn.textContent = translate("noEmailSet");
     toggleBtn.classList.add("text-red-600");
     toggleBtn.classList.remove("text-black");
 
@@ -1287,16 +1336,19 @@ async function toggleNotifications() {
 
 function updateNotificationToggleText() {
   const toggleBtn = document.getElementById("notification-toggle");
+  if (!toggleBtn) return;
 
-  if (!document.getElementById("email-input").value.trim()) {
-    toggleBtn.textContent = "Enter email to enable notifications";
+  const email = currentUser?.email?.trim();
+  if (!email) {
+    toggleBtn.textContent = translate("getnotif");
     return;
   }
 
   toggleBtn.textContent = notificationsEnabled
-    ? "Notifications ON"
-    : "Get notified on likes & comments";
+    ? translate("notificationsOn")
+    : translate("notificationsOff");
 }
+
 
 document.getElementById('email-input').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') {

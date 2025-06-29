@@ -110,7 +110,7 @@ def get_user(current_user):
     return jsonify({
         "username": current_user.username,
         "email": current_user.email,
-        "notifications_enabled": current_user.notifications_enabled
+        "notifications_enabled": bool(current_user.notifications_enabled)  # ✅ force boolean
     }), 200
 
 
@@ -133,9 +133,9 @@ def update_email(current_user):
     try:
         session.commit()
         return jsonify({
-            "message": "Email updated",
-            "email": new_email,
-            "notifications_enabled": current_user.notifications_enabled
+            "username": current_user.username,
+            "email": current_user.email,
+            "notifications_enabled": bool(current_user.notifications_enabled)
         }), 200
     except IntegrityError:
         session.rollback()
