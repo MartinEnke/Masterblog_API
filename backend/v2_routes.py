@@ -26,6 +26,8 @@ import html
 import re
 from threading import Thread
 from utils import send_email
+from sqlalchemy.exc import IntegrityError
+from email_validator import validate_email, EmailNotValidError
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -111,24 +113,24 @@ def get_user(current_user):
     }), 200
 
 
-from sqlalchemy.exc import IntegrityError
-
-
 @v2.route("/user/email", methods=["PUT"])
 @token_required
 def update_email(current_user):
     data = request.get_json()
-    new_email = data.get("email")
+    new_email = data.get("email", "").strip()
 
-    email_pattern = r"^[^@]+@[^@]+\.[^@]+$"
-    if not new_email or not re.match(email_pattern, new_email) or len(new_email) > 254:
-        return jsonify({"error": "Invalid email address"}), 400
+    try:
+        # 🧠 Validate + normalize email
+        valid = validate_email(new_email)
+        normalized_email = valid.email
+    except EmailNotValidError as e:
+        return jsonify({"error": str(e)}), 400
 
-    current_user.email = new_email
+    current_user.email = normalized_email
 
     try:
         session.commit()
-        return jsonify({"message": "Email updated", "email": new_email}), 200
+        return jsonify({"message": "Email updated", "email": normalized_email}), 200
     except IntegrityError:
         session.rollback()
         return jsonify({"error": "This email is already in use."}), 409
