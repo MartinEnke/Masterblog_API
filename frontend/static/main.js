@@ -393,31 +393,54 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
   });
 
   // ❤️ Like button
-  const likeBtn = document.createElement('button');
+const likeBtn = document.createElement('button');
 likeBtn.id = `like-btn-${post.id}`;
+
+const isLoggedIn = !!getToken();
+const userHasLiked = post.liked_by_current_user;
+const likeCount = post.likes || 0;
+
 likeBtn.className = `
   flex items-center gap-1 text-white text-sm
   bg-transparent hover:bg-transparent focus:outline-none active:bg-transparent
-  transition-colors ${post.liked_by_current_user ? 'liked' : ''}
+  transition-colors ${userHasLiked ? 'liked' : ''}
 `.trim();
-  likeBtn.innerHTML = `
-    <span id="like-heart-${post.id}" style="font-size: 1.2em;">${post.liked_by_current_user ? '❤️' : '🤍'}</span>
-    <span id="like-count-${post.id}">${post.likes || 0}</span>
-  `;
-  likeBtn.onclick = () => {
-    fetch(`${getBaseUrl()}/posts/${post.id}/like`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${getToken()}` }
+
+likeBtn.innerHTML = `
+  <span id="like-heart-${post.id}" style="font-size: 1.2em;">
+    ${isLoggedIn && userHasLiked ? '❤️' : '♡'}
+  </span>
+  <span id="like-count-${post.id}">${likeCount}</span>
+`;
+
+likeBtn.onclick = () => {
+  const token = getToken();
+  if (!token) {
+    openLoginModal(); // 🚪 Show login prompt
+    return;
+  }
+
+  fetch(`${getBaseUrl()}/posts/${post.id}/like`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+    .then(r => r.json())
+    .then(d => {
+      const heart = document.getElementById(`like-heart-${post.id}`);
+      const count = document.getElementById(`like-count-${post.id}`);
+      heart.textContent = d.liked_by_current_user ? '❤️' : '♡';
+      count.textContent = d.likes;
+      likeBtn.className = `
+        flex items-center gap-1 text-white text-sm
+        bg-transparent hover:bg-transparent focus:outline-none active:bg-transparent
+        transition-colors ${d.liked_by_current_user ? 'liked' : ''}
+      `.trim();
     })
-      .then(r => r.json())
-      .then(d => {
-        document.getElementById(`like-count-${post.id}`).textContent = d.likes;
-        document.getElementById(`like-heart-${post.id}`).textContent = d.liked_by_current_user ? '❤️' : '🤍';
-        likeBtn.className = d.liked_by_current_user ? 'liked' : '';
-      })
-      .catch(console.error);
-  };
-  btnWrap.appendChild(likeBtn);
+    .catch(console.error);
+};
+
+btnWrap.appendChild(likeBtn);
+
 
   // ✏️ Edit button
   if (isOwner && isOriginalLang) {

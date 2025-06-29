@@ -9,6 +9,9 @@ from flask import request
 from flask_limiter.util import get_remote_address
 import re
 load_dotenv()
+import smtplib
+from email.mime.text import MIMEText
+from flask import current_app
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -113,6 +116,36 @@ def like_post_db(post_id):
     post.likes = (post.likes or 0) + 1
     session.commit()
     return {"message": f"Post {post_id} liked", "likes": post.likes}, 200
+
+
+
+
+def send_email(app, to_email, subject, body):
+    with app.app_context():
+        if current_app.config.get("ENV") == "development":
+            print(f"📧 Dev mode: would send email to {to_email}:\nSubject: {subject}\n{body}")
+            return
+
+        smtp_server = current_app.config["SMTP_SERVER"]
+        smtp_port = current_app.config["SMTP_PORT"]
+        smtp_user = current_app.config["SMTP_USERNAME"]  # ✅ fixed key
+        smtp_password = current_app.config["SMTP_PASSWORD"]
+        from_email = current_app.config.get("EMAIL_FROM", smtp_user)  # ✅ corrected fallback
+
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = to_email
+
+        try:
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(from_email, [to_email], msg.as_string())
+            print(f"✅ Email sent to {to_email}")
+        except Exception as e:
+            print(f"❌ Failed to send email to {to_email}: {e}")
+
 
 
 def moderate_post(title, content):

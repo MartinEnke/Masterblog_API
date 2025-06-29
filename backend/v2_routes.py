@@ -5,7 +5,7 @@ from db import session
 from models import Post, User, Comment, PostLike
 from rate_limit import limiter
 from auth import token_required, register_user, login_user, TOKENS
-from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data
+from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data, send_email
 from translations_db import get_translation, save_translation, translate_post
 from babel.dates import format_date
 from langdetect import detect
@@ -24,6 +24,8 @@ from io import BytesIO
 from notifications import send_email
 import html
 import re
+from threading import Thread
+from utils import send_email
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -890,12 +892,19 @@ def like_post(current_user, post_id):
 
         session.commit()
         print(message)
+
+        # ✅ Notify post author (non-blocking)
         if liked_by_user and post.user and post.user.email and post.user.id != current_user.id:
-            send_email(
-                to_email=post.user.email,
-                subject="❤️ Someone liked your post",
-                body=f"{current_user.username} liked your post: {post.title}"
-            )
+            Thread(
+                target=send_email,
+                args=(
+                    current_app._get_current_object(),
+                    post.user.email,
+                    "❤️ Someone liked your post",
+                    f"{current_user.username} liked your post: {post.title}"
+                )
+            ).start()
+
         return jsonify({
             "message": message,
             "likes": len(post.liked_by),
@@ -910,7 +919,7 @@ def like_post(current_user, post_id):
 
 @v2.route("/posts/<int:post_id>/comments", methods=["POST"])
 @token_required
-def add_comment_v2(user, post_id):
+def add_comment_v2(current_user, post_id):
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return jsonify({"error": "Post not found"}), 404
@@ -922,7 +931,7 @@ def add_comment_v2(user, post_id):
     if not can_call_openai(limit=10):
         return jsonify({"error": "AI moderation limit reached. Try again later."}), 429
 
-    # 🧠 Run moderation check
+    # 🧠 AI moderation
     moderation_result = moderate_post("Comment", data["text"])
 
     if moderation_result == "rejected":
@@ -931,23 +940,28 @@ def add_comment_v2(user, post_id):
     if moderation_result == "needs_review":
         return jsonify({"warning": "Comment submitted for review. It will be published after approval."}), 202
 
-    # ✅ Approved comment — save it
+    # ✅ Save approved comment
     comment = Comment(
         post_id=post.id,
-        author=user.username,
+        author=current_user.username,
         text=data["text"],
         date=datetime.now()
     )
 
     session.add(comment)
     session.commit()
-    # After saving the comment
-    if post.user and post.user.email:
-        send_email(
-            to_email=post.user.email,
-            subject="📬 New comment on your post",
-            body=f"{user.username} commented on your post '{post.title}':\n\n{data['text']}"
-        )
+
+    # ✅ Notify post author (non-blocking)
+    if post.user and post.user.email and post.user.id != current_user.id:
+        Thread(
+            target=send_email,
+            args=(
+                current_app._get_current_object(),
+                post.user.email,
+                "💬 New comment on your post",
+                f"{current_user.username} commented on your post: {post.title}\n\n“{comment.text}”"
+            )
+        ).start()
 
     return jsonify({
         "message": "Comment added",
@@ -958,6 +972,7 @@ def add_comment_v2(user, post_id):
             "date": comment.date.strftime("%B %d, %Y")
         }
     }), 201
+
 
 
 @v2.route("/posts/<int:post_id>/comments", methods=["GET"])
