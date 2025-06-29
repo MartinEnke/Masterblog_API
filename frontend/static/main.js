@@ -1189,12 +1189,18 @@ function showEmailSection(user) {
 function saveEmail() {
   const input = document.getElementById("email-input");
   const button = document.getElementById("save-email-btn");
-  const msg = document.getElementById("email-msg");
   const email = input.value.trim();
 
   if (!email.includes("@")) {
-    msg.textContent = "❌ Invalid email.";
-    msg.className = "text-xs text-red-600 ml-2";
+    // Optional: flash the button red for invalid input
+    button.textContent = translate("invalid");
+    button.classList.remove("text-black", "hover:text-gray-800");
+    button.classList.add("text-red-600");
+    setTimeout(() => {
+      button.textContent = translate("save");
+      button.classList.remove("text-red-600");
+      button.classList.add("text-black", "hover:text-gray-800");
+    }, 2000);
     return;
   }
 
@@ -1207,20 +1213,13 @@ function saveEmail() {
     body: JSON.stringify({ email })
   })
     .then(async (resp) => {
-      let data;
-      try {
-        data = await resp.json();
-      } catch (jsonErr) {
-        throw new Error("Invalid JSON response from server.");
-      }
-
       if (resp.ok) {
-        msg.textContent = "";
-        button.textContent = `${translate("saved")}`;
+        button.textContent = translate("saved");
         button.removeAttribute("data-i18n");
         button.classList.remove("text-black", "hover:text-gray-800");
         button.classList.add("text-green-600");
 
+        // Revert button after delay
         setTimeout(() => {
           button.setAttribute("data-i18n", "save");
           applyUITranslations();
@@ -1228,7 +1227,7 @@ function saveEmail() {
           button.classList.add("text-black", "hover:text-gray-800");
         }, 2000);
 
-        // ✅ Hide dropdown after 1 second
+        // Optionally hide the dropdown
         setTimeout(() => {
           const dropdown = document.getElementById('email-section');
           if (dropdown && !dropdown.classList.contains('hidden')) {
@@ -1236,16 +1235,15 @@ function saveEmail() {
           }
         }, 1000);
       } else {
-        msg.textContent = "❌ " + (data.error || "Error");
-        msg.className = "text-xs text-red-600 ml-2";
+        const data = await resp.json();
+        console.warn("Server rejected email save:", data.error);
       }
-    }) // 👈 this closing bracket was missing!
+    })
     .catch((err) => {
-      console.error("🧨 Caught error:", err);
-      msg.textContent = "❌ Network or JSON error.";
-      msg.className = "text-xs text-red-600 ml-2";
+      console.error("🧨 Email save error:", err);
     });
 }
+
 
 
 document.getElementById('email-input').addEventListener('keydown', function (e) {
