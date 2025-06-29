@@ -118,8 +118,6 @@ def like_post_db(post_id):
     return {"message": f"Post {post_id} liked", "likes": post.likes}, 200
 
 
-
-
 def send_email(app, to_email, subject, body):
     with app.app_context():
         if current_app.config.get("ENV") == "development":
@@ -128,9 +126,10 @@ def send_email(app, to_email, subject, body):
 
         smtp_server = current_app.config["SMTP_SERVER"]
         smtp_port = current_app.config["SMTP_PORT"]
-        smtp_user = current_app.config["SMTP_USERNAME"]  # ✅ fixed key
+        smtp_ssl_port = current_app.config.get("SMTP_SSL_PORT", 465)
+        smtp_user = current_app.config["SMTP_USERNAME"]
         smtp_password = current_app.config["SMTP_PASSWORD"]
-        from_email = current_app.config.get("EMAIL_FROM", smtp_user)  # ✅ corrected fallback
+        from_email = current_app.config.get("EMAIL_FROM", smtp_user)
 
         msg = MIMEText(body)
         msg["Subject"] = subject
@@ -138,14 +137,28 @@ def send_email(app, to_email, subject, body):
         msg["To"] = to_email
 
         try:
-            with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()
+            # Try STARTTLS first (most common for port 587)
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.ehlo()
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(from_email, [to_email], msg.as_string())
+            server.quit()
+            print(f"✅ Email sent to {to_email} via STARTTLS")
+
+        except Exception as e1:
+            print(f"⚠️ STARTTLS failed: {e1}. Trying SSL fallback...")
+
+            try:
+                # Fallback: SSL (commonly used with port 465)
+                server = smtplib.SMTP_SSL(smtp_server, smtp_ssl_port)
                 server.login(smtp_user, smtp_password)
                 server.sendmail(from_email, [to_email], msg.as_string())
-            print(f"✅ Email sent to {to_email}")
-        except Exception as e:
-            print(f"❌ Failed to send email to {to_email}: {e}")
+                server.quit()
+                print(f"✅ Email sent to {to_email} via SMTP_SSL")
 
+            except Exception as e2:
+                print(f"❌ Failed to send email to {to_email}: {e2}")
 
 
 def moderate_post(title, content):
