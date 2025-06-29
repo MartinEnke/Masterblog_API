@@ -1142,7 +1142,7 @@ function updateUserInfo() {
 function showEmailSection(user) {
   const emailSection = document.getElementById('email-section');
   const emailInput = document.getElementById('email-input');
-  const emailMsg = document.getElementById('email-msg');
+  const saveBtn = document.getElementById('save-email-btn');
 
   emailSection.classList.remove('hidden');
 
@@ -1152,11 +1152,21 @@ function showEmailSection(user) {
     emailInput.value = user.email || '';
   }, 0);
 
-  document.getElementById('save-email-btn').onclick = async () => {
+  saveBtn.onclick = async () => {
     const newEmail = emailInput.value.trim();
-    if (!newEmail.includes("@")) {
-      emailMsg.textContent = "❌ Invalid email.";
-      emailMsg.className = "text-xs text-red-600 ml-2";
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      saveBtn.textContent = translate("invalid");
+      saveBtn.removeAttribute("data-i18n");
+      saveBtn.classList.remove("text-black", "hover:text-gray-800");
+      saveBtn.classList.add("text-red-600");
+
+      setTimeout(() => {
+        saveBtn.setAttribute("data-i18n", "save");
+        applyUITranslations();
+        saveBtn.classList.remove("text-red-600");
+        saveBtn.classList.add("text-black", "hover:text-gray-800");
+      }, 2000);
       return;
     }
 
@@ -1172,37 +1182,76 @@ function showEmailSection(user) {
 
       const data = await resp.json();
       if (resp.ok) {
-        emailMsg.textContent = "✅ Email saved.";
-        emailMsg.className = "text-xs text-green-600 ml-2";
+        saveBtn.textContent = translate("saved");
+        saveBtn.removeAttribute("data-i18n");
+        saveBtn.classList.remove("text-black", "hover:text-gray-800");
+        saveBtn.classList.add("text-green-600");
+
+        setTimeout(() => {
+          saveBtn.setAttribute("data-i18n", "save");
+          applyUITranslations();
+          saveBtn.classList.remove("text-green-600");
+          saveBtn.classList.add("text-black", "hover:text-gray-800");
+        }, 2000);
+
+        // Optionally hide the dropdown after success
+        setTimeout(() => {
+          const dropdown = document.getElementById('email-section');
+          if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+          }
+        }, 1000);
       } else {
-        emailMsg.textContent = "❌ " + data.error;
-        emailMsg.className = "text-xs text-red-600 ml-2";
+        saveBtn.textContent = translate("error");
+        saveBtn.classList.remove("text-black", "hover:text-gray-800");
+        saveBtn.classList.add("text-red-600");
+
+        setTimeout(() => {
+          saveBtn.setAttribute("data-i18n", "save");
+          applyUITranslations();
+          saveBtn.classList.remove("text-red-600");
+          saveBtn.classList.add("text-black", "hover:text-gray-800");
+        }, 2000);
       }
     } catch (err) {
       console.error("Error updating email:", err);
-      emailMsg.textContent = "❌ Network error.";
+      saveBtn.textContent = translate("error");
+      saveBtn.classList.remove("text-black", "hover:text-gray-800");
+      saveBtn.classList.add("text-red-600");
+
+      setTimeout(() => {
+        saveBtn.setAttribute("data-i18n", "save");
+        applyUITranslations();
+        saveBtn.classList.remove("text-red-600");
+        saveBtn.classList.add("text-black", "hover:text-gray-800");
+      }, 2000);
     }
   };
 }
 
 
+
 function saveEmail() {
   const input = document.getElementById("email-input");
   const button = document.getElementById("save-email-btn");
+  const msg = document.getElementById("email-msg"); // ✅ important line!
   const email = input.value.trim();
 
-  if (!email.includes("@")) {
-    // Optional: flash the button red for invalid input
-    button.textContent = translate("invalid");
-    button.classList.remove("text-black", "hover:text-gray-800");
-    button.classList.add("text-red-600");
-    setTimeout(() => {
-      button.textContent = translate("save");
-      button.classList.remove("text-red-600");
-      button.classList.add("text-black", "hover:text-gray-800");
-    }, 2000);
-    return;
-  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  button.textContent = translate("invalid");
+  button.removeAttribute("data-i18n");
+  button.classList.remove("text-black", "hover:text-gray-800");
+  button.classList.add("text-red-600");
+
+  setTimeout(() => {
+    button.setAttribute("data-i18n", "save");
+    applyUITranslations();
+    button.classList.remove("text-red-600");
+    button.classList.add("text-black", "hover:text-gray-800");
+  }, 2000);
+
+  return;
+}
 
   fetch("/api/v2/user/email", {
     method: "PUT",
@@ -1214,12 +1263,12 @@ function saveEmail() {
   })
     .then(async (resp) => {
       if (resp.ok) {
+        msg.textContent = "";
         button.textContent = translate("saved");
         button.removeAttribute("data-i18n");
         button.classList.remove("text-black", "hover:text-gray-800");
         button.classList.add("text-green-600");
 
-        // Revert button after delay
         setTimeout(() => {
           button.setAttribute("data-i18n", "save");
           applyUITranslations();
@@ -1227,7 +1276,6 @@ function saveEmail() {
           button.classList.add("text-black", "hover:text-gray-800");
         }, 2000);
 
-        // Optionally hide the dropdown
         setTimeout(() => {
           const dropdown = document.getElementById('email-section');
           if (dropdown && !dropdown.classList.contains('hidden')) {
@@ -1237,13 +1285,22 @@ function saveEmail() {
       } else {
         const data = await resp.json();
         console.warn("Server rejected email save:", data.error);
+        msg.textContent = `❌ ${data.error || translate("error")}`;
+        msg.className = "text-xs text-red-600 ml-2";
       }
     })
     .catch((err) => {
       console.error("🧨 Email save error:", err);
+      msg.textContent = "❌ Network error.";
+      msg.className = "text-xs text-red-600 ml-2";
     });
 }
 
+
+function isValidEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+}
 
 
 document.getElementById('email-input').addEventListener('keydown', function (e) {
