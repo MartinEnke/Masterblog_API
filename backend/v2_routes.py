@@ -109,7 +109,8 @@ def get_user_from_token_value(token):
 def get_user(current_user):
     return jsonify({
         "username": current_user.username,
-        "email": current_user.email
+        "email": current_user.email,
+        "notifications_enabled": current_user.notifications_enabled
     }), 200
 
 
@@ -118,17 +119,16 @@ def get_user(current_user):
 def update_email(current_user):
     data = request.get_json()
     new_email = data.get("email")
-    notify_pref = data.get("notifications_enabled")  # 👈 optional toggle from frontend
+    notify_pref = data.get("notifications_enabled")  # Optional from frontend
 
-    # Validate email format
     email_pattern = r"^[^@]+@[^@]+\.[^@]+$"
     if not new_email or not re.match(email_pattern, new_email) or len(new_email) > 254:
         return jsonify({"error": "Invalid email address"}), 400
 
-    # ✅ Save email and optional notification preference
     current_user.email = new_email
-    if notify_pref is not None:
-        current_user.notifications_enabled = bool(notify_pref)
+
+    # ✅ Force notifications ON if a valid email is saved
+    current_user.notifications_enabled = True if new_email else False
 
     try:
         session.commit()
@@ -141,6 +141,28 @@ def update_email(current_user):
         session.rollback()
         return jsonify({"error": "This email is already in use."}), 409
 
+
+@v2.route("/user/notifications", methods=["PUT"])
+@token_required
+def toggle_notification_setting(current_user):
+    data = request.get_json()
+    enabled = data.get("enabled")
+
+    if enabled not in [True, False]:
+        return jsonify({"error": "Invalid 'enabled' value"}), 400
+
+    current_user.notifications_enabled = enabled
+
+    try:
+        session.commit()
+        return jsonify({
+            "message": "Notification preference updated",
+            "notifications_enabled": current_user.notifications_enabled
+        }), 200
+    except Exception as e:
+        session.rollback()
+        print("❌ Error updating notification setting:", e)
+        return jsonify({"error": "Failed to update notification preference."}), 500
 
 
 # -------------------------

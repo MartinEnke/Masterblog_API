@@ -5,13 +5,14 @@ conn = sqlite3.connect("backend/blog.db")
 cursor = conn.cursor()
 
 # # Delete all translations with id >= 13
-cursor.execute("DELETE FROM translations WHERE id >= 22;")
+# cursor.execute("DELETE FROM translations WHERE id >= 22;")
 #
 # cursor.execute("UPDATE users SET email = 'trickform.info@gmail.com' WHERE username = 'martin';")
 # print("🗑️ Deleted translations with ID >= 0")
 
 # Delete all posts with id >= 5
-cursor.execute("UPDATE users SET tts_demo_used = 0;")
+cursor.execute("UPDATE users SET notifications_enabled = Null;")
+cursor.execute("UPDATE users SET email = Null;")
 print("🗑️ Deleted posts with ID >= 5")
 #
 # # Confirm remaining entries

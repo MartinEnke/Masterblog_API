@@ -2,7 +2,7 @@
 
 // Global variable to avoid redundant checks
 let hasUsedTTSDemo = null;
-let notificationsEnabled = true; // default (could be replaced with user.notifications_enabled from backend)
+let notificationsEnabled = false; // default (could be replaced with user.notifications_enabled from backend)
 /* ==========================================================================
    GLOBAL VARIABLES
    ========================================================================== */
@@ -1144,118 +1144,44 @@ function showEmailSection(user) {
   const emailSection = document.getElementById('email-section');
   const emailInput = document.getElementById('email-input');
   const saveBtn = document.getElementById('save-email-btn');
+  const notificationToggle = document.getElementById("notification-toggle");
 
   emailSection.classList.remove('hidden');
 
-  // Delay setting the input value to avoid overwrite from DOM re-rendering
   setTimeout(() => {
-    console.log("✅ Setting email input value to:", user.email);
     emailInput.value = user.email || '';
+    notificationsEnabled = user.notifications_enabled === 1;
+    updateNotificationToggleText();
   }, 0);
 
-  saveBtn.onclick = async () => {
-    const newEmail = emailInput.value.trim();
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
-      saveBtn.textContent = translate("invalid");
-      saveBtn.removeAttribute("data-i18n");
-      saveBtn.classList.remove("text-black", "hover:text-gray-800");
-      saveBtn.classList.add("text-red-600");
-
-      setTimeout(() => {
-        saveBtn.setAttribute("data-i18n", "save");
-        applyUITranslations();
-        saveBtn.classList.remove("text-red-600");
-        saveBtn.classList.add("text-black", "hover:text-gray-800");
-      }, 2000);
-      return;
-    }
-
-    try {
-      const resp = await fetch('/api/v2/user/email', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: newEmail })
-      });
-
-      const data = await resp.json();
-      if (resp.ok) {
-        saveBtn.textContent = translate("saved");
-        saveBtn.removeAttribute("data-i18n");
-        saveBtn.classList.remove("text-black", "hover:text-gray-800");
-        saveBtn.classList.add("text-green-600");
-
-        setTimeout(() => {
-          saveBtn.setAttribute("data-i18n", "save");
-          applyUITranslations();
-          saveBtn.classList.remove("text-green-600");
-          saveBtn.classList.add("text-black", "hover:text-gray-800");
-        }, 2000);
-
-        // Optionally hide the dropdown after success
-        setTimeout(() => {
-          const dropdown = document.getElementById('email-section');
-          if (dropdown && !dropdown.classList.contains('hidden')) {
-            dropdown.classList.add('hidden');
-          }
-        }, 1000);
-      } else {
-        saveBtn.textContent = translate("error");
-        saveBtn.classList.remove("text-black", "hover:text-gray-800");
-        saveBtn.classList.add("text-red-600");
-
-        setTimeout(() => {
-          saveBtn.setAttribute("data-i18n", "save");
-          applyUITranslations();
-          saveBtn.classList.remove("text-red-600");
-          saveBtn.classList.add("text-black", "hover:text-gray-800");
-        }, 2000);
-      }
-    } catch (err) {
-      console.error("Error updating email:", err);
-      saveBtn.textContent = translate("error");
-      saveBtn.classList.remove("text-black", "hover:text-gray-800");
-      saveBtn.classList.add("text-red-600");
-
-      setTimeout(() => {
-        saveBtn.setAttribute("data-i18n", "save");
-        applyUITranslations();
-        saveBtn.classList.remove("text-red-600");
-        saveBtn.classList.add("text-black", "hover:text-gray-800");
-      }, 2000);
-    }
+  saveBtn.onclick = () => {
+    saveEmail();
   };
-  // ✅ Set notification toggle state from user and update UI text
-    notificationsEnabled = user.notifications_enabled ?? true;
-  toggleNotifications();
 }
+
 
 
 
 function saveEmail() {
   const input = document.getElementById("email-input");
   const button = document.getElementById("save-email-btn");
-  const msg = document.getElementById("email-msg"); // ✅ important line!
+  const msg = document.getElementById("email-msg");
   const email = input.value.trim();
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-  button.textContent = translate("invalid");
-  button.removeAttribute("data-i18n");
-  button.classList.remove("text-black", "hover:text-gray-800");
-  button.classList.add("text-red-600");
+  if (!isValidEmail(email)) {
+    button.textContent = translate("invalid");
+    button.removeAttribute("data-i18n");
+    button.classList.remove("text-black", "hover:text-gray-800");
+    button.classList.add("text-red-600");
 
-  setTimeout(() => {
-    button.setAttribute("data-i18n", "save");
-    applyUITranslations();
-    button.classList.remove("text-red-600");
-    button.classList.add("text-black", "hover:text-gray-800");
-  }, 2000);
-
-  return;
-}
+    setTimeout(() => {
+      button.setAttribute("data-i18n", "save");
+      applyUITranslations();
+      button.classList.remove("text-red-600");
+      button.classList.add("text-black", "hover:text-gray-800");
+    }, 2000);
+    return;
+  }
 
   fetch("/api/v2/user/email", {
     method: "PUT",
@@ -1265,39 +1191,43 @@ function saveEmail() {
     },
     body: JSON.stringify({ email })
   })
-    .then(async (resp) => {
-      if (resp.ok) {
-        msg.textContent = "";
-        button.textContent = translate("saved");
-        button.removeAttribute("data-i18n");
-        button.classList.remove("text-black", "hover:text-gray-800");
-        button.classList.add("text-green-600");
+  .then(async (resp) => {
+    if (resp.ok) {
+      msg.textContent = "";
+      button.textContent = translate("saved");
+      button.removeAttribute("data-i18n");
+      button.classList.remove("text-black", "hover:text-gray-800");
+      button.classList.add("text-green-600");
 
-        setTimeout(() => {
-          button.setAttribute("data-i18n", "save");
-          applyUITranslations();
-          button.classList.remove("text-green-600");
-          button.classList.add("text-black", "hover:text-gray-800");
-        }, 2000);
+      // ✅ Set notificationsEnabled true
+      notificationsEnabled = true;
+      updateNotificationToggleText();
 
-        setTimeout(() => {
-          const dropdown = document.getElementById('email-section');
-          if (dropdown && !dropdown.classList.contains('hidden')) {
-            dropdown.classList.add('hidden');
-          }
-        }, 1000);
-      } else {
-        const data = await resp.json();
-        console.warn("Server rejected email save:", data.error);
-        msg.textContent = `❌ ${data.error || translate("error")}`;
-        msg.className = "text-xs text-red-600 ml-2";
-      }
-    })
-    .catch((err) => {
-      console.error("🧨 Email save error:", err);
-      msg.textContent = "❌ Network error.";
+      setTimeout(() => {
+        button.setAttribute("data-i18n", "save");
+        applyUITranslations();
+        button.classList.remove("text-green-600");
+        button.classList.add("text-black", "hover:text-gray-800");
+      }, 2000);
+
+      setTimeout(() => {
+        const dropdown = document.getElementById('email-section');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+          dropdown.classList.add('hidden');
+        }
+      }, 1000);
+    } else {
+      const data = await resp.json();
+      console.warn("Server rejected email save:", data.error);
+      msg.textContent = `❌ ${data.error || translate("error")}`;
       msg.className = "text-xs text-red-600 ml-2";
-    });
+    }
+  })
+  .catch((err) => {
+    console.error("🧨 Email save error:", err);
+    msg.textContent = "❌ Network error.";
+    msg.className = "text-xs text-red-600 ml-2";
+  });
 }
 
 
@@ -1306,37 +1236,40 @@ function isValidEmail(email) {
   return regex.test(email);
 }
 
-function toggleNotifications() {
-  const toggleText = document.getElementById("notification-toggle");
-  notificationsEnabled = !notificationsEnabled;
+async function toggleNotifications() {
+  const newState = !notificationsEnabled;
 
-  toggleText.textContent = notificationsEnabled
-    ? translate("notificationsOn")  // e.g. "🔔 Get notified on likes & comments"
-    : translate("notificationsOff"); // e.g. "🔕 Notifications off — click to enable"
+  try {
+    const resp = await fetch("/api/v2/user/notifications", {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${getToken()}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ enabled: newState })
+    });
 
-  // 🔄 Also update the backend!
-  const email = document.getElementById("email-input").value.trim();
-
-  fetch("/api/v2/user/email", {
-    method: "PUT",
-    headers: {
-      "Authorization": `Bearer ${getToken()}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      email,
-      notifications_enabled: notificationsEnabled
-    })
-  }).then(async (resp) => {
-    if (!resp.ok) {
-      const data = await resp.json();
-      console.warn("❌ Notification toggle failed:", data.error || "unknown error");
+    const data = await resp.json();
+    if (resp.ok) {
+      notificationsEnabled = data.notifications_enabled;
+      updateNotificationToggleText();
+    } else {
+      console.warn("❌ Failed to toggle notifications:", data.error);
     }
-  }).catch(err => {
-    console.error("❌ Network error while toggling notifications:", err);
-  });
+  } catch (err) {
+    console.error("Network error while toggling notifications:", err);
+  }
 }
 
+
+function updateNotificationToggleText() {
+  const toggleBtn = document.getElementById("notification-toggle");
+  if (notificationsEnabled) {
+    toggleBtn.textContent = "Notifications ON";
+  } else {
+    toggleBtn.textContent = "Get notified on likes & comments";
+  }
+}
 
 document.getElementById('email-input').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') {
