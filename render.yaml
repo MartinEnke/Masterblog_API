@@ -2,7 +2,9 @@ services:
   - type: web
     name: the-quiet-almanac
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install -r requirements.txt
+      python backend/init_db.py
     startCommand: python backend/backend_app.py
     envVars:
       - key: SECRET_KEY
