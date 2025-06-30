@@ -1231,7 +1231,7 @@ function saveEmail() {
   })
     .then(async (resp) => {
       if (resp.status === 401) {
-        msg.textContent = "⚠️ Signup or Login first.";
+        msg.textContent = translate("signupOrLoginFirst");
         msg.className = "text-xs text-yellow-600 ml-2";
         return;
       }
@@ -1581,18 +1581,18 @@ function renderInfoModal() {
       }).join('')}
     </ul>
 
-    <p class="text-xs text-gray-500 mt-4 text-center">
+    <p class="text-xs text-gray-500 mt-4 text-center leading-relaxed">
   ${strings.disclaimerNoticePrefix}
-  <a href="#" id="openDisclaimer" class="underline hover:text-white">
+  <a href="#" id="openDisclaimer" class="underline hover:text-white block sm:inline mt-1">
     ${strings.disclaimerLink}
   </a>
 </p>
 
-<p class="text-xs text-center text-[#6aa8a0] mb-6">
+<p class="text-xs text-center text-[#6aa8a0] mb-6 leading-relaxed">
   ${strings.githubLinePrefix}
   <a href="https://github.com/MartinEnke/Masterblog_API/blob/main/README.md"
      target="_blank"
-     class="underline hover:text-white">
+     class="underline hover:text-white block sm:inline mt-1">
     ${strings.githubLink}
   </a>
 </p>
