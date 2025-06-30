@@ -24,6 +24,7 @@ def get_token_or_ip():
 # locate backend and frontend dirs
 HERE = os.path.dirname(os.path.abspath(__file__))
 FRONTEND = os.path.abspath(os.path.join(HERE, "..", "frontend"))
+print("🔍 FRONTEND path resolved to:", FRONTEND)
 
 app = Flask(
     __name__,

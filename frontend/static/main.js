@@ -1228,7 +1228,7 @@ function saveEmail() {
     return;
   }
 
-  fetch("/api/v2/user/email", {
+  fetch(`${API_BASE_URL}/user/email`, {
     method: "PUT",
     headers: {
       "Authorization": `Bearer ${getToken()}`,
