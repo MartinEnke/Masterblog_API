@@ -1539,38 +1539,47 @@ function renderInfoModal() {
   // Modal Content
   const content = document.createElement("div");
   content.className = `
-    bg-white bg-opacity-90 backdrop-blur-md text-gray-800
-    rounded-xl shadow-2xl p-8 max-w-2xl w-full
-    font-serif text-sm leading-relaxed
-  `;
+  bg-[#2e2f36]/50 backdrop-blur-md
+  text-white rounded-lg shadow-xl p-6
+  w-[90%] sm:w-[90%] md:max-w-xl
+  font-sans text-sm leading-relaxed border border-[#6aa8a0]/80
+`;
 
-  content.innerHTML = `
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg md:text-xl font-semibold">${strings.infoTitle}</h2>
-      <select id="info-lang-select" class="text-sm border border-gray-300 rounded px-2 py-1 bg-white text-gray-700">
-        <option value="en">English</option>
-        <option value="de">Deutsch</option>
-        <option value="fr">Français</option>
-        <option value="es">Español</option>
-      </select>
-    </div>
+content.innerHTML = `
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg md:text-xl font-semibold text-[#f5eec6]">${strings.infoTitle}</h2>
+    <select id="info-lang-select"
+      class="text-xs border border-white bg-[#14151c] text-white rounded px-2 py-1">
+      <option value="en">English</option>
+      <option value="de">Deutsch</option>
+      <option value="fr">Français</option>
+      <option value="es">Español</option>
+    </select>
+  </div>
 
-    <p class="mb-4">${strings.infoIntro}</p>
+  <p class="mb-3 text-gray-200">${strings.infoIntro}</p>
 
-    <h3 class="text-md font-semibold mb-2">${strings.infoFeaturesTitle}</h3>
-    <ul class="list-none space-y-2 mb-6">
-      ${[...Array(10)].map((_, i) => {
-        const feature = strings[`infoFeature${i + 1}`];
-        return feature ? `<li class="flex items-start"><span class="mr-2 text-blue-500">&rarr;</span> <span>${feature}</span></li>` : '';
-      }).join('')}
-    </ul>
+  <h3 class="text-sm font-semibold mb-2 text-[#6aa8a0]">${strings.infoFeaturesTitle}</h3>
+  <ul class="list-none space-y-1.5 mb-4">
+    ${[...Array(10)].map((_, i) => {
+      const feature = strings[`infoFeature${i + 1}`];
+      return feature
+        ? `<li class="flex items-start text-gray-100 text-sm">
+              <span class="mr-2 text-[#f5eec6] font-bold text-sm">&rarr;</span>
+              <span>${feature}</span>
+           </li>`
+        : '';
+    }).join('')}
+  </ul>
 
-    <div class="text-right">
-      <button id="info-close-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-        ${strings.infoClose}
-      </button>
-    </div>
-  `;
+  <div class="text-right">
+    <button id="info-close-btn"
+      class="px-4 py-1.5 rounded-md bg-[#6aa8a0] text-black text-sm font-semibold hover:bg-[#82bab2] transition">
+      ${strings.infoClose}
+    </button>
+  </div>
+`;
+
 
   modal.appendChild(content);
   document.body.appendChild(modal);
