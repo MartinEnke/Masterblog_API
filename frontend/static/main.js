@@ -7,6 +7,12 @@ let disclaimerOpenedFrom = null;
 /* ==========================================================================
    GLOBAL VARIABLES
    ========================================================================== */
+
+const isLocalhost = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+
+const API_BASE_URL = isLocalhost
+  ? "http://127.0.0.1:5021/api/v2"               // ✅ local backend
+  : "https://the-quiet-almanac.onrender.com/api/v2";  // ✅ Render backend
 const API_URL_KEY = 'apiBaseUrl';
 let categories = [];
 let postToEditId = null;
@@ -16,7 +22,7 @@ function getCurrentLanguage() {
 }
 
 function checkBackendConnection() {
-  fetch(`${getBaseUrl()}/status`)
+  fetch(`${API_BASE_URL}/status`)
     .then(res => {
       if (res.ok) {
         console.log("✅ Backend status: OK");
