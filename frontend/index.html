@@ -260,12 +260,14 @@
     <input
   type="text"
   id="login-username"
+  data-i18n-placeholder="usernamePlaceholder"
   placeholder="Username"
   class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400"
 />
 <input
   type="password"
   id="login-password"
+  data-i18n-placeholder="passwordPlaceholder"
   placeholder="Password"
   class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400"
 />
@@ -280,18 +282,21 @@
   <div class="bg-black text-white p-6 rounded-lg w-full max-w-md shadow-lg border border-white">
     <h2 data-i18n="signup" class="text-xl font-bold mb-4">📝 Signup</h2>
 
-    <input type="text" id="signup-username" placeholder="Username"
+    <input type="text" id="signup-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username"
       class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
 
-    <input type="password" id="signup-password" placeholder="Password"
+    <input type="password" id="signup-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password"
       class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
 
     <div class="flex justify-end gap-3">
-      <button onclick="submitSignup()"
-        class="text-white bg-blue-600 px-4 py-2 rounded-md">Register</button>
-      <button onclick="closeSignupModal()"
-        class="text-black bg-white px-4 py-2 rounded-md">Cancel</button>
-    </div>
+  <button onclick="submitSignup()"
+    class="text-white bg-blue-600 px-4 py-2 rounded-md"
+    data-i18n="save">Save</button>
+
+  <button onclick="closeSignupModal()"
+    class="text-black bg-white px-4 py-2 rounded-md"
+    data-i18n="cancel">Cancel</button>
+</div>
   </div>
 </div>
 
@@ -299,10 +304,10 @@
   <div class="bg-black text-white p-6 rounded-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-screen overflow-y-auto shadow-lg border border-white">
     <h2 data-i18n="addPost" class="text-xl font-bold mb-4">📝 Add Post</h2>
 
-    <input type="text" id="add-title" placeholder="Title"
+    <input type="text" id="add-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title"
       class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
 
-    <textarea id="add-content" placeholder="Content"
+    <textarea id="add-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"
       class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400 min-h-[200px]"></textarea>
 
     <select id="add-category"
@@ -314,9 +319,14 @@
     </div>
 
     <div class="flex justify-end gap-3">
-      <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" onclick="submitAdd()">Save</span>
-      <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer" id="cancel-add-btn">Cancel</span>
-    </div>
+  <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer"
+        data-i18n="save"
+        onclick="submitAdd()">Save</span>
+
+  <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer"
+        data-i18n="cancel"
+        id="cancel-add-btn">Cancel</span>
+</div>
   </div>
 </div>
 
@@ -325,10 +335,10 @@
   <div class="bg-black text-white p-6 rounded-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-screen overflow-y-auto shadow-lg border border-white">
     <h2 data-i18n="editPost" class="text-xl font-bold mb-4">✏️ Edit Post</h2>
 
-    <input type="text" id="edit-title" placeholder="Title"
+    <input type="text" id="edit-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title"
       class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
 
-    <textarea id="edit-content" placeholder="Content"
+    <textarea id="edit-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"
       class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400 min-h-[200px]"></textarea>
 
     <select id="edit-category"
@@ -340,9 +350,14 @@
     </div>
 
     <div class="flex justify-end gap-3">
-      <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" onclick="submitUpdate()">Save</span>
-      <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer" onclick="closeModal()">Cancel</span>
-    </div>
+  <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer"
+        data-i18n="save"
+        onclick="submitUpdate()">Save</span>
+
+  <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer"
+        data-i18n="cancel"
+        onclick="closeModal()">Cancel</span>
+</div>
   </div>
 </div>
 
