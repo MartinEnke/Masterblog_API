@@ -5,7 +5,7 @@ from backend.auth import register_user, login_user, token_required
 from flask_limiter.util import get_remote_address
 from flasgger import Swagger
 from backend.utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data
-from rate_limit import limiter
+from backend.rate_limit import limiter
 from backend.translations_db import init_db, get_translation, save_translation, session, translate_post
 from backend.models import Post
 import os

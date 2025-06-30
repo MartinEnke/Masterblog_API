@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm import joinedload
 from backend.db import session
 from backend.models import Post, User, Comment, PostLike
-from rate_limit import limiter
+from backend.rate_limit import limiter
 from backend.auth import token_required, register_user, login_user, TOKENS
 from backend.utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data, send_email
 from backend.translations_db import get_translation, save_translation, translate_post
@@ -20,7 +20,7 @@ from sqlalchemy import func
 import os, requests, base64
 from flask import Blueprint, request, jsonify, send_file
 from io import BytesIO
-from notifications import send_email
+# from backend.notifications import send_email
 import html
 import re
 from threading import Thread
