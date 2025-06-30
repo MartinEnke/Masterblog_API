@@ -37,6 +37,15 @@ button:focus, button:active {
   outline: none !important;
   box-shadow: none !important;
 }
+
+#info-modal .modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+html {
+  scroll-behavior: smooth;
+}
 /* ========================================================================
    HEADER / BANNER
    ======================================================================== */
@@ -123,6 +132,11 @@ button:focus, button:active {
 }
 .burning-orange:hover {
   color: #ff7133; /* optional: a lighter hover tone */
+}
+
+.no-bg-hover:hover {
+  background-color: transparent !important;
+  transform: none !important;
 }
 /* ========================================================================
    FILTER BAR
@@ -409,3 +423,4 @@ footer {
   box-shadow: none !important;
   background: none !important;
 }
+

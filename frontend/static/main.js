@@ -1543,43 +1543,57 @@ function renderInfoModal() {
   text-white rounded-lg shadow-xl p-6
   w-[90%] sm:w-[90%] md:max-w-xl
   font-sans text-sm leading-relaxed border border-[#6aa8a0]/80
+  max-h-[90vh] overflow-y-auto
 `;
 
-content.innerHTML = `
-  <div class="flex justify-between items-center mb-4">
-    <h2 class="text-lg md:text-xl font-semibold text-[#f5eec6]">${strings.infoTitle}</h2>
-    <select id="info-lang-select"
-      class="text-xs border border-white bg-[#14151c] text-white rounded px-2 py-1">
-      <option value="en">English</option>
-      <option value="de">Deutsch</option>
-      <option value="fr">Français</option>
-      <option value="es">Español</option>
-    </select>
-  </div>
+  content.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg md:text-xl font-semibold text-[#f5eec6]">${strings.infoTitle}</h2>
+      <select id="info-lang-select"
+        class="text-xs border border-white bg-[#14151c] text-white rounded px-2 py-1">
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+      </select>
+    </div>
 
-  <p class="mb-3 text-gray-200">${strings.infoIntro}</p>
+    <p class="mb-3 text-gray-200">${strings.infoIntro}</p>
 
-  <h3 class="text-sm font-semibold mb-2 text-[#6aa8a0]">${strings.infoFeaturesTitle}</h3>
-  <ul class="list-none space-y-1.5 mb-4">
-    ${[...Array(10)].map((_, i) => {
-      const feature = strings[`infoFeature${i + 1}`];
-      return feature
-        ? `<li class="flex items-start text-gray-100 text-sm">
-              <span class="mr-2 text-[#f5eec6] font-bold text-sm">&rarr;</span>
-              <span>${feature}</span>
-           </li>`
-        : '';
-    }).join('')}
-  </ul>
+    <h3 class="text-sm font-semibold mb-2 text-[#6aa8a0]">${strings.infoFeaturesTitle}</h3>
+    <ul class="list-none space-y-2 mb-6">
+      ${[...Array(10)].map((_, i) => {
+        const feature = strings[`infoFeature${i + 1}`];
+        const isWarning = feature?.startsWith("⚠️");
+        return feature
+          ? `<li class="flex items-start text-sm text-white">
+              <span class="mr-2 mt-[3px]">
+                ${isWarning
+                  ? '⚠️'
+                  : `<svg class="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="#6aa86a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="4 10 8 14 16 6" />
+                    </svg>`}
+              </span>
+              <span>${feature.replace(/^✅ |^⚠️ /, '')}</span>
+            </li>`
+          : '';
+      }).join('')}
+    </ul>
 
-  <div class="text-right">
-    <button id="info-close-btn"
-      class="px-4 py-1.5 rounded-md bg-[#6aa8a0] text-black text-sm font-semibold hover:bg-[#82bab2] transition">
-      ${strings.infoClose}
-    </button>
-  </div>
-`;
+    <p class="text-xs text-center text-[#6aa8a0] mb-6">
+      View source & README on
+      <a href="https://github.com/MartinEnke/Masterblog_API/blob/main/README.md"
+         target="_blank"
+         class="underline hover:text-white">GitHub</a>.
+    </p>
 
+    <div class="text-center">
+      <button id="info-close-btn"
+  class="no-bg-hover text-blue-500 hover:text-[#f5eec6] text-sm font-semibold transition">
+  ${strings.infoClose}
+</button>
+    </div>
+  `;
 
   modal.appendChild(content);
   document.body.appendChild(modal);
@@ -1593,10 +1607,10 @@ content.innerHTML = `
     document.getElementById("lang-select").value = newLang;
     applyUITranslations();
     loadPosts();
-    renderInfoModal(); // Re-render in new lang
+    renderInfoModal(); // Re-render with new language
   });
 
-  // Close
+  // Close button logic
   document.getElementById("info-close-btn").addEventListener("click", () => {
     sessionStorage.setItem("infoSeen", "true");
     modal.remove();
