@@ -2,6 +2,7 @@
 from sqlalchemy import Column, Integer, String, UniqueConstraint, Boolean, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 from backend.db import Base, engine, session
+from backend.models import Post
 import os
 from dotenv import load_dotenv
 from openai import OpenAI

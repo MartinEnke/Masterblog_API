@@ -1,19 +1,19 @@
 from flasgger import swag_from
 from datetime import datetime
 from sqlalchemy.orm import joinedload
-from db import session
+from backend.db import session
 from backend.models import Post, User, Comment, PostLike
 from rate_limit import limiter
 from backend.auth import token_required, register_user, login_user, TOKENS
-from utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data, send_email
-from translations_db import get_translation, save_translation, translate_post
+from backend.utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data, send_email
+from backend.translations_db import get_translation, save_translation, translate_post
 from babel.dates import format_date
 from langdetect import detect
 from traceback import print_exc
 from flask import g
 import jwt
 from flask import current_app
-from utils import can_call_openai, moderate_post
+from backend.utils import can_call_openai, moderate_post
 from openai import OpenAIError
 import openai
 from sqlalchemy import func
@@ -24,7 +24,6 @@ from notifications import send_email
 import html
 import re
 from threading import Thread
-from utils import send_email
 from sqlalchemy.exc import IntegrityError
 from email_validator import validate_email, EmailNotValidError
 

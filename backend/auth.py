@@ -3,7 +3,7 @@ from flask import request, jsonify, current_app
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
 from backend.models import User
-from db import session
+from backend.db import session
 from datetime import datetime, timedelta
 from jwt import ExpiredSignatureError, InvalidTokenError
 

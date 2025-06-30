@@ -1,6 +1,6 @@
 from flask import jsonify
-from models import Post, Comment, PostLike
-from translations_db import session
+from backend.models import Post, Comment, PostLike
+from backend.translations_db import session
 from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
