@@ -48,11 +48,11 @@ const UI_TRANSLATIONS = {
     yes: "Yes",
     readAloud: "Read Aloud (Demo)",
     ttsUsedUp: "⚠️ You've used your demo listen. Upgrade required for more.",
-    "getnotif": "Get notified on likes & comments",   // when no email stored
-    "noEmailSet": "Please save email first",    // when user tries toggle without email
-    "invalid": "Invalid",
-    "notificationsOn": "Notifications ON",
-    "notificationsOff": "Notifications disabled — click to enable",
+    "getnotif": "Get notified on likes & comments",   // when no email is stored
+    "noEmailSet": "Please save email first",    // when clicked on getnotif but no email is stored
+    "invalid": "Invalid", // when user enters false email format
+    "notificationsOn": "Notifications ON", // only shows when email is stored and notifications_enabled = 1
+    "notificationsOff": "Notifications disabled — click to enable", // only shows when email is stored and notifications_enabled = 0
     infoTitle: "Welcome,",
     infoIntro: "This is a portfolio project showcasing multilingual, AI-assisted blog translation, AI moderation, text-to-speech, and more.",
     infoFeaturesTitle: "What this app can do:",
@@ -113,9 +113,11 @@ const UI_TRANSLATIONS = {
     yes: "Ja",
     readAloud: "Vorlesen (Demo)",
     ttsUsedUp: "⚠️ Du hast dein Demovorlesen verwendet. Upgrade erforderlich für mehr.",
-    "noEmailSet": "Bitte gib zuerst deine E-Mail-Adresse ein",
+    "getnotif": "Lass dich über Likes & Kommentare benachrichtigen",
+    "noEmailSet": "Bitte zuerst E-Mail speichern",
+    "invalid": "Ungültig",
     "notificationsOn": "Benachrichtigungen AKTIV",
-    "notificationsOff": "Benachrichtigungen deaktiviert – zum Aktivieren klicken",
+    "notificationsOff": "Benachrichtigungen deaktiviert — zum Aktivieren klicken",
     infoTitle: "Willkommen,",
     infoIntro: "Dies ist ein Portfolio-Projekt, das mehrsprachige, KI-gestützte Blog-Übersetzung, KI-Moderation, Text-to-Speech und mehr demonstriert.",
     infoFeaturesTitle: "Was diese App kann:",
@@ -176,7 +178,9 @@ const UI_TRANSLATIONS = {
     yes: "Oui",
     readAloud: "Lecture à voix haute (Démo)",
     ttsUsedUp: "⚠️ Vous avez utilisé votre écoute démo. Mise à niveau requise pour plus.",
-    "noEmailSet": "Veuillez d’abord entrer votre adresse e-mail",
+    "getnotif": "Recevez des notifications pour les likes et les commentaires",
+    "noEmailSet": "Veuillez d'abord enregistrer une adresse e-mail",
+    "invalid": "Invalide",
     "notificationsOn": "Notifications ACTIVÉES",
     "notificationsOff": "Notifications désactivées — cliquez pour activer",
     infoTitle: "Bienvenue,",
@@ -239,7 +243,9 @@ const UI_TRANSLATIONS = {
     yes: "Sí",
     readAloud: "Leer en voz alta (Demostración)",
     ttsUsedUp: "⚠️ Has usado tu demostración. Se requiere mejora para más.",
-    "noEmailSet": "Por favor, introduce tu correo electrónico primero",
+    "getnotif": "Recibe notificaciones sobre me gusta y comentarios",
+    "noEmailSet": "Por favor guarda tu correo electrónico primero",
+    "invalid": "Inválido",
     "notificationsOn": "Notificaciones ACTIVADAS",
     "notificationsOff": "Notificaciones desactivadas — haz clic para activar",
     infoTitle: "Bienvenido,",

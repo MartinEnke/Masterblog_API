@@ -1339,10 +1339,10 @@ function updateNotificationToggleText() {
   if (!toggleBtn) return;
 
   const email = currentUser?.email?.trim();
-  if (!email) {
-    toggleBtn.textContent = translate("getnotif");
-    return;
-  }
+  if (!email || !isValidEmail(email)) {
+  toggleBtn.textContent = translate("getnotif");
+  return;
+}
 
   toggleBtn.textContent = notificationsEnabled
     ? translate("notificationsOn")
