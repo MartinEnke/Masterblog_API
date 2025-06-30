@@ -3,6 +3,7 @@
 // Global variable to avoid redundant checks
 let hasUsedTTSDemo = null;
 let currentUser = {}; // ✅ empty object
+let disclaimerOpenedFrom = null;
 /* ==========================================================================
    GLOBAL VARIABLES
    ========================================================================== */
@@ -1633,8 +1634,9 @@ function renderInfoModal() {
 if (openDisclaimerBtn) {
   openDisclaimerBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    modal.remove(); // optional: close info modal first
-    renderDisclaimerModal(); // show translated modal
+    disclaimerOpenedFrom = "info"; // ✅ Track source
+    modal.remove(); // Close Info modal
+    renderDisclaimerModal(); // Open disclaimer modal
   });
 }
 }
@@ -1662,20 +1664,34 @@ function renderDisclaimerModal() {
   const modal = document.getElementById('disclaimerModal');
   const modalContent = modal.querySelector('.modal-content');
 
+  // Fill modal content dynamically
   modalContent.innerHTML = `
     <h2 class="text-lg font-semibold mb-4">${strings.disclaimerTitle}</h2>
     <ul class="text-sm list-disc pl-5 space-y-2 text-gray-300 text-left">
       ${strings.disclaimerItems.map(item => `<li>${item}</li>`).join('')}
     </ul>
     <div class="text-center mt-6">
-      <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')" class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">
-  ${strings.disclaimerClose}
-</button>
+      <button id="disclaimer-close-btn" class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">
+        ${strings.disclaimerClose}
+      </button>
     </div>
   `;
 
+  // Show the modal
   modal.classList.remove("hidden");
+
+  // Handle close button
+  document.getElementById("disclaimer-close-btn")?.addEventListener("click", () => {
+    modal.classList.add("hidden");
+
+    // ✅ Reopen Info modal if needed
+    if (disclaimerOpenedFrom === "info") {
+      renderInfoModal();
+      disclaimerOpenedFrom = null;
+    }
+  });
 }
+
 
 // Wire up buttons
 document.getElementById('auth-button').onclick = handleAuthClick;
