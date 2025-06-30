@@ -1528,24 +1528,25 @@ function renderInfoModal() {
   const lang = getCurrentLanguage();
   const strings = UI_TRANSLATIONS[lang];
 
-  // Remove existing modal
+  // Remove any existing modal
   document.getElementById("info-modal")?.remove();
 
-  // Overlay
+  // Create overlay
   const modal = document.createElement("div");
   modal.id = "info-modal";
   modal.className = "fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50";
 
-  // Modal Content
+  // Modal content container
   const content = document.createElement("div");
   content.className = `
-  bg-[#2e2f36]/50 backdrop-blur-md
-  text-white rounded-lg shadow-xl p-6
-  w-[90%] sm:w-[90%] md:max-w-xl
-  font-sans text-sm leading-relaxed border border-[#6aa8a0]/80
-  max-h-[90vh] overflow-y-auto
-`;
+    bg-[#2e2f36]/50 backdrop-blur-md
+    text-white rounded-lg shadow-xl p-6
+    w-[90%] sm:w-[90%] md:max-w-xl
+    font-sans text-sm leading-relaxed border border-[#6aa8a0]/80
+    max-h-[90vh] overflow-y-auto
+  `;
 
+  // Inner HTML of modal
   content.innerHTML = `
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg md:text-xl font-semibold text-[#f5eec6]">${strings.infoTitle}</h2>
@@ -1580,25 +1581,42 @@ function renderInfoModal() {
       }).join('')}
     </ul>
 
-    <p class="text-xs text-center text-[#6aa8a0] mb-6">
-      View source & README on
-      <a href="https://github.com/MartinEnke/Masterblog_API/blob/main/README.md"
-         target="_blank"
-         class="underline hover:text-white">GitHub</a>.
-    </p>
+    <p class="text-xs text-gray-500 mt-4 text-center">
+  ${strings.disclaimerNoticePrefix}
+  <a href="#" id="openDisclaimer" class="underline hover:text-white">
+    ${strings.disclaimerLink}
+  </a>
+</p>
+
+<p class="text-xs text-center text-[#6aa8a0] mb-6">
+  ${strings.githubLinePrefix}
+  <a href="https://github.com/MartinEnke/Masterblog_API/blob/main/README.md"
+     target="_blank"
+     class="underline hover:text-white">
+    ${strings.githubLink}
+  </a>
+</p>
 
     <div class="text-center">
       <button id="info-close-btn"
-  class="no-bg-hover text-blue-500 hover:text-[#f5eec6] text-sm font-semibold transition">
-  ${strings.infoClose}
-</button>
+        class="no-bg-hover text-blue-500 hover:text-[#f5eec6] text-sm font-semibold transition">
+        ${strings.infoClose}
+      </button>
     </div>
   `;
 
+  // Append modal to document
   modal.appendChild(content);
   document.body.appendChild(modal);
 
-  // Language switcher sync
+  // Event: Close modal
+  const closeBtn = document.getElementById("info-close-btn");
+  closeBtn.addEventListener("click", () => {
+    sessionStorage.setItem("infoSeen", "true");
+    modal.remove();
+  });
+
+  // Event: Language selector
   const langSelect = document.getElementById("info-lang-select");
   langSelect.value = lang;
   langSelect.addEventListener("change", (e) => {
@@ -1610,12 +1628,18 @@ function renderInfoModal() {
     renderInfoModal(); // Re-render with new language
   });
 
-  // Close button logic
-  document.getElementById("info-close-btn").addEventListener("click", () => {
-    sessionStorage.setItem("infoSeen", "true");
-    modal.remove();
+  // Event: Open disclaimer modal
+  const openDisclaimerBtn = document.getElementById('openDisclaimer');
+if (openDisclaimerBtn) {
+  openDisclaimerBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    modal.remove(); // optional: close info modal first
+    renderDisclaimerModal(); // show translated modal
   });
 }
+}
+
+
 
 
 function showInfoModalIfNeeded() {
@@ -1631,6 +1655,27 @@ function forceShowInfoModal() {
   renderInfoModal(); // directly show it
 }
 
+function renderDisclaimerModal() {
+  const lang = getCurrentLanguage();
+  const strings = UI_TRANSLATIONS[lang];
+
+  const modal = document.getElementById('disclaimerModal');
+  const modalContent = modal.querySelector('.modal-content');
+
+  modalContent.innerHTML = `
+    <h2 class="text-lg font-semibold mb-4">${strings.disclaimerTitle}</h2>
+    <ul class="text-sm list-disc pl-5 space-y-2 text-gray-300 text-left">
+      ${strings.disclaimerItems.map(item => `<li>${item}</li>`).join('')}
+    </ul>
+    <div class="text-center mt-6">
+      <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')" class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">
+  ${strings.disclaimerClose}
+</button>
+    </div>
+  `;
+
+  modal.classList.remove("hidden");
+}
 
 // Wire up buttons
 document.getElementById('auth-button').onclick = handleAuthClick;

@@ -67,6 +67,20 @@ const UI_TRANSLATIONS = {
 "infoFeature9": "✅ Secure post/comment management with live updates",
 "infoFeature10": "⚠️ Category, comment, and date translation ",
 "infoClose": "Explore the App",
+disclaimerNoticePrefix: "This is a study project.",
+    disclaimerLink: "Read full disclaimer",
+    githubLinePrefix: "View source & README on",
+    githubLink: "GitHub",
+    disclaimerTitle: "⚠️ Disclaimer",
+    disclaimerItems: [
+      "This is a study project created as part of a backend & AI engineering curriculum.",
+      "No guarantees are provided regarding performance, security, or data persistence.",
+      "AI-generated translations, moderation, and TTS may contain inaccuracies or unpredictable behavior.",
+      "Email notifications are sent only to demo/test addresses and are not production-secure.",
+      'The “Upgrade Required” TTS message is a demo placeholder — no upsell or payment exists.',
+      "Use at your own risk. The developer assumes no liability for any outcomes resulting from usage."
+    ],
+    disclaimerClose: "Close"
 
   },
   de: {
@@ -132,7 +146,21 @@ const UI_TRANSLATIONS = {
   "infoFeature8": "✅ Übersetzungs-Cache für schnelle, wiederverwendbare Ergebnisse",
   "infoFeature9": "✅ Sichere Post- und Kommentar-Verwaltung mit Live-Aktualisierung",
   "infoFeature10": "⚠️ Kategorien, Kommentare und Datumsangaben sind derzeit nicht übersetzt",
-  "infoClose": "App erkunden"
+  "infoClose": "App erkunden",
+  disclaimerNoticePrefix: "Dies ist ein Studienprojekt.",
+    disclaimerLink: "Vollständigen Haftungsausschluss lesen",
+    githubLinePrefix: "Quellcode & README auf",
+    githubLink: "GitHub",
+    disclaimerTitle: "⚠️ Haftungsausschluss",
+    disclaimerItems: [
+      "Dies ist ein Studienprojekt im Rahmen eines Backend- & KI-Engineering-Kurses.",
+      "Es wird keine Garantie für Leistung, Sicherheit oder Datenpersistenz übernommen.",
+      "KI-gestützte Übersetzungen, Moderation und Sprachausgabe können Ungenauigkeiten oder unvorhersehbares Verhalten enthalten.",
+      "E-Mail-Benachrichtigungen werden nur zu Demo-/Testzwecken gesendet und sind nicht für die Produktion gedacht.",
+      "Die Meldung „Upgrade erforderlich“ bei der Sprachausgabe ist ein Demo-Platzhalter – es gibt kein Upsell oder Zahlungssystem.",
+      "Nutzung auf eigene Gefahr. Der Entwickler übernimmt keine Haftung für Folgen aus der Nutzung."
+    ],
+    disclaimerClose: "Schließen"
   },
   fr: {
     loadPosts: "Charger les articles",
@@ -197,8 +225,22 @@ const UI_TRANSLATIONS = {
   "infoFeature8": "✅ Mise en cache des traductions pour des performances accrues",
   "infoFeature9": "✅ Gestion sécurisée des posts et commentaires avec mises à jour en direct",
   "infoFeature10": "⚠️ Les catégories, commentaires et dates ne sont pas encore traduits",
-  "infoClose": "Explorer l’application"
-  },
+  "infoClose": "Explorer l’application",
+  disclaimerNoticePrefix: "Ceci est un projet d'étude.",
+    disclaimerLink: "Lire l'avertissement complet",
+    githubLinePrefix: "Voir le code source et le README sur",
+    githubLink: "GitHub",
+    disclaimerTitle: "⚠️ Avertissement",
+    disclaimerItems: [
+      "Ceci est un projet d’étude réalisé dans le cadre d’un cursus en backend et ingénierie de l’IA.",
+      "Aucune garantie n’est fournie concernant les performances, la sécurité ou la conservation des données.",
+      "Les traductions, modérations et synthèses vocales générées par l’IA peuvent comporter des erreurs ou un comportement imprévisible.",
+      "Les notifications par e-mail sont envoyées uniquement à des adresses de test/démonstration et ne sont pas sécurisées pour un usage en production.",
+      "Le message vocal « Mise à niveau requise » est un simple exemple – il n’y a ni vente ni paiement.",
+      "Utilisez à vos propres risques. Le développeur décline toute responsabilité en cas de problème."
+    ],
+    disclaimerClose: "Fermer"
+    },
   es: {
     loadPosts: "Cargar publicaciones",
     login: "Iniciar sesión",
@@ -262,7 +304,21 @@ const UI_TRANSLATIONS = {
   "infoFeature8": "✅ Caché de traducciones para reutilización rápida",
   "infoFeature9": "✅ Gestión segura de publicaciones y comentarios con actualizaciones en tiempo real",
   "infoFeature10": "⚠️ Categorías, comentarios y fechas aún no están traducidos",
-  "infoClose": "Explorar la app"
+  "infoClose": "Explorar la app",
+  disclaimerNoticePrefix: "Este es un proyecto de estudio.",
+    disclaimerLink: "Leer la declaración completa",
+    githubLinePrefix: "Ver el código fuente y el README en",
+    githubLink: "GitHub",
+    disclaimerTitle: "⚠️ Aviso legal",
+    disclaimerItems: [
+      "Este es un proyecto de estudio creado como parte de un curso de backend e ingeniería de IA.",
+      "No se ofrecen garantías sobre el rendimiento, la seguridad o la persistencia de datos.",
+      "Las traducciones, moderaciones y lecturas generadas por IA pueden contener errores o comportamientos impredecibles.",
+      "Las notificaciones por correo electrónico se envían solo a direcciones de prueba/demostración y no son seguras para producción.",
+      'El mensaje de TTS “Se requiere actualización” es un marcador de demostración — no existe venta ni pago.',
+      "Úselo bajo su propia responsabilidad. El desarrollador no se hace responsable de los resultados derivados del uso."
+    ],
+    disclaimerClose: "Cerrar"
   }
 };
 

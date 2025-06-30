@@ -151,11 +151,14 @@ This project was designed to explore and apply real-world development patterns u
 
 
 ## ⚠️ Disclaimers
-The "Upgrade required" message for TTS is not a real upsell — 
-the project is strictly for testing usage limits.
-No real payment or premium functionality exists.
 
-Emails are sent only for user-supplied addresses and only for comment/like notifications.
+- This project is built for educational purposes as part of a backend & AI engineering curriculum.
+- No warranties or guarantees are provided regarding performance, security, or data retention.
+- AI-generated translations, moderation, and feedback may contain inaccuracies or unexpected behavior.
+- Email notifications are only sent to test/demo addresses and are not secured for production use.
+- The TTS "Upgrade Required" message is a demo placeholder — no real payment or upsell exists.
+- Use of this app is at your own risk; the developer is not liable for any outcomes resulting from its usage.
+
 
 ## Contributions
 Pull requests and forks are welcome!

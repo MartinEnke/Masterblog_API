@@ -346,12 +346,31 @@
   </div>
 </div>
 
+<div id="disclaimerModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+  <div class="modal-content max-w-xl bg-gray-800 p-6 rounded-xl text-white shadow-xl">
+    <h2 class="text-lg font-semibold mb-4">⚠️ Disclaimer</h2>
+    <ul class="text-sm list-disc pl-5 space-y-2 text-gray-300 text-left">
+      <li>This is a study project created as part of a backend & AI engineering curriculum.</li>
+      <li>No guarantees are provided regarding performance, security, or data persistence.</li>
+      <li>AI-generated translations, moderation, and TTS may contain inaccuracies or unpredictable behavior.</li>
+      <li>Email notifications are sent only to demo/test addresses and are not production-secure.</li>
+      <li>The “Upgrade Required” TTS message is a demo placeholder — no upsell or payment exists.</li>
+      <li>Use at your own risk. The developer assumes no liability for any outcomes resulting from usage.</li>
+    </ul>
+    <div class="text-center mt-6">
+      <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')" class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- Footer -->
 <footer class="text-center text-gray-400 text-sm mt-10">&copy; The Quiet Almanac 2025</footer>
 
 <!-- Scripts -->
+
+
 <script src="/static/i18n.js"></script>
 <script src="/static/main.js" defer></script>
+
 </body>
 </html>
