@@ -5,7 +5,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python backend/init_db.py
-    startCommand: python backend/backend_app.py
+    startCommand: python -m backend.backend_app
     envVars:
       - key: SECRET_KEY
         value: your-secret-key
