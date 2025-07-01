@@ -93,7 +93,7 @@ function applyUITranslations() {
   const username = localStorage.getItem("username");
   const userInfo = document.getElementById("user-info");
   if (username && userInfo) {
-    userInfo.textContent = `${strings.welcome || "Welcome"}, ${username}!`;
+    userInfo.textContent = `${strings.welcome || "Welcome"}, ${capitalizeName(username)}!`;
   } else if (userInfo) {
     userInfo.textContent = "";
   }
@@ -369,7 +369,7 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
   <h2 id="post-title-${post.id}">${post.title}</h2>
   <p id="post-content-${post.id}">${post.content}</p>
   <p class="post-meta mt-3">
-    ${post.date || 'No date'} · <span class="by-label">by</span> ${post.author || 'Unknown'}
+    ${post.date || 'No date'} · <span class="by-label">by</span> ${capitalizeName(post.author) || 'Unknown'}
   </p>
   ${post.updated
     ? `<p style="font-size:.9em;color:#777;margin-bottom:10px">
@@ -637,7 +637,7 @@ const commentCount = data.comment_count || comments.length;
         const p = document.createElement('p');
         p.className = 'comment-line';
         p.innerHTML = `
-          <strong>${c.author}</strong>: ${c.text}
+          <strong>${capitalizeName(c.author)}</strong>: ${c.text}
           <span style="font-size:.8em; color:#888">(${c.date})</span>
           ${isOwner || isAdmin
             ? `<span style="cursor:pointer; color:red; margin-left:10px" onclick="deleteComment(${c.id}, ${postId})">❌</span>`
@@ -654,6 +654,10 @@ const commentCount = data.comment_count || comments.length;
     });
 }
 
+function capitalizeName(name) {
+  if (!name) return "";
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
 /* ==========================================================================
    UTILS
    ========================================================================== */
