@@ -1,12 +1,11 @@
 /* static/main.js */
 
-// Global variable to avoid redundant checks
-let hasUsedTTSDemo = null;
-let currentUser = {}; // ✅ empty object
-let disclaimerOpenedFrom = null;
 /* ==========================================================================
    GLOBAL VARIABLES
    ========================================================================== */
+let hasUsedTTSDemo = null;
+let currentUser = {}; // ✅ empty object
+let disclaimerOpenedFrom = null;
 
 const isLocalhost = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
@@ -23,7 +22,7 @@ function getCurrentLanguage() {
 }
 
 function checkBackendConnection() {
-  fetch(`${API_BASE_URL}/status`)
+  fetch(`${getBaseUrl()}/status`)
     .then(res => {
       if (res.ok) {
         console.log("✅ Backend status: OK");
@@ -121,7 +120,6 @@ function applyUITranslations() {
 /* ==========================================================================
    GOOGLE TRANSLATE ON DEMAND
    ========================================================================== */
-
 function loadGoogleTranslate() {
   const container = document.getElementById("google_translate_element");
 
@@ -150,12 +148,11 @@ function googleTranslateElementInit() {
   }, 'google_translate_element');
 }
 
-
 /* ==========================================================================
    UTILITIES: BASE URL (public v1 API)
    ========================================================================== */
 function getDefaultBaseUrl() {
-  return "http://127.0.0.1:5021/api/v2";
+  return API_BASE_URL;
 }
 
 function getBaseUrl() {
@@ -204,9 +201,9 @@ async function checkTTSStatus() {
 
   // Otherwise, fetch from backend
   try {
-    const resp = await fetch('/api/v2/tts-demo-status', {
-      headers: { 'Authorization': `Bearer ${getToken()}` }
-    });
+    const resp = await fetch(`${getBaseUrl()}/tts-demo-status`, {
+  headers: { 'Authorization': `Bearer ${getToken()}` }
+});
     const data = await resp.json();
     hasUsedTTSDemo = data.used_demo === true;
 
@@ -273,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (getToken()) {
   // ✅ Fetch current user data on load
   try {
-    const resp = await fetch("/api/v2/user", {
+    const resp = await fetch(`${getBaseUrl()}/user`, {
       headers: { "Authorization": `Bearer ${getToken()}` }
     });
     if (resp.ok) {
@@ -302,7 +299,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-
 /* ==========================================================================
    POSTS: LOAD / RENDER / SEARCH
    ========================================================================== */
@@ -321,7 +317,7 @@ async function loadPosts() {
   const token = getToken();
   if (token) {
     try {
-      const resp = await fetch('/api/v2/tts-demo-status', {
+      const resp = await fetch(`${getBaseUrl()}/tts-demo-status`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -347,7 +343,6 @@ async function loadPosts() {
       console.error("Error loading posts:", e);
     });
 }
-
 
 /**
  * Renders a single post card, showing Edit/Delete only to the author.
@@ -469,7 +464,6 @@ likeBtn.onclick = () => {
 
 btnWrap.appendChild(likeBtn);
 
-
   // ✏️ Edit button
   if (isOwner && isOriginalLang) {
     const editBtn = document.createElement('button');
@@ -523,7 +517,6 @@ btnWrap.appendChild(likeBtn);
       .catch(err => console.warn("Translation failed for post", post.id, err));
   }
 
-
   // 🎧 Read Aloud button (Hume TTS)
   // Demo Limited Usage
   const ttsWrap = document.createElement('div');
@@ -554,7 +547,7 @@ readBtn.className = 'text-sm font-medium text-[#fdf7d5] hover:text-[#4e857e] px-
     }
 
     try {
-      const resp = await fetch('/api/v2/generate-tts', {
+      const resp = await fetch(`${getBaseUrl()}/generate-tts`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -589,7 +582,6 @@ container.appendChild(div);
 loadComments(post.id);
 }
 
-
 function searchPosts() {
   const query = document.getElementById('search-input').value.trim();
   if (!query) return loadPosts();
@@ -613,7 +605,7 @@ function searchPosts() {
 }
 
 function loadComments(postId) {
-  const url = `/api/v2/posts/${postId}/comments`;
+  const url = `${getBaseUrl()}/posts/${postId}/comments`;
   console.log(`📨 Fetching comments from: ${url}`);
 
   fetch(url)
@@ -662,12 +654,9 @@ const commentCount = data.comment_count || comments.length;
     });
 }
 
-
-
 /* ==========================================================================
    UTILS
    ========================================================================== */
-
 function updatePostDom(postId, newTitle, newContent) {
   const titleEl = document.getElementById(`post-title-${postId}`);
   const contentEl = document.getElementById(`post-content-${postId}`);
@@ -675,7 +664,6 @@ function updatePostDom(postId, newTitle, newContent) {
   if (titleEl) titleEl.textContent = newTitle;
   if (contentEl) contentEl.textContent = newContent;
 }
-
 
 /* ==========================================================================
    POSTS: ADD / EDIT / DELETE
@@ -737,7 +725,6 @@ function submitAdd() {
     .catch(e => alert("Error: " + e));
 }
 
-
 function submitUpdate() {
   const base = getBaseUrl();
   let category = document.getElementById('edit-category').value;
@@ -794,7 +781,6 @@ function submitUpdate() {
     })
     .catch(e => alert("Error: " + e));
 }
-
 
 function showToast(message, type = "info") {
   const toast = document.createElement("div");
@@ -886,7 +872,6 @@ function submitComment(postId) {
   .catch(e => alert("Error: " + e));
 }
 
-
 function deleteComment(commentId, postId) {
   const base = getBaseUrl();
   const token = getToken();
@@ -932,7 +917,6 @@ function deleteComment(commentId, postId) {
   })
   .catch(err => console.error("❌ Delete failed:", err));
 }
-
 
 /* ==========================================================================
    CATEGORIES
@@ -997,18 +981,15 @@ function loadCategories() {
     });
 }
 
-
-
-
 /* ==========================================================================
    AUTH: LOGIN / SIGNUP / UI
    ========================================================================== */
 function submitLogin() {
-  const base = getBaseUrl().split('/api/')[0];
+  const base = getBaseUrl();
   const u = document.getElementById('login-username').value;
   const p = document.getElementById('login-password').value;
 
-  fetch(`${base}/api/v1/login`, {
+  fetch(`${base.replace(/\/+$/, '')}/api/v1/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: u, password: p })
@@ -1059,9 +1040,8 @@ showEmailSection(freshUser);
   .catch(() => alert('Login request failed'));
 }
 
-
 function submitSignup() {
-  const base = getBaseUrl().split('/api/')[0];
+  const base = getBaseUrl();
   const u = document.getElementById('signup-username').value.trim();
   const p = document.getElementById('signup-password').value.trim();
 
@@ -1129,8 +1109,6 @@ showEmailSection(freshUser);
   .catch(e => alert("Signup error: " + e.message));
 }
 
-
-
 function updateAuthButton() {
   const btn = document.getElementById('auth-button');
   const signupBtn = document.getElementById('signup-button');
@@ -1170,12 +1148,12 @@ function handleAuthClick() {
     openLoginModal();
   }
 }
+
 function updateUserInfo() {
   const u = localStorage.getItem('username');
   document.getElementById('user-info')
     .textContent = u?`Welcome, ${u}!`:'';
 }
-
 
 function showEmailSection(user) {
   console.log("🧪 showEmailSection() called with user:", user);
@@ -1205,9 +1183,6 @@ function showEmailSection(user) {
   };
 }
 
-
-
-
 function saveEmail() {
   const input = document.getElementById("email-input");
   const button = document.getElementById("save-email-btn");
@@ -1229,7 +1204,7 @@ function saveEmail() {
     return;
   }
 
-  fetch(`${API_BASE_URL}/user/email`, {
+  fetch(`${getBaseUrl()}/user/email`, {
     method: "PUT",
     headers: {
       "Authorization": `Bearer ${getToken()}`,
@@ -1287,9 +1262,6 @@ function saveEmail() {
     });
 }
 
-
-
-
 function isValidEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
@@ -1320,7 +1292,7 @@ async function toggleNotifications() {
   const newState = !notificationsEnabled;
 
   try {
-    const resp = await fetch("/api/v2/user/notifications", {
+    const resp = await fetch(`${getBaseUrl()}/user/notifications`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${getToken()}`,
@@ -1340,7 +1312,6 @@ async function toggleNotifications() {
     console.error("Network error while toggling notifications:", err);
   }
 }
-
 
 function updateNotificationToggleText() {
   const toggleBtn = document.getElementById("notification-toggle");
@@ -1381,10 +1352,10 @@ document.addEventListener('click', (event) => {
     dropdown.classList.add('hidden');
   }
 });
+
 /* ==========================================================================
    MODAL HELPERS
    ========================================================================== */
-
 // Translates modal text and placeholders
 function translateModalPlaceholders() {
   const currentLang = getCurrentLanguage();
@@ -1469,7 +1440,6 @@ function openAddModal() {
   updateAuthButton();
 }
 
-
 function openEditModal(post) {
   postToEditId = post.id;
   document.getElementById('edit-title').value = post.title;
@@ -1503,7 +1473,6 @@ function openEditModal(post) {
   document.getElementById('edit-modal').classList.remove('hidden');
   updateAuthButton();
 }
-
 
 function closeModal() {
   document.getElementById('edit-modal').classList.add('hidden');
@@ -1648,16 +1617,12 @@ if (openDisclaimerBtn) {
 }
 }
 
-
-
-
 function showInfoModalIfNeeded() {
   const infoSeen = sessionStorage.getItem("infoSeen");
   if (!infoSeen) {
     renderInfoModal();
   }
 }
-
 
 function forceShowInfoModal() {
   sessionStorage.removeItem("infoSeen");
