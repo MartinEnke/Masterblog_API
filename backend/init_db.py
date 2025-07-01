@@ -2,6 +2,13 @@
 
 from backend.db import Base, engine, session
 from backend.models import User, Post, Comment, PostLike
+from dotenv import load_dotenv
+import os
+
+# Adjust the path relative to the current file
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+
 from backend.translations_db import PostTranslation
 
 from datetime import datetime

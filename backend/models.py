@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from backend.db import Base
 
 
-
 class User(Base):
     __tablename__ = "users"
 
@@ -72,4 +71,15 @@ class PostLike(Base):
     post = relationship("Post", back_populates="liked_by")
 
 
-
+class PostTranslation(Base):
+    __tablename__ = 'translations'
+    id = Column(Integer, primary_key=True)
+    post_id = Column(Integer, nullable=False)
+    lang = Column(String(10), nullable=False)
+    title = Column(String, nullable=False)
+    content = Column(String, nullable=False)
+    is_ai_translation = Column(Boolean, default=False)
+    original_post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=True)
+    # 🔁 Relationship to Post model
+    post = relationship("Post", back_populates="translations")
+    __table_args__ = (UniqueConstraint('post_id', 'lang', name='uix_post_lang'),)
