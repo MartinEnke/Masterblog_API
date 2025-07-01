@@ -14,6 +14,7 @@ const API_BASE_URL = isLocalhost
   ? "http://127.0.0.1:5021/api/v2"               // ✅ local backend
   : "https://the-quiet-almanac.onrender.com/api/v2";  // ✅ Render backend
 const API_URL_KEY = 'apiBaseUrl';
+console.log("🌍 API base URL:", API_BASE_URL);
 let categories = [];
 let postToEditId = null;
 

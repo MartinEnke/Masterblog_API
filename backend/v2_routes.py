@@ -32,6 +32,16 @@ v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
 HUME_KEY = os.getenv("HUME_KEY")  # set in .env
 
+
+@v2.route("/api/v2/status")
+def status():
+    from backend.models import Post
+    posts = session.query(Post).all()
+    return {
+        "status": "ok",
+        "post_count": len(posts)
+    }
+
 @v2.route("/generate-tts", methods=["POST"])
 @token_required
 def gen_tts_hume(current_user):
