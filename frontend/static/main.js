@@ -985,11 +985,11 @@ function loadCategories() {
    AUTH: LOGIN / SIGNUP / UI
    ========================================================================== */
 function submitLogin() {
-  const base = getBaseUrl();
+  const base = getBaseUrl().replace(/\/+$/, '');
   const u = document.getElementById('login-username').value;
   const p = document.getElementById('login-password').value;
 
-  fetch(`${base.replace(/\/+$/, '')}/api/v2/login`, {
+  fetch(`${base}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: u, password: p })
@@ -1007,7 +1007,7 @@ function submitLogin() {
 
     // ✅ Try to fetch admin info before proceeding
     try {
-      const res = await fetch(`${base}/api/v2/me`, {
+      const res = await fetch(`${base}/me`, {
         headers: { 'Authorization': `Bearer ${d.token}` }
       });
 
@@ -1019,7 +1019,7 @@ function submitLogin() {
           localStorage.removeItem('isAdmin');
         }
         // ✅ ADD THIS to show email input
-        const freshUser = await fetch("/api/v2/user", {
+        const freshUser = await fetch(`${base}/user`, {
   headers: { Authorization: `Bearer ${getToken()}` }
 }).then(r => r.json());
 
@@ -1041,7 +1041,7 @@ showEmailSection(freshUser);
 }
 
 function submitSignup() {
-  const base = getBaseUrl();
+  const base = getBaseUrl().replace(/\/+$/, '');
   const u = document.getElementById('signup-username').value.trim();
   const p = document.getElementById('signup-password').value.trim();
 
@@ -1051,7 +1051,7 @@ function submitSignup() {
   }
 
   // 🔐 Step 1: Register
-  fetch(`${base}/api/v2/register`, {
+  fetch(`${base}/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: u, password: p })
@@ -1063,7 +1063,7 @@ function submitSignup() {
     }
 
     // ✅ Step 2: Login right after successful signup
-    return fetch(`${base}/api/v2/login`, {
+    return fetch(`${base}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: u, password: p })
@@ -1078,7 +1078,7 @@ function submitSignup() {
 
     // 🧠 Optional: fetch admin info
     try {
-      const res = await fetch(`${base}/api/v2/me`, {
+      const res = await fetch(`${base}/me`, {
         headers: { 'Authorization': `Bearer ${d.token}` }
       });
 
@@ -1090,7 +1090,7 @@ function submitSignup() {
           localStorage.removeItem('isAdmin');
         }
         // ✅ ADD THIS to show email input
-        const freshUser = await fetch("/api/v2/user", {
+        const freshUser = await fetch(`${base}/user`, {
   headers: { Authorization: `Bearer ${getToken()}` }
 }).then(r => r.json());
 
