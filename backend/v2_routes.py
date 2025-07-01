@@ -282,6 +282,7 @@ def get_posts_v2():
 
             # 🌐 Load translation if needed
             if lang != p.original_lang:
+                print(f"🔁 Translating post {p.id} to {lang} using AI")  # <-- Add here
                 translation = get_translation(p.id, lang)
                 if translation:
                     title = translation.title

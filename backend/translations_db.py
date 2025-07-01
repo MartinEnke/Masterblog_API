@@ -9,10 +9,11 @@ from openai import OpenAI
 
 load_dotenv()  # Loads .env file
 
-client = OpenAI(
-    api_key=os.getenv("TOGETHER_AI_KEY"),
-    base_url="https://api.together.xyz/v1"
-)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# client = OpenAI(
+#     api_key=os.getenv("TOGETHER_AI_KEY"),
+#     base_url="https://api.together.xyz/v1"
+# )
 
 class PostTranslation(Base):
     __tablename__ = 'translations'
@@ -78,10 +79,15 @@ def translate_post(title, content, target_lang):
 
     try:
         response = client.chat.completions.create(
-            model="mistralai/Mixtral-8x7B-Instruct-v0.1",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.7
+            temperature=0
         )
+        # response = client.chat.completions.create(
+        #     model="mistralai/Mixtral-8x7B-Instruct-v0.1",
+        #     messages=[{"role": "user", "content": prompt}],
+        #     temperature=0.7
+        # )
 
         result = response.choices[0].message.content.strip()
         print("📤 AI raw response:\n", repr(result))
