@@ -989,7 +989,7 @@ function submitLogin() {
   const u = document.getElementById('login-username').value;
   const p = document.getElementById('login-password').value;
 
-  fetch(`${base.replace(/\/+$/, '')}/api/v1/login`, {
+  fetch(`${base.replace(/\/+$/, '')}/api/v2/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: u, password: p })
@@ -1051,7 +1051,7 @@ function submitSignup() {
   }
 
   // 🔐 Step 1: Register
-  fetch(`${base}/api/v1/register`, {
+  fetch(`${base}/api/v2/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: u, password: p })
@@ -1063,7 +1063,7 @@ function submitSignup() {
     }
 
     // ✅ Step 2: Login right after successful signup
-    return fetch(`${base}/api/v1/login`, {
+    return fetch(`${base}/api/v2/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: u, password: p })
