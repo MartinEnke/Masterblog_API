@@ -9,25 +9,25 @@
 
 ## Tech Stack & Tools
 
-| Tool | Description |
-|------|-------------|
-| [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](https://www.python.org) | **Python** — Main backend language for APIs and logic |
-| [![Flask](https://img.shields.io/badge/Flask-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com) | **Flask** — Lightweight web framework for building APIs |
-| [![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5) | **HTML5** — Structures the frontend UI |
-| [![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS) | **CSS3** — Styles the layout and appearance |
-| [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) | **JavaScript** — Adds interactivity to the UI |
-| [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwind-css&logoColor=white)](https://tailwindcss.com) | **Tailwind CSS** — Utility-first framework for styling |
-| [![OpenAI](https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white)](https://platform.openai.com) | **OpenAI API** — Translates and moderates content |
-| [![Hume AI](https://img.shields.io/badge/Hume_AI-FF6978?style=flat&logo=wave)](https://www.hume.ai) | **Hume AI** — Provides expressive TTS audio |
-| [![Swagger UI](https://img.shields.io/badge/Swagger_UI-85EA2D?logo=swagger&logoColor=black)](https://swagger.io/tools/swagger-ui/) | **Swagger UI** — Generates live API docs |
-| [![JWT](https://img.shields.io/badge/JWT-black?logo=jsonwebtokens&logoColor=white)](https://jwt.io) | **JWT** — Token-based user authentication |
-| [![Flask-Limiter](https://img.shields.io/badge/Flask--Limiter-0a9396?style=flat&logo=python&logoColor=white)](https://flask-limiter.readthedocs.io/) | **Flask-Limiter** — API rate limiting to prevent spam |
-| [![Flasgger](https://img.shields.io/badge/Flasgger-44A1A0?logo=flask&logoColor=white)](https://github.com/flasgger/flasgger) | **Flasgger** — Swagger integration for Flask |
-| [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/index.html) | **SQLite** — Lightweight database for storing content |
-| [![Email](https://img.shields.io/badge/Email-Notifications-blue?logo=gmail&logoColor=white)](#) | **Email Alerts** — Sends notifications for likes & comments |
-| [![LocalStorage](https://img.shields.io/badge/LocalStorage-ffa500?logo=google-chrome&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) | **LocalStorage** — Persists user sessions in-browser |
-| [![Git](https://img.shields.io/badge/Git-F05032?logo=git&logoColor=white)](https://git-scm.com/) | **Git** — Version control for collaboration |
-| [![Markdown](https://img.shields.io/badge/Markdown-000000?logo=markdown&logoColor=white)](https://daringfireball.net/projects/markdown/) | **Markdown** — Formats this README and other docs |
+| Tool | Description                                                     |
+|------|-----------------------------------------------------------------|
+| [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](https://www.python.org) | **Python** — Main backend language for APIs and logic           |
+| [![Flask](https://img.shields.io/badge/Flask-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com) | **Flask** — Lightweight web framework for building APIs         |
+| [![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5) | **HTML5** — Structures the frontend UI                          |
+| [![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS) | **CSS3** — Styles the layout and appearance                     |
+| [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) | **JavaScript** — Adds interactivity to the UI                   |
+| [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwind-css&logoColor=white)](https://tailwindcss.com) | **Tailwind CSS** — Utility-first framework for styling          |
+| [![OpenAI](https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white)](https://platform.openai.com) | **OpenAI API** — Translates and moderates content               |
+| [![Hume AI](https://img.shields.io/badge/Hume_AI-FF6978?style=flat&logo=wave)](https://www.hume.ai) | **Hume AI** — Provides expressive TTS audio                     |
+| [![Swagger UI](https://img.shields.io/badge/Swagger_UI-85EA2D?logo=swagger&logoColor=black)](https://swagger.io/tools/swagger-ui/) | **Swagger UI** — Generates live API docs                        |
+| [![JWT](https://img.shields.io/badge/JWT-black?logo=jsonwebtokens&logoColor=white)](https://jwt.io) | **JWT** — Token-based user authentication                       |
+| [![Flask-Limiter](https://img.shields.io/badge/Flask--Limiter-0a9396?style=flat&logo=python&logoColor=white)](https://flask-limiter.readthedocs.io/) | **Flask-Limiter** — API rate limiting to prevent spam           |
+| [![Flasgger](https://img.shields.io/badge/Flasgger-44A1A0?logo=flask&logoColor=white)](https://github.com/flasgger/flasgger) | **Flasgger** — Swagger integration for Flask                    |
+| [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/) | **PostgreSQL** — Database for reliable, persistent data storage |
+| [![Email](https://img.shields.io/badge/Email-Notifications-blue?logo=gmail&logoColor=white)](#) | **Email Alerts** — Sends notifications for likes & comments     |
+| [![LocalStorage](https://img.shields.io/badge/LocalStorage-ffa500?logo=google-chrome&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) | **LocalStorage** — Persists user sessions in-browser            |
+| [![Git](https://img.shields.io/badge/Git-F05032?logo=git&logoColor=white)](https://git-scm.com/) | **Git** — Version control for collaboration                     |
+| [![Markdown](https://img.shields.io/badge/Markdown-000000?logo=markdown&logoColor=white)](https://daringfireball.net/projects/markdown/) | **Markdown** — Formats this README and other docs               |
 
 
 
