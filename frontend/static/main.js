@@ -295,6 +295,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error("❌ Failed to load user data on init:", err);
   }
 }
+  // Add global click listener to close email dropdown when clicking outside
+  document.addEventListener('click', (event) => {
+    const wrapper = document.getElementById('email-wrapper');
+    const dropdown = document.getElementById('email-section');
+    if (
+      wrapper &&
+      dropdown &&
+      !wrapper.contains(event.target) &&
+      !dropdown.contains(event.target)
+    ) {
+      dropdown.classList.add('hidden');
+    }
+  });
 
   // 🔍 Search on Enter key
   const searchInput = document.getElementById('search-input');
@@ -1462,13 +1475,20 @@ function toggleEmailDropdown() {
   dropdown.classList.toggle('hidden');
 }
 
-document.addEventListener('click', (event) => {
-  const wrapper = document.getElementById('email-wrapper');
-  const dropdown = document.getElementById('email-section');
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', (event) => {
+    const wrapper = document.getElementById('email-wrapper');
+    const dropdown = document.getElementById('email-section');
 
-  if (wrapper && dropdown && !wrapper.contains(event.target)) {
-    dropdown.classList.add('hidden');
-  }
+    if (
+      wrapper &&
+      dropdown &&
+      !wrapper.contains(event.target) &&
+      !dropdown.contains(event.target)
+    ) {
+      dropdown.classList.add('hidden');
+    }
+  });
 });
 
 /* ==========================================================================
