@@ -150,6 +150,23 @@ def update_email(current_user):
         return jsonify({"error": "This email is already in use."}), 409
 
 
+@v2.route("/user/email", methods=["DELETE"])
+@token_required
+def delete_email(current_user):
+    current_user.email = None
+    current_user.notifications_enabled = False
+    try:
+        session.commit()
+        return jsonify({
+            "message": "Email deleted successfully.",
+            "username": current_user.username,
+            "email": current_user.email,
+            "notifications_enabled": current_user.notifications_enabled
+        }), 200
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": "Failed to delete email."}), 500
+
 @v2.route("/user/notifications", methods=["PUT"])
 @token_required
 def toggle_notification_setting(current_user):

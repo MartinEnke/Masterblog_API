@@ -424,3 +424,6 @@ footer {
   background: none !important;
 }
 
+#delete-email-btn:hover {
+  background-color: transparent !important;
+}

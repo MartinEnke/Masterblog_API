@@ -115,6 +115,10 @@ function applyUITranslations() {
 
   // 🔁 Also update the auth button text (Login/Logout)
   updateAuthButton();
+
+  // 🔄 Update notification toggle text on language change
+  updateNotificationToggleText();
+
 }
 
 /* ==========================================================================
@@ -281,6 +285,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentUser.notifications_enabled = user.notifications_enabled;
       notificationsEnabled = currentUser.notifications_enabled;
       updateNotificationToggleText();
+      // Show the email input section with loaded user data
+      showEmailSection(user);
 
       // Optional: auto-show email section
       // showEmailSection(user);
@@ -1185,6 +1191,87 @@ function showEmailSection(user) {
   saveBtn.onclick = () => {
     saveEmail();
   };
+
+  // Add or update Delete button dynamically
+  let deleteBtn = document.getElementById('delete-email-btn');
+  if (!deleteBtn) {
+    deleteBtn = document.createElement('button');
+    deleteBtn.id = 'delete-email-btn';
+    deleteBtn.className = 'ml-2 text-sm text-red-600 hover:text-red-800 transition-colors bg-transparent focus:outline-none';
+    deleteBtn.setAttribute('data-i18n', 'deletePost');
+
+    // Insert deleteBtn right after saveBtn
+    saveBtn.insertAdjacentElement('afterend', deleteBtn);
+
+    applyUITranslations();
+  }
+
+  if (currentUser.email && currentUser.email.trim()) {
+    deleteBtn.style.display = 'inline-block';
+    deleteBtn.onclick = () => {
+      deleteEmail();
+    };
+  } else {
+    deleteBtn.style.display = 'none';
+  }
+}
+
+function deleteEmail() {
+  const msg = document.getElementById("email-msg");
+  const deleteBtn = document.getElementById("delete-email-btn");
+  const saveBtn = document.getElementById("save-email-btn");
+
+  fetch(`${getBaseUrl()}/user/email`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${getToken()}`,
+      "Content-Type": "application/json"
+    }
+  })
+    .then(async (resp) => {
+      if (resp.status === 401) {
+        msg.textContent = translate("signupOrLoginFirst");
+        msg.className = "text-xs text-yellow-600 ml-2";
+        return;
+      }
+
+      let data = {};
+      try {
+        data = await resp.json();
+      } catch {
+        console.warn("⚠️ No JSON in response");
+      }
+
+      if (resp.ok) {
+        msg.textContent = translate("emailDeleted");
+        msg.className = "text-xs text-green-600 ml-2";
+
+        // Reset input and buttons
+        document.getElementById("email-input").value = '';
+        currentUser.email = null;
+        currentUser.notifications_enabled = false;
+        notificationsEnabled = false;
+        updateNotificationToggleText();
+
+        deleteBtn.style.display = 'none';
+        saveBtn.textContent = translate("save");
+        saveBtn.classList.remove("text-green-600");
+        saveBtn.classList.add("text-black", "hover:text-gray-800");
+
+        setTimeout(() => {
+          msg.textContent = '';
+          document.getElementById('email-section')?.classList.add('hidden');
+        }, 1500);
+      } else {
+        msg.textContent = `❌ ${data.error || translate("error")}`;
+        msg.className = "text-xs text-red-600 ml-2";
+      }
+    })
+    .catch((err) => {
+      console.error("🧨 Email delete error:", err);
+      msg.textContent = "❌ Something went wrong.";
+      msg.className = "text-xs text-red-600 ml-2";
+    });
 }
 
 function saveEmail() {
@@ -1242,6 +1329,8 @@ function saveEmail() {
         currentUser.notifications_enabled = data.notifications_enabled;
         notificationsEnabled = data.notifications_enabled;
         updateNotificationToggleText();
+
+        showEmailSection(currentUser);
 
         setTimeout(() => {
   if (currentUser.email?.trim()) {
@@ -1544,7 +1633,7 @@ function renderInfoModal() {
 
     <h3 class="text-sm font-semibold mb-2 text-[#6aa8a0]">${strings.infoFeaturesTitle}</h3>
     <ul class="list-none space-y-2 mb-6">
-      ${[...Array(10)].map((_, i) => {
+      ${[...Array(11)].map((_, i) => {
         const feature = strings[`infoFeature${i + 1}`];
         const isWarning = feature?.startsWith("⚠️");
         return feature
