@@ -57,7 +57,7 @@ const UI_TRANSLATIONS = {
     "notificationsOn": "Notifications ON", // only shows when email is stored and notifications_enabled = 1
     "notificationsOff": "Notifications disabled — click to enable", // only shows when email is stored and notifications_enabled = 0
     "infoTitle": "Welcome!",
-"infoIntro": "Originally a school assignment, this project was expanded to explore core concepts in full-stack development. It brings together multilingual publishing, AI integrations, and a focus on user experience.",
+"infoIntro": "This project started as a school assignment and was expanded to explore core concepts of backend and frontend web development, including multilingual publishing and AI-powered features.",
 "infoFeaturesTitle": "Highlights:",
 "infoFeature1": "✅ Multilingual interface with AI-generated post translations (EN, DE, FR, ES)",
 "infoFeature2": "✅ AI moderation system filters out harmful or unsafe content",
@@ -140,7 +140,7 @@ disclaimerNoticePrefix: "This is a study project.",
     "notificationsOn": "Benachrichtigungen AKTIV",
     "notificationsOff": "Benachrichtigungen deaktiviert — zum Aktivieren klicken",
       "infoTitle": "Willkommen!",
-  "infoIntro": "Ursprünglich als Schulprojekt gestartet, wurde diese App erweitert, um zentrale Konzepte der Full-Stack-Entwicklung zu vertiefen. Sie kombiniert mehrsprachiges Publishing, KI-gestützte Funktionen und ein benutzerfreundliches UX-Design.",
+  "infoIntro": "Ursprünglich als Schulprojekt gestartet, wurde diese App erweitert, um zentrale Konzepte der Backend- und Frontend-Entwicklung zu vertiefen, inklusive mehrsprachigem Publishing und KI-gestützten Funktionen.",
   "infoFeaturesTitle": "Highlights:",
   "infoFeature1": "✅ Mehrsprachige Oberfläche mit KI-gestützter Übersetzung von Posts (EN, DE, FR, ES)",
   "infoFeature2": "✅ KI-Moderation erkennt und filtert unangemessene oder sensible Inhalte",
