@@ -994,6 +994,26 @@ function loadCategories() {
 /* ==========================================================================
    AUTH: LOGIN / SIGNUP / UI
    ========================================================================== */
+function isStrongPassword(password) {
+  const minLength = 8;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasDigit = /\d/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  return password.length >= minLength && hasUpper && hasLower && hasDigit && hasSpecial;
+}
+
+document.getElementById('signup-form').addEventListener('submit', function(e) {
+  const passwordInput = document.getElementById('signup-password');
+  const password = passwordInput.value;
+
+  if (!isStrongPassword(password)) {
+    e.preventDefault();
+    alert(translate('passwordTooWeak'));
+    passwordInput.focus();
+  }
+});
+
 function submitLogin() {
   const base = getBaseUrl().replace(/\/+$/, '');
   const u = document.getElementById('login-username').value;
@@ -1056,7 +1076,13 @@ function submitSignup() {
   const p = document.getElementById('signup-password').value.trim();
 
   if (!u || !p) {
-    alert("Username and password required.");
+    alert(translate("usernameAndPasswordRequired") || "Username and password required.");
+    return;
+  }
+
+  // Password strength validation
+  if (!isStrongPassword(p)) {
+    alert(translate("passwordTooWeak"));
     return;
   }
 
@@ -1099,13 +1125,12 @@ function submitSignup() {
         } else {
           localStorage.removeItem('isAdmin');
         }
-        // ✅ ADD THIS to show email input
+        // ✅ Show email input section after signup/login
         const freshUser = await fetch(`${base}/user`, {
-  headers: { Authorization: `Bearer ${getToken()}` }
-}).then(r => r.json());
+          headers: { Authorization: `Bearer ${getToken()}` }
+        }).then(r => r.json());
 
-showEmailSection(freshUser);
-
+        showEmailSection(freshUser);
       }
     } catch (err) {
       console.warn("Warning: Couldn't fetch /me:", err);

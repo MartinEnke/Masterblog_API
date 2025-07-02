@@ -6,9 +6,24 @@ from backend.models import User
 from backend.db import session
 from datetime import datetime, timedelta
 from jwt import ExpiredSignatureError, InvalidTokenError
+import re
 
 
 TOKENS = {}
+
+def is_strong_password(password):
+    # Minimum 8 characters, at least 1 uppercase, 1 lowercase, 1 digit, 1 special char
+    if len(password) < 8:
+        return False
+    if not re.search(r"[A-Z]", password):
+        return False
+    if not re.search(r"[a-z]", password):
+        return False
+    if not re.search(r"\d", password):
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False
+    return True
 
 def validate_login(username, password):
     user = session.query(User).filter_by(username=username).first()
@@ -20,6 +35,11 @@ def validate_registration(username, password, email=None):
     existing_user = session.query(User).filter_by(username=username).first()
     if existing_user:
         return False, {"error": "User already exists"}, 400
+
+    if not is_strong_password(password):
+        return False, {
+            "error": "Password is not strong enough. It must be at least 8 characters long, include uppercase, lowercase, digit and special character."
+        }, 400
 
     hashed_pw = generate_password_hash(password)
     new_user = User(username=username, password=hashed_pw, email=email)
