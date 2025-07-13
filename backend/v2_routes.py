@@ -286,6 +286,16 @@ def get_posts_v2():
             query = query.filter(Post.category.in_(cat_list))
 
         posts = query.all()  # ✅ get all results so we can sort and paginate manually
+        post_ids = [p.id for p in posts]
+
+        comment_counts = (
+            session.query(Comment.post_id, func.count(Comment.id))
+            .filter(Comment.post_id.in_(post_ids))
+            .group_by(Comment.post_id)
+            .all()
+        )
+        comment_count_map = {post_id: count for post_id, count in comment_counts}
+
         posts_data = []
 
         search_term = request.args.get("q", "").strip().lower()
@@ -346,6 +356,7 @@ def get_posts_v2():
                 "date_sort": p.date.isoformat() if p.date else None,
                 "updated": p.updated.strftime("%B %d, %Y") if p.updated else None,
                 "likes": len(p.liked_by),
+                "comment_count": comment_count_map.get(p.id, 0),
                 "translated": translated_flag,
                 "is_ai_translation": is_ai,
                 "original_lang": p.original_lang,

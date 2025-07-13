@@ -397,7 +397,7 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
       : ''}
     <div class="comment-section mt-4" id="comments-${post.id}">
       <button class="toggle-comments-btn flex items-center gap-2 text-sm text-[#6aa8a0] font-semibold hover:text-[#6aa8a0] focus:outline-none bg-transparent hover:bg-transparent">
-        <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
+        <span data-i18n="comments">Comments</span> (<span class="comment-count">${post.comment_count || 0}</span>)
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
@@ -652,31 +652,6 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
   div.appendChild(ttsWrap);
 }
 
-
-
-
-function searchPosts() {
-  const query = document.getElementById('search-input').value.trim();
-  if (!query) return loadPosts();
-
-  const qs = new URLSearchParams({
-    q: query,
-    lang: getCurrentLanguage()
-  });
-
-  fetch(`${getBaseUrl()}/posts/search?${qs}`)
-    .then(r => r.json())
-    .then(data => {
-      const container = document.getElementById('post-container');
-      container.innerHTML = data.error ? `<p>${data.error}</p>` : '';
-      (data.posts || data).forEach(renderSinglePost);
-
-      // ✅ Apply after rendering
-      applyUITranslations();
-    })
-    .catch(err => console.error('Search error:', err));
-}
-
 function loadComments(postId) {
   const url = `${getBaseUrl()}/posts/${postId}/comments`;
   console.log(`📨 Fetching comments from: ${url}`);
@@ -725,6 +700,28 @@ const commentCount = data.comment_count || comments.length;
     .catch(err => {
       console.error(`🔥 Error loading comments for post ${postId}:`, err);
     });
+}
+
+function searchPosts() {
+  const query = document.getElementById('search-input').value.trim();
+  if (!query) return loadPosts();
+
+  const qs = new URLSearchParams({
+    q: query,
+    lang: getCurrentLanguage()
+  });
+
+  fetch(`${getBaseUrl()}/posts/search?${qs}`)
+    .then(r => r.json())
+    .then(data => {
+      const container = document.getElementById('post-container');
+      container.innerHTML = data.error ? `<p>${data.error}</p>` : '';
+      (data.posts || data).forEach(renderSinglePost);
+
+      // ✅ Apply after rendering
+      applyUITranslations();
+    })
+    .catch(err => console.error('Search error:', err));
 }
 
 function capitalizeName(name) {
