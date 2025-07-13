@@ -385,69 +385,110 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
   const isOwner = post.is_owner;
 
   div.innerHTML = `
-  <h2 id="post-title-${post.id}">${post.title}</h2>
-  <p id="post-content-${post.id}">${post.content}</p>
-  <p class="post-meta mt-3">
-    ${post.date || 'No date'} · <span class="by-label">by</span> ${capitalizeName(post.author) || 'Unknown'}
-  </p>
-  ${post.updated
-    ? `<p style="font-size:.9em;color:#777;margin-bottom:10px">
-         <span class="updated-label">Updated:</span> ${post.updated}
-       </p>`
-    : ''}
-  <div class="comment-section mt-4" id="comments-${post.id}">
-    <button class="toggle-comments-btn flex items-center gap-2 text-sm text-[#6aa8a0] font-semibold hover:text-[#6aa8a0] focus:outline-none bg-transparent hover:bg-transparent">
-      <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-      </svg>
-    </button>
-    <div class="comments-container mt-3 hidden">
-      <div id="comment-list-${post.id}" class="space-y-2"></div>
-      <textarea
-        id="comment-text-${post.id}"
-        data-i18n-placeholder="commentPlaceholder"
-        placeholder="Add a comment..."
-        class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"
-      ></textarea>
-      <button
-        onclick="submitComment(${post.id})"
-        class="comment-submit mt-2 text-[#fdf7d5] hover:text-[#4e857e] text-sm font-medium bg-transparent hover:bg-transparent focus:outline-none transition-colors"
-      >
-        <span data-i18n="postComment">Post Comment</span>
+    <h2 id="post-title-${post.id}">${post.title}</h2>
+    <p id="post-content-${post.id}">${post.content}</p>
+    <p class="post-meta mt-3">
+      ${post.date || 'No date'} · <span class="by-label">by</span> ${capitalizeName(post.author) || 'Unknown'}
+    </p>
+    ${post.updated
+      ? `<p style="font-size:.9em;color:#777;margin-bottom:10px">
+           <span class="updated-label">Updated:</span> ${post.updated}
+         </p>`
+      : ''}
+    <div class="comment-section mt-4" id="comments-${post.id}">
+      <button class="toggle-comments-btn flex items-center gap-2 text-sm text-[#6aa8a0] font-semibold hover:text-[#6aa8a0] focus:outline-none bg-transparent hover:bg-transparent">
+        <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
+      <div class="comments-container mt-3 hidden">
+        <div id="comment-list-${post.id}" class="space-y-2"></div>
+        <textarea
+          id="comment-text-${post.id}"
+          data-i18n-placeholder="commentPlaceholder"
+          placeholder="Add a comment..."
+          class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"
+        ></textarea>
+        <button
+          onclick="submitComment(${post.id})"
+          class="comment-submit mt-2 text-[#fdf7d5] hover:text-[#4e857e] text-sm font-medium bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+        >
+          <span data-i18n="postComment">Post Comment</span>
+        </button>
+      </div>
     </div>
-  </div>
-`;
+  `;
 
-const commentInput = div.querySelector(`#comment-text-${post.id}`);
-if (commentInput) {
-  if (!getToken()) {
-    commentInput.placeholder = translate("loginToComment");
-    commentInput.readOnly = true;  // prevent typing if not logged in
+  // Append the post div first
+  container.appendChild(div);
 
-    // Add event listener to open login modal on focus or click
-    commentInput.addEventListener('click', () => {
-      openLoginModal();
-    });
-    commentInput.addEventListener('focus', () => {
-      openLoginModal();
-      commentInput.blur(); // remove focus to keep disabled feel
-    });
+  // Apply translations AFTER appending
+  applyUITranslations(div);
 
-  } else {
-    commentInput.placeholder = translate("commentPlaceholder");
-    commentInput.disabled = false;
+  // Handle comment textarea depending on auth
+  const commentInput = div.querySelector(`#comment-text-${post.id}`);
+  if (commentInput) {
+    if (!getToken()) {
+      commentInput.placeholder = translate("loginToComment");
+      commentInput.readOnly = true;
 
-    // Remove any previously added listeners for login modal if user is logged in
-    commentInput.removeEventListener('click', openLoginModal);
-    commentInput.removeEventListener('focus', openLoginModal);
+      // Open login modal on click or focus
+      commentInput.addEventListener('click', () => openLoginModal());
+      commentInput.addEventListener('focus', () => {
+        openLoginModal();
+        commentInput.blur();
+      });
+    } else {
+      commentInput.placeholder = translate("commentPlaceholder");
+      commentInput.readOnly = false;
+      // Optional: remove login modal listeners if you store references (not implemented here)
+    }
   }
-}
 
-applyUITranslations(div);
+  // Lazy load comments on toggle
+  const commentToggle = div.querySelector(`#comments-${post.id} .toggle-comments-btn`);
+  const commentContainer = div.querySelector(`#comments-${post.id} .comments-container`);
+  const commentList = div.querySelector(`#comment-list-${post.id}`);
 
-  // 🧠 AI Translated badge (overlay, now with space)
+  let commentsLoaded = false;
+
+  if (commentToggle && commentContainer && commentList) {
+    commentToggle.addEventListener('click', () => {
+      commentContainer.classList.toggle('hidden');
+      const icon = div.querySelector(`#comments-${post.id} .toggle-icon`);
+      if (icon) icon.classList.toggle('rotate-180');
+
+      if (!commentsLoaded) {
+        fetch(`${getBaseUrl()}/posts/${post.id}/comments`)
+          .then(res => {
+            if (!res.ok) throw new Error("Failed to load comments");
+            return res.json();
+          })
+          .then(data => {
+            commentList.innerHTML = '';
+            (data.comments || []).forEach(c => {
+              const p = document.createElement('p');
+              p.className = 'comment-line';
+              p.innerHTML = `
+                <strong>${capitalizeName(c.author)}</strong>: ${c.text}
+                <span style="font-size:.8em; color:#888">(${c.date})</span>
+              `;
+              commentList.appendChild(p);
+            });
+            const countEl = div.querySelector(`#comments-${post.id} .comment-count`);
+            if (countEl) countEl.textContent = data.comment_count || (data.comments?.length || 0);
+            commentsLoaded = true;
+          })
+          .catch(err => {
+            commentList.innerHTML = `<p style="color:red;">Error loading comments</p>`;
+            console.error(err);
+          });
+      }
+    });
+  }
+
+  // AI Translated badge
   if (isTranslatedCopy && !isOriginalLang) {
     const badge = document.createElement('div');
     badge.className = 'ai-badge';
@@ -456,7 +497,7 @@ applyUITranslations(div);
     div.appendChild(badge);
   }
 
-  // 🧩 Action buttons (Edit/Delete)
+  // Buttons wrapper
   const btnWrap = document.createElement('div');
   Object.assign(btnWrap.style, {
     display: 'flex',
@@ -465,56 +506,55 @@ applyUITranslations(div);
     marginTop: '10px'
   });
 
-  // ❤️ Like button
-const likeBtn = document.createElement('button');
-likeBtn.id = `like-btn-${post.id}`;
+  // Like button
+  const likeBtn = document.createElement('button');
+  likeBtn.id = `like-btn-${post.id}`;
+  const isLoggedIn = !!getToken();
+  const userHasLiked = post.liked_by_current_user;
+  const likeCount = post.likes || 0;
 
-const isLoggedIn = !!getToken();
-const userHasLiked = post.liked_by_current_user;
-const likeCount = post.likes || 0;
+  likeBtn.className = `
+    flex items-center gap-1 text-white text-sm
+    bg-transparent hover:bg-transparent focus:outline-none active:bg-transparent
+    transition-colors ${userHasLiked ? 'liked' : ''}
+  `.trim();
 
-likeBtn.className = `
-  flex items-center gap-1 text-white text-sm
-  bg-transparent hover:bg-transparent focus:outline-none active:bg-transparent
-  transition-colors ${userHasLiked ? 'liked' : ''}
-`.trim();
+  likeBtn.innerHTML = `
+    <span id="like-heart-${post.id}" style="font-size: 1.2em;">
+      ${isLoggedIn && userHasLiked ? '❤️' : '♡'}
+    </span>
+    <span id="like-count-${post.id}">${likeCount}</span>
+  `;
 
-likeBtn.innerHTML = `
-  <span id="like-heart-${post.id}" style="font-size: 1.2em;">
-    ${isLoggedIn && userHasLiked ? '❤️' : '♡'}
-  </span>
-  <span id="like-count-${post.id}">${likeCount}</span>
-`;
+  likeBtn.onclick = () => {
+    const token = getToken();
+    if (!token) {
+      openLoginModal();
+      return;
+    }
 
-likeBtn.onclick = () => {
-  const token = getToken();
-  if (!token) {
-    openLoginModal(); // 🚪 Show login prompt
-    return;
-  }
-
-  fetch(`${getBaseUrl()}/posts/${post.id}/like`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` }
-  })
-    .then(r => r.json())
-    .then(d => {
-      const heart = document.getElementById(`like-heart-${post.id}`);
-      const count = document.getElementById(`like-count-${post.id}`);
-      heart.textContent = d.liked_by_current_user ? '❤️' : '♡';
-      count.textContent = d.likes;
-      likeBtn.className = `
-        flex items-center gap-1 text-white text-sm
-        bg-transparent hover:bg-transparent focus:outline-none active:bg-transparent
-        transition-colors ${d.liked_by_current_user ? 'liked' : ''}
-      `.trim();
+    fetch(`${getBaseUrl()}/posts/${post.id}/like`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
     })
-    .catch(console.error);
-};
+      .then(r => r.json())
+      .then(d => {
+        const heart = document.getElementById(`like-heart-${post.id}`);
+        const count = document.getElementById(`like-count-${post.id}`);
+        heart.textContent = d.liked_by_current_user ? '❤️' : '♡';
+        count.textContent = d.likes;
+        likeBtn.className = `
+          flex items-center gap-1 text-white text-sm
+          bg-transparent hover:bg-transparent focus:outline-none active:bg-transparent
+          transition-colors ${d.liked_by_current_user ? 'liked' : ''}
+        `.trim();
+      })
+      .catch(console.error);
+  };
 
-btnWrap.appendChild(likeBtn);
+  btnWrap.appendChild(likeBtn);
 
-  // ✏️ Edit button
+  // Edit button (owner & original language only)
   if (isOwner && isOriginalLang) {
     const editBtn = document.createElement('button');
     editBtn.setAttribute("data-i18n", "editPost");
@@ -524,7 +564,7 @@ btnWrap.appendChild(likeBtn);
     btnWrap.appendChild(editBtn);
   }
 
-  // 🗑️ Delete button
+  // Delete button (owner or admin)
   if (isOwner || isAdmin) {
     const delBtn = document.createElement('button');
     delBtn.setAttribute("data-i18n", "deletePost");
@@ -535,20 +575,8 @@ btnWrap.appendChild(likeBtn);
   }
 
   div.appendChild(btnWrap);
-  container.appendChild(div);
 
-  // 💬 Comments toggle
-  const commentToggle = div.querySelector(`#comments-${post.id} .toggle-comments-btn`);
-  const commentContainer = div.querySelector(`#comments-${post.id} .comments-container`);
-  const icon = div.querySelector(`#comments-${post.id} .toggle-icon`);
-  if (commentToggle && commentContainer && icon) {
-    commentToggle.addEventListener('click', () => {
-      commentContainer.classList.toggle('hidden');
-      icon.classList.toggle('rotate-180');
-    });
-  }
-
-  // 🌀 Lazy translation fetch
+  // Lazy translation fetch
   if (post.translated === false && currentLang !== "en") {
     fetch(`${getBaseUrl()}/posts/${post.id}/translate?lang=${currentLang}`)
       .then(r => r.json())
@@ -567,22 +595,21 @@ btnWrap.appendChild(likeBtn);
       .catch(err => console.warn("Translation failed for post", post.id, err));
   }
 
-  // 🎧 Read Aloud button (Hume TTS)
-  // Demo Limited Usage
+  // Read Aloud button (Hume TTS) — Demo Limited Usage
   const ttsWrap = document.createElement('div');
   ttsWrap.className = 'flex gap-4 mt-3 items-center ml-4';
 
   const insertUsedDemoMessage = () => {
-  const msg = document.createElement('span');
-  msg.textContent = translate("ttsUsedUp");
-  msg.className = 'text-xs text-gray-500';
-  ttsWrap.innerHTML = ''; // Clear existing children
-  ttsWrap.appendChild(msg);
-};
+    const msg = document.createElement('span');
+    msg.textContent = translate("ttsUsedUp");
+    msg.className = 'text-xs text-gray-500';
+    ttsWrap.innerHTML = ''; // Clear existing children
+    ttsWrap.appendChild(msg);
+  };
 
   const readBtn = document.createElement('button');
-readBtn.innerHTML = `<span data-i18n="readAloud">${UI_TRANSLATIONS[currentLang].readAloud || 'Read Aloud (Demo)'}</span>`;
-readBtn.className = 'text-sm font-medium text-[#fdf7d5] hover:text-[#4e857e] px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors';
+  readBtn.innerHTML = `<span data-i18n="readAloud">${UI_TRANSLATIONS[currentLang].readAloud || 'Read Aloud (Demo)'}</span>`;
+  readBtn.className = 'text-sm font-medium text-[#fdf7d5] hover:text-[#4e857e] px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:outline-none transition-colors';
 
   readBtn.onclick = async () => {
     const token = getToken();
@@ -622,15 +649,11 @@ readBtn.className = 'text-sm font-medium text-[#fdf7d5] hover:text-[#4e857e] px-
   };
 
   ttsWrap.appendChild(readBtn);
-div.appendChild(ttsWrap);
-applyUITranslations(div);
-
-// ✅ Add the post element to the DOM first!
-container.appendChild(div);
-
-// 💬 Load comments (which will also update count later)
-loadComments(post.id);
+  div.appendChild(ttsWrap);
 }
+
+
+
 
 function searchPosts() {
   const query = document.getElementById('search-input').value.trim();

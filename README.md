@@ -39,17 +39,17 @@
 These core features demonstrate fundamental fullstack skills, AI integration, and a focus on user experience:
 
 ✅ **Multilingual interface with AI-generated post translations** (EN, DE, FR, ES)  
-✅ **AI moderation system** filters out harmful or unsafe content
-✅ **One-time demo of AI text-to-speech (TTS) for post narration** via Hume AI
-✅ **Passwords are hashed securely** using scrypt algorithm
-✅ **Injection-safe form handling** with sanitized inputs
-✅ **Email notifications for likes and comments** (can be disabled) 
+✅ **AI moderation system** filters out harmful or unsafe content  
+✅ **One-time demo of AI text-to-speech (TTS) for post narration** via Hume AI  
+✅ **Passwords are hashed securely** using scrypt algorithm  
+✅ **Injection-safe form handling** with sanitized inputs  
+✅ **Email notifications for likes and comments** (can be disabled)  
 ✅ **Integrated protections against spam and abuse** (rate, length, repetition)  
-✅ **Token-based login system** with protected endpoints
-✅ **Secure post/comment management** with live updates
-✅ **Translation caching** for fast, on-demand reuse
-✅ **Fully translated responsive frontend UI (Tailwind)**
-⚠️ **Categories, comments, and dates are not translated yet**
+✅ **Token-based login system** with protected endpoints  
+✅ **Secure post/comment management** with live updates  
+✅ **Translation caching** for fast, on-demand reuse  
+✅ **Fully translated responsive frontend UI (Tailwind)**  
+⚠️ **Categories, comments, and dates are not translated yet**  
 ✅ **Swagger API documentation at `/apidocs`**
 
 ---
