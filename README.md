@@ -2,8 +2,7 @@
 
 ![Banner](frontend/static/images/almanac.png)
 
-**Originally a school assignment, this project was expanded to explore core concepts in full-stack development.** 
-**It brings together multilingual publishing, AI integrations, and a focus on user experience.**
+**This project started as a school assignment and was expanded to explore core concepts of backend and frontend web development, including multilingual publishing and AI-powered features.**
 
 ---
 
@@ -37,37 +36,41 @@
 
 ## Key Highlights
 
-These standout features demonstrate modern fullstack skills, AI integration, and user-centric design:
+These core features demonstrate fundamental fullstack skills, AI integration, and a focus on user experience:
 
-✅ **Multilingual AI Translations** (EN, DE, FR, ES)  
-✅ **AI Moderation with OpenAI API**  
-✅ **AI Text-to-Speech (TTS)** via Hume AI (1 demo per user)  
-✅ **Spam/abuse prevention** (rate limiting, length filtering, OpenAI moderation)  
-✅ **Secure JWT-based authentication** with role-based access  
-✅ **Live email notifications** for post likes and comments  
-✅ **Input sanitization** to prevent script injection  
-✅ **Fully translated responsive frontend UI (Tailwind)**  
+✅ **Multilingual interface with AI-generated post translations** (EN, DE, FR, ES)  
+✅ **AI moderation system** filters out harmful or unsafe content
+✅ **One-time demo of AI text-to-speech (TTS) for post narration** via Hume AI
+✅ **Passwords are hashed securely** using scrypt algorithm
+✅ **Injection-safe form handling** with sanitized inputs
+✅ **Email notifications for likes and comments** (can be disabled) 
+✅ **Integrated protections against spam and abuse** (rate, length, repetition)  
+✅ **Token-based login system** with protected endpoints
+✅ **Secure post/comment management** with live updates
+✅ **Translation caching** for fast, on-demand reuse
+✅ **Fully translated responsive frontend UI (Tailwind)**
+⚠️ **Categories, comments, and dates are not translated yet**
 ✅ **Swagger API documentation at `/apidocs`**
 
 ---
 
 ## Feature List (Ranked by Impact & Difficulty)
 
-| Feature                        | Description                                            |
-|--------------------------------|--------------------------------------------------------|
-| - JWT authentication           | Auth flow using signed tokens stored in `localStorage` |
-| - Blog post management         | Create, edit, delete posts (ownership enforced)        |
-| - Commenting                   | Add comments under posts                               |
-| -️ Like system                 | Like any post + email alerts if enabled                |
-| - Search & filter              | Find posts by author, keyword, or category             |
-| - Language switching           | Compare OpenAI vs. Google Translate on demand          |
-| - Email notification toggle    | Per-user control                                       |
-| - Rate limiting                | Flask-Limiter + moderation fallback                    |
-| - Swagger API docs             | Interactive at `/apidocs`                              |
-| - Caching of AI translations   | Avoid repeated token use                               |
-| - Responsive Tailwind UI       | Mobile-friendly, custom dropdowns                      |
-| - JSON file storage            | No external DB needed                                  |
-| - TTS usage limiter            | One voice demo per user, tracked via DB flag           |
+| Feature                     | Description                                           |
+|-----------------------------|-------------------------------------------------------|
+| - JWT authentication        | Auth flow using signed tokens stored in `localStorage` |
+| - Blog post management      | Create, edit, delete posts (ownership enforced)       |
+| - Commenting                | Add comments under posts + + email alerts if enabled  |
+| -️ Like system              | Like any post + email alerts if enabled               |
+| - Search & filter           | Find posts by author, keyword, or category            |
+| - Language switching        | via custom i18n.js frontend implementation        |
+| - Email notification toggle | Per-user control                                      |
+| - Rate limiting             | Flask-Limiter + moderation fallback                   |
+| - Swagger API docs          | Interactive at `/apidocs`                             |
+| - Saving AI translations    | Avoid repeated token use                              |
+| - Responsive Tailwind UI    | Mobile-friendly, custom dropdowns                     |
+| - PostgreSQL                |  relational DB powering all data storage and queries  |
+| - TTS usage limiter         | One voice demo per user, tracked via DB flag          |
 
 ---
 
@@ -172,5 +175,5 @@ User-controlled multilingual blogging
 
 Created by me.
 As part of the Masterschool Backend / AI Engineering Bootcamp.
-Built with love, passion and curiosity.
+Built with passion and curiosity.
 
