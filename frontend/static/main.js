@@ -397,24 +397,55 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
     : ''}
   <div class="comment-section mt-4" id="comments-${post.id}">
     <button class="toggle-comments-btn flex items-center gap-2 text-sm text-[#6aa8a0] font-semibold hover:text-[#6aa8a0] focus:outline-none bg-transparent hover:bg-transparent">
-  <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-  </svg>
-</button>
+      <span data-i18n="comments">Comments</span> (<span class="comment-count">0</span>)
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform toggle-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
     <div class="comments-container mt-3 hidden">
       <div id="comment-list-${post.id}" class="space-y-2"></div>
-      <textarea id="comment-text-${post.id}" data-i18n-placeholder="commentPlaceholder" placeholder="Add a comment..." class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"></textarea>
+      <textarea
+        id="comment-text-${post.id}"
+        data-i18n-placeholder="commentPlaceholder"
+        placeholder="Add a comment..."
+        class="comment-input w-full h-16 border rounded p-2 text-sm mt-2"
+      ></textarea>
       <button
-  onclick="submitComment(${post.id})"
-  class="comment-submit mt-2 text-[#fdf7d5] hover:text-[#4e857e] text-sm font-medium bg-transparent hover:bg-transparent focus:outline-none transition-colors"
->
-  <span data-i18n="postComment">Post Comment</span>
-</button>
+        onclick="submitComment(${post.id})"
+        class="comment-submit mt-2 text-[#fdf7d5] hover:text-[#4e857e] text-sm font-medium bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+      >
+        <span data-i18n="postComment">Post Comment</span>
+      </button>
     </div>
   </div>
 `;
-  applyUITranslations();
+
+const commentInput = div.querySelector(`#comment-text-${post.id}`);
+if (commentInput) {
+  if (!getToken()) {
+    commentInput.placeholder = translate("loginToComment");
+    commentInput.readOnly = true;  // prevent typing if not logged in
+
+    // Add event listener to open login modal on focus or click
+    commentInput.addEventListener('click', () => {
+      openLoginModal();
+    });
+    commentInput.addEventListener('focus', () => {
+      openLoginModal();
+      commentInput.blur(); // remove focus to keep disabled feel
+    });
+
+  } else {
+    commentInput.placeholder = translate("commentPlaceholder");
+    commentInput.disabled = false;
+
+    // Remove any previously added listeners for login modal if user is logged in
+    commentInput.removeEventListener('click', openLoginModal);
+    commentInput.removeEventListener('focus', openLoginModal);
+  }
+}
+
+applyUITranslations(div);
 
   // 🧠 AI Translated badge (overlay, now with space)
   if (isTranslatedCopy && !isOriginalLang) {
@@ -847,8 +878,20 @@ function deletePost(postId) {
 }
 
 function submitComment(postId) {
+  const token = getToken();
+  const commentInput = document.getElementById(`comment-text-${postId}`);
+  const commentInfoMsg = document.getElementById(`comment-info-msg-${postId}`);
+
+  if (!token) {
+    if (commentInfoMsg) commentInfoMsg.classList.remove('hidden');
+    openLoginModal();  // Open login modal if user tries to comment while logged out
+    return;
+  } else {
+    if (commentInfoMsg) commentInfoMsg.classList.add('hidden');
+  }
+
   const base = getBaseUrl();
-  const text = document.getElementById(`comment-text-${postId}`).value.trim();
+  const text = commentInput.value.trim();
 
   if (!text) return alert("Please enter a comment");
 
@@ -856,7 +899,7 @@ function submitComment(postId) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getToken()}`
+      'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify({ text })
   })
@@ -882,15 +925,14 @@ function submitComment(postId) {
       ${showDelete ? `<span style="cursor:pointer; color:red; margin-left:10px" onclick="deleteComment(${c.id}, ${postId})">❌</span>` : ''}
     `;
     list.appendChild(p);
-    document.getElementById(`comment-text-${postId}`).value = '';
+    commentInput.value = '';
 
-    // 🔼 Increment the comment count immediately
+    // Increment comment count
     const countEl = document.querySelector(`#comments-${postId} .comment-count`);
     if (countEl) {
       const currentCount = parseInt(countEl.textContent || '0', 10);
       countEl.textContent = currentCount + 1;
     }
-
   })
   .catch(e => alert("Error: " + e));
 }
