@@ -309,7 +309,7 @@ def get_posts_v2():
 
             # 🌐 Load translation if needed
             if lang != p.original_lang:
-                print(f"🔁 Translating post {p.id} to {lang} using AI")  # <-- Add here
+                print(f"🔁 Translating post {p.id} to {lang} using AI")
                 translation = get_translation(p.id, lang)
                 if translation:
                     title = translation.title
@@ -375,7 +375,28 @@ def get_posts_v2():
 
             reverse = direction == "desc"
 
-            if sort_field == "likes":
+            if sort_field == "date" and direction == "desc":
+                # Special logic: post with id 11 always first, then rest sorted by date desc
+                special_post = None
+                other_posts = []
+
+                for p in posts_data:
+                    if p["id"] == 11:
+                        special_post = p
+                    else:
+                        other_posts.append(p)
+
+                other_posts.sort(
+                    key=lambda p: p.get("date_sort") or datetime.min.isoformat(),
+                    reverse=True
+                )
+
+                if special_post:
+                    posts_data = [special_post] + other_posts
+                else:
+                    posts_data = other_posts
+
+            elif sort_field == "likes":
                 posts_data.sort(key=lambda p: p.get("likes", 0), reverse=reverse)
 
             elif sort_field == "updated":
@@ -385,6 +406,7 @@ def get_posts_v2():
                 )
 
             elif sort_field == "date":
+                # Other date sorts (e.g. ascending)
                 posts_data.sort(
                     key=lambda p: p.get("date_sort") or datetime.min.isoformat(),
                     reverse=reverse
@@ -415,7 +437,6 @@ def get_posts_v2():
         print("🔥 ERROR IN /posts:", e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
 
 
 
