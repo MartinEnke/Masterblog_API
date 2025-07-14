@@ -1881,6 +1881,133 @@ function renderDisclaimerModal() {
 }
 
 
+
+
+// Show Feedback modal function
+function openFeedbackModal() {
+  if (!getToken()) {
+    alert("You must be logged in to send feedback.");
+    openLoginModal();
+    return;
+  }
+
+  const modal = document.getElementById("feedback-modal");
+  modal.classList.remove("hidden");
+
+  initStarRating();
+  document.getElementById("feedback-text").value = "";
+  document.getElementById("feedback-msg").textContent = "";
+
+  // Attach cancel click listener freshly every time modal opens
+  const cancelBtn = document.getElementById("feedback-cancel");
+  if (cancelBtn) {
+    cancelBtn.onclick = () => {
+      modal.classList.add("hidden");
+    };
+  }
+}
+
+// Close Feedback modal function
+function closeFeedbackModal() {
+  const modal = document.getElementById("feedback-modal");
+  modal.classList.add("hidden");
+}
+
+// Initialize star rating UI
+function initStarRating() {
+  const starContainer = document.getElementById("star-rating");
+  starContainer.innerHTML = "";
+  let selectedStars = 0;
+
+  const feedbackForm = document.getElementById("feedback-form");
+  feedbackForm.dataset.rating = 0;
+
+  for (let i = 1; i <= 5; i++) {
+    const star = document.createElement("span");
+    star.textContent = "☆"; // empty star
+    star.className = "text-4xl cursor-pointer select-none";
+    star.dataset.value = i;
+
+    star.addEventListener("mouseenter", () => {
+      highlightStars(i);
+    });
+
+    star.addEventListener("mouseleave", () => {
+      highlightStars(selectedStars);
+    });
+
+    star.addEventListener("click", () => {
+      selectedStars = i;
+      feedbackForm.dataset.rating = i; // update rating here
+      highlightStars(selectedStars);
+    });
+
+    starContainer.appendChild(star);
+  }
+
+  function highlightStars(count) {
+    const stars = starContainer.querySelectorAll("span");
+    stars.forEach((star, index) => {
+      star.textContent = index < count ? "★" : "☆";
+      star.classList.toggle("text-yellow-400", index < count);
+    });
+  }
+}
+
+// Handle form submission
+document.getElementById("feedback-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const rating = Number(e.currentTarget.dataset.rating || 0);
+  const feedbackText = document.getElementById("feedback-text").value.trim();
+
+  if (rating === 0) {
+    const msg = document.getElementById("feedback-msg");
+    msg.textContent = "Please select a star rating.";
+    msg.className = "mt-2 text-sm text-red-600";
+    return;
+  }
+
+  const token = getToken();
+  if (!token) {
+    alert("You must be logged in to send feedback.");
+    closeFeedbackModal();
+    openLoginModal();
+    return;
+  }
+
+  const payload = { rating, feedback: feedbackText };
+
+  try {
+    const resp = await fetch(`${getBaseUrl()}/feedback`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json();
+      throw new Error(errData.error || "Failed to send feedback");
+    }
+
+    const msg = document.getElementById("feedback-msg");
+    msg.textContent = "Thank you for your feedback!";
+    msg.className = "mt-2 text-sm text-green-600";
+
+    setTimeout(() => {
+      closeFeedbackModal();
+    }, 2000);
+  } catch (err) {
+    const msg = document.getElementById("feedback-msg");
+    msg.textContent = err.message;
+    msg.className = "mt-2 text-sm text-red-600";
+  }
+});
+
+
 // Wire up buttons
 document.getElementById('auth-button').onclick = handleAuthClick;
 document.getElementById('add-save-btn')?.addEventListener('click', submitAdd);
