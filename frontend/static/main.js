@@ -223,15 +223,74 @@ async function checkTTSStatus() {
 /* ==========================================================================
    INITIALIZATION
    ========================================================================== */
-document.addEventListener('DOMContentLoaded', async () => {
+   document.addEventListener('DOMContentLoaded', async () => {
   console.log("🚀 DOM fully loaded. Starting app.");
 
-  // 🔘 Cancel button for Add Post modal
+  // === Feedback form submit handler ===
+  const feedbackForm = document.getElementById("feedback-form");
+  console.log("Feedback form element found:", feedbackForm);
+
+  if (feedbackForm) {
+    feedbackForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      console.log("Feedback form submitted");
+
+      const rating = Number(e.currentTarget.dataset.rating || 0);
+      const feedbackText = document.getElementById("feedback-text").value.trim();
+
+      if (rating === 0) {
+        const msg = document.getElementById("feedback-msg");
+        msg.textContent = "Please select a star rating.";
+        msg.className = "mt-2 text-sm text-red-600";
+        return;
+      }
+
+      const token = getToken();
+      if (!token) {
+        alert("You must be logged in to send feedback.");
+        closeFeedbackModal();
+        openLoginModal();
+        return;
+      }
+
+      const payload = { rating, feedback: feedbackText };
+
+      try {
+        const resp = await fetch(`${getBaseUrl()}/feedback`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+          const errData = await resp.json();
+          throw new Error(errData.error || "Failed to send feedback");
+        }
+
+        const msg = document.getElementById("feedback-msg");
+        msg.textContent = "Thank you for your feedback!";
+        msg.className = "mt-2 text-sm text-green-600";
+
+        setTimeout(() => {
+          closeFeedbackModal();
+        }, 2000);
+      } catch (err) {
+        const msg = document.getElementById("feedback-msg");
+        msg.textContent = err.message;
+        msg.className = "mt-2 text-sm text-red-600";
+      }
+    });
+  }
+
+  // === Cancel button for Add Post modal ===
   document.getElementById("cancel-add-btn")?.addEventListener("click", () => {
     document.getElementById("add-modal").classList.add("hidden");
   });
 
-  // 🔁 "Apply Filters" button
+  // === "Apply Filters" button ===
   const loadBtn = document.getElementById("load-posts-btn");
   if (loadBtn) {
     loadBtn.addEventListener("click", loadPosts);
@@ -239,12 +298,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.warn("⚠️ Couldn't find #load-posts-btn in DOM.");
   }
 
-  // 🌐 Set base API URL input
+  // === API base URL input ===
   const baseInput = document.getElementById('api-base-url');
   baseInput.value = getBaseUrl();
   baseInput.addEventListener('change', storeBaseUrl);
 
-  // 🌐 Set language dropdown and update translations
+  // === Language dropdown ===
   const langSelect = document.getElementById("lang-select");
   if (langSelect) {
     langSelect.value = getCurrentLanguage();
@@ -255,47 +314,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 🌍 Apply translations immediately
+  // === Apply translations immediately ===
   applyUITranslations();
   showInfoModalIfNeeded();
 
-  // 🔊 TTS: check if demo already used
-  await checkTTSStatus(); // sets `hasUsedTTSDemo`
+  // === TTS demo status check ===
+  await checkTTSStatus();
 
-  // 📂 Load categories and posts
+  // === Load categories and posts ===
   loadCategories();
   loadPosts();
 
-  // 🔐 Update login/logout button and user info
+  // === Update login/logout button and user info ===
   updateAuthButton();
   updateUserInfo();
 
-  // 📧 Show email notification input if logged in
+  // === Fetch user data and show email section if logged in ===
   if (getToken()) {
-  // ✅ Fetch current user data on load
-  try {
-    const resp = await fetch(`${getBaseUrl()}/user`, {
-      headers: { "Authorization": `Bearer ${getToken()}` }
-    });
-    if (resp.ok) {
-      const user = await resp.json();
+    try {
+      const resp = await fetch(`${getBaseUrl()}/user`, {
+        headers: { "Authorization": `Bearer ${getToken()}` }
+      });
+      if (resp.ok) {
+        const user = await resp.json();
 
-      // ✅ Step 2: Populate currentUser
-      currentUser.email = user.email;
-      currentUser.notifications_enabled = user.notifications_enabled;
-      notificationsEnabled = currentUser.notifications_enabled;
-      updateNotificationToggleText();
-      // Show the email input section with loaded user data
-      showEmailSection(user);
+        // Update currentUser and notifications state globally
+        currentUser.email = user.email;
+        currentUser.notifications_enabled = user.notifications_enabled;
+        notificationsEnabled = currentUser.notifications_enabled;
 
-      // Optional: auto-show email section
-      // showEmailSection(user);
+        updateNotificationToggleText();
+
+        // Show email input section pre-filled with user data
+        showEmailSection(user);
+      }
+    } catch (err) {
+      console.error("❌ Failed to load user data on init:", err);
     }
-  } catch (err) {
-    console.error("❌ Failed to load user data on init:", err);
   }
-}
-  // Add global click listener to close email dropdown when clicking outside
+
+  // === Global click listener to close email dropdown when clicking outside ===
   document.addEventListener('click', (event) => {
     const wrapper = document.getElementById('email-wrapper');
     const dropdown = document.getElementById('email-section');
@@ -309,7 +367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // 🔍 Search on Enter key
+  // === Search input Enter key triggers search ===
   const searchInput = document.getElementById('search-input');
   if (searchInput) {
     searchInput.addEventListener('keydown', e => {
@@ -318,6 +376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// filterByCategory function outside DOMContentLoaded
 function filterByCategory(category) {
   const filterSelect = document.getElementById("filter-category");
   if (!filterSelect) return;
@@ -325,6 +384,8 @@ function filterByCategory(category) {
   filterSelect.value = category;
   loadPosts();
 }
+
+
 /* ==========================================================================
    POSTS: LOAD / RENDER / SEARCH
    ========================================================================== */
@@ -1955,58 +2016,67 @@ function initStarRating() {
 }
 
 // Handle form submission
-document.getElementById("feedback-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const rating = Number(e.currentTarget.dataset.rating || 0);
-  const feedbackText = document.getElementById("feedback-text").value.trim();
-
-  if (rating === 0) {
-    const msg = document.getElementById("feedback-msg");
-    msg.textContent = "Please select a star rating.";
-    msg.className = "mt-2 text-sm text-red-600";
+document.addEventListener('DOMContentLoaded', () => {
+  const feedbackForm = document.getElementById("feedback-form");
+  if (!feedbackForm) {
+    console.warn("⚠️ #feedback-form not found in DOM.");
     return;
   }
 
-  const token = getToken();
-  if (!token) {
-    alert("You must be logged in to send feedback.");
-    closeFeedbackModal();
-    openLoginModal();
-    return;
-  }
+  feedbackForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    console.log("Feedback form submitted");
 
-  const payload = { rating, feedback: feedbackText };
+    const rating = Number(e.currentTarget.dataset.rating || 0);
+    const feedbackText = document.getElementById("feedback-text").value.trim();
 
-  try {
-    const resp = await fetch(`${getBaseUrl()}/feedback`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!resp.ok) {
-      const errData = await resp.json();
-      throw new Error(errData.error || "Failed to send feedback");
+    if (rating === 0) {
+      const msg = document.getElementById("feedback-msg");
+      msg.textContent = "Please select a star rating.";
+      msg.className = "mt-2 text-sm text-red-600";
+      return;
     }
 
-    const msg = document.getElementById("feedback-msg");
-    msg.textContent = "Thank you for your feedback!";
-    msg.className = "mt-2 text-sm text-green-600";
-
-    setTimeout(() => {
+    const token = getToken();
+    if (!token) {
+      alert("You must be logged in to send feedback.");
       closeFeedbackModal();
-    }, 2000);
-  } catch (err) {
-    const msg = document.getElementById("feedback-msg");
-    msg.textContent = err.message;
-    msg.className = "mt-2 text-sm text-red-600";
-  }
-});
+      openLoginModal();
+      return;
+    }
 
+    const payload = { rating, feedback: feedbackText };
+
+    try {
+      const resp = await fetch(`${getBaseUrl()}/feedback`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok) {
+        const errData = await resp.json();
+        throw new Error(errData.error || "Failed to send feedback");
+      }
+
+      const msg = document.getElementById("feedback-msg");
+      msg.textContent = "Thank you for your feedback!";
+      msg.className = "mt-2 text-sm text-green-600";
+
+      setTimeout(() => {
+        closeFeedbackModal();
+      }, 2000);
+    } catch (err) {
+      const msg = document.getElementById("feedback-msg");
+      msg.textContent = err.message;
+      msg.className = "mt-2 text-sm text-red-600";
+    }
+  });
+  return false; // <-- add this
+});
 
 // Wire up buttons
 document.getElementById('auth-button').onclick = handleAuthClick;

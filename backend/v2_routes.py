@@ -12,13 +12,10 @@ from langdetect import detect
 from traceback import print_exc
 from flask import g
 import jwt
-from flask import current_app
 from backend.utils import can_call_openai, moderate_post
-from openai import OpenAIError
-import openai
 from sqlalchemy import func
 import os, requests, base64
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, current_app
 from io import BytesIO
 # from backend.notifications import send_email
 import html
@@ -26,6 +23,9 @@ import re
 from threading import Thread
 from sqlalchemy.exc import IntegrityError
 from email_validator import validate_email, EmailNotValidError
+
+
+
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -189,6 +189,35 @@ def toggle_notification_setting(current_user):
         print("❌ Error updating notification setting:", e)
         return jsonify({"error": "Failed to update notification preference."}), 500
 
+
+@v2.route("/feedback", methods=["POST"])
+@token_required
+def submit_feedback(current_user):
+    print(f"Received feedback from user {current_user.username}")
+    data = request.get_json() or {}
+    rating = data.get("rating")
+    feedback_text = data.get("feedback", "").strip()
+
+    if not isinstance(rating, int) or rating < 1 or rating > 5:
+        return jsonify({"error": "Rating must be an integer between 1 and 5"}), 400
+
+    # Compose email content
+    subject = f"New Feedback from {current_user.username}"
+    body = f"""
+    Feedback received at {datetime.utcnow().isoformat()} UTC
+
+    Username: {current_user.username}
+    Rating: {rating}
+    Feedback: {feedback_text or '[No feedback text]'}
+    """
+
+    # Send email (uses your existing send_email util)
+    try:
+        send_email(current_app, current_app.config["EMAIL_FROM"], subject, body)
+    except Exception as e:
+        return jsonify({"error": f"Failed to send feedback email: {str(e)}"}), 500
+
+    return jsonify({"message": "Thank you for your feedback! It has been sent."}), 201
 
 # -------------------------
 # Swagger schemas
