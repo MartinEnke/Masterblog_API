@@ -430,7 +430,13 @@
 
 <!-- Scripts -->
 
-
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    if (typeof forceShowInfoModal === 'function') {
+      forceShowInfoModal();
+    }
+  });
+</script>
 <script src="/static/i18n.js"></script>
 <script src="/static/main.js?v=17" defer></script>
 
