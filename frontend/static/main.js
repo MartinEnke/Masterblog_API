@@ -318,6 +318,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+function filterByCategory(category) {
+  const filterSelect = document.getElementById("filter-category");
+  if (!filterSelect) return;
+
+  filterSelect.value = category;
+  loadPosts();
+}
 /* ==========================================================================
    POSTS: LOAD / RENDER / SEARCH
    ========================================================================== */
@@ -387,9 +394,18 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
   div.innerHTML = `
     <h2 id="post-title-${post.id}">${post.title}</h2>
     <p id="post-content-${post.id}">${post.content}</p>
-    <p class="post-meta mt-3">
-      ${post.date || 'No date'} · <span class="by-label">by</span> ${capitalizeName(post.author) || 'Unknown'}
-    </p>
+    <p class="post-meta mt-3 flex justify-between items-center">
+  <span>
+    ${post.date || 'No date'} · <span class="by-label">by</span> ${capitalizeName(post.author) || 'Unknown'}
+  </span>
+  <button
+  class="post-category text-[#6aa8a0] font italic capitalize text-s tracking-wide cursor-pointer bg-transparent border-0 p-0 transition-colors"
+  onclick="filterByCategory('${post.category}')"
+  title="Filter by ${post.category}"
+>
+  ${post.category || 'Uncategorized'}
+</button>
+</p>
     ${post.updated
       ? `<p style="font-size:.9em;color:#777;margin-bottom:10px">
            <span class="updated-label">Updated:</span> ${post.updated}

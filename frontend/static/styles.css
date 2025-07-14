@@ -228,6 +228,24 @@ html {
   border: none !important;
   box-shadow: none !important;
 }
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem; /* mt-3 */
+}
+
+.post-category:hover {
+  color: #fdf7d5;
+  background-color: transparent !important;
+}
+
+.post-category:focus {
+  outline: none;
+  box-shadow: none;
+  background-color: transparent !important;
+}
 /* ========================================================================
    BUTTONS
    ======================================================================== */
