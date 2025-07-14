@@ -1942,16 +1942,21 @@ function renderDisclaimerModal() {
 }
 
 
-
+/* ==========================================================================
+   Feedback Modal
+   ========================================================================== */
+function handleFeedbackClick() {
+  if (!getToken()) {
+    // Open login modal immediately, no alert
+    openLoginModal();
+  } else {
+    // User logged in, open feedback modal
+    openFeedbackModal();
+  }
+}
 
 // Show Feedback modal function
 function openFeedbackModal() {
-  if (!getToken()) {
-    alert("You must be logged in to send feedback.");
-    openLoginModal();
-    return;
-  }
-
   const modal = document.getElementById("feedback-modal");
   modal.classList.remove("hidden");
 
@@ -1959,7 +1964,6 @@ function openFeedbackModal() {
   document.getElementById("feedback-text").value = "";
   document.getElementById("feedback-msg").textContent = "";
 
-  // Attach cancel click listener freshly every time modal opens
   const cancelBtn = document.getElementById("feedback-cancel");
   if (cancelBtn) {
     cancelBtn.onclick = () => {
