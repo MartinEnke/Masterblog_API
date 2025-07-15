@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,38 +10,38 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
 
   <!-- Custom Styles -->
   <link rel="stylesheet" href="/static/styles.css" />
 
   <!-- Favicon / Icons -->
-<link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
-<link rel="manifest" href="/static/images/site.webmanifest">
-<link rel="mask-icon" href="/static/images/safari-pinned-tab.svg" color="#6aa8a0">
-<link rel="shortcut icon" href="/static/images/favicon.ico">
-<meta name="msapplication-TileColor" content="#14151c">
-<meta name="msapplication-config" content="/static/images/browserconfig.xml">
-<meta name="theme-color" content="#14151c">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+  <link rel="manifest" href="/static/images/site.webmanifest">
+  <link rel="mask-icon" href="/static/images/safari-pinned-tab.svg" color="#6aa8a0">
+  <link rel="shortcut icon" href="/static/images/favicon.ico">
+  <meta name="msapplication-TileColor" content="#14151c">
+  <meta name="msapplication-config" content="/static/images/browserconfig.xml">
+  <meta name="theme-color" content="#14151c">
 
   <style>
-  html, body {
-  background-color: #14151c;
-  color: #fff !important;
-  font-family: 'Manrope', sans-serif;
-}
+    html,
+    body {
+      background-color: #14151c;
+      color: #fff !important;
+      font-family: 'Manrope', sans-serif;
+    }
 
-  .bg-page {
-    background-color: #14151c;
-  }
+    .bg-page {
+      background-color: #14151c;
+    }
 
-  .hidden {
-    display: none;
-  }
-</style>
+    .hidden {
+      display: none;
+    }
+  </style>
 
   <!-- Google Translate
   <script type="text/javascript">
@@ -62,397 +63,329 @@
 
 <body class="bg-transparent text-white min-h-screen p-4">
 
-<!-- Header -->
-<!-- Banner as refresh (reloads full page) -->
-<header class="flex justify-center mb-6 cursor-pointer" onclick="location.reload()">
-  <div class="border border-white rounded-lg shadow-md">
-    <img src="/static/images/almanac.png"
-         alt="Notes on the Miraculous Ordinary"
-         class="w-full max-w-5xl rounded-lg"
-    />
-  </div>
-</header>
-<!-- Language Translators Section -->
-<div class="flex flex-row flex-wrap items-center justify-center gap-8 mb-6 text-center">
+  <!-- Header -->
+  <!-- Banner as refresh (reloads full page) -->
+  <header class="flex justify-center mb-6 cursor-pointer" onclick="location.reload()">
+    <div class="border border-white rounded-lg shadow-md">
+      <img src="/static/images/almanac.png" alt="Notes on the Miraculous Ordinary" class="w-full max-w-5xl rounded-lg" />
+    </div>
+  </header>
 
-  <!-- OpenAI Translator -->
-  <div class="flex flex-col items-center">
-    <h3 class="font-normal text-white mb-2">OpenAI Translator</h3>
-    <select id="lang-select" onchange="setLanguage(this.value)"
-  class="text-sm border border-white rounded-md px-3 py-2 text-white focus:outline-none transition-colors duration-200"
-  style="background-color: #14151c;"
->
+  <!-- Language Translators Section -->
+  <div class="flex flex-row flex-wrap items-center justify-center gap-8 mb-6 text-center">
 
-      <option value="en">English</option>
-      <option value="de">Deutsch</option>
-      <option value="fr">Français</option>
-      <option value="es">Español</option>
-    </select>
-  </div>
-  <!-- Translator Label
-  <div class="text-gray-500 font-semibold mt-4 md:mt-10">Translator</div> -->
-
-  <!-- Google Widget Translator
-  <div class="flex flex-col items-center">
-    <h3 class="font-bold text-gray-700 mb-2">Google Widget</h3>
-    <button onclick="loadGoogleTranslate()"
-      class="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-700 hover:bg-gray-100 focus:ring-2 focus:ring-blue-500">
-      Choose
-    </button>
-    <div id="google_translate_element" class="mt-2 hidden"></div>
-  </div> -->
-
-</div>
-
-<!-- Main Container -->
-<main class="max-w-5xl mx-auto">
-
-  <!-- Top Navigation -->
-  <section class="bg-page border border-white rounded-lg p-4 mb-6">
-
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-    <!-- Left: Signup + Login + Welcome -->
-    <div class="flex items-center gap-4 justify-start order-1 md:order-1 w-full md:w-auto">
-      <button
-              id="signup-button"
-  onclick="openSignupModal()"
-  class="text-base text-[#6aa8a0] hover:text-white bg-transparent hover:bg-transparent focus:outline-none transition-colors"
-  data-i18n="signup">Signup</button>
-
-      <button
-  id="auth-button"
-  onclick="handleAuthClick()"
-  class="text-base text-[#6aa8a0] hover:text-white bg-transparent hover:bg-transparent focus:outline-none transition-colors"
-  data-i18n="login">Login</button>
-
-      <div id="user-info" class="text-white font-normal text-base"></div>
+    <!-- OpenAI Translator -->
+    <div class="flex flex-col items-center">
+      <h3 class="font-normal text-white mb-2">OpenAI Translator</h3>
+      <select id="lang-select" onchange="setLanguage(this.value)"
+        class="text-sm border border-white rounded-md px-3 py-2 text-white focus:outline-none transition-colors duration-200"
+        style="background-color: #14151c;">
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+      </select>
     </div>
 
-    <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 order-2 w-full md:w-auto">
-<div id="email-wrapper" class="relative">
-  <!-- Toggle Button -->
-  <span
-  onclick="toggleEmailDropdown()"
-  class="cursor-pointer text-[#6aa8a0] hover:text-white text-base transition-colors mr-3"
->
-  Email
-</span>
+    <!-- Translator Label
+    <div class="text-gray-500 font-semibold mt-4 md:mt-10">Translator</div> -->
 
-  <button
-  type="button"
-  onclick="handleFeedbackClick()"
-  class="text-[#6aa8a0] hover:text-white bg-transparent hover:bg-transparent focus:bg-transparent focus:ring-0 focus:outline-none transition-colors ml-4"
-  title="Leave Feedback"
->
-  Feedback
-</button>
+    <!-- Google Widget Translator
+    <div class="flex flex-col items-center">
+      <h3 class="font-bold text-gray-700 mb-2">Google Widget</h3>
+      <button onclick="loadGoogleTranslate()"
+        class="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-700 hover:bg-gray-100 focus:ring-2 focus:ring-blue-500">
+        Choose
+      </button>
+      <div id="google_translate_element" class="mt-2 hidden"></div>
+    </div> -->
 
-<!-- Dropdown Content -->
-<div id="email-section" class="hidden absolute mt-2 bg-[#14151c] border border-white p-3 rounded-md z-50 w-[250px] md:w-[300px] flex flex-col gap-2">
-
-  <span
-  id="notification-toggle"
-  class="text-sm cursor-pointer text-blue-400 hover:text-blue-300 transition"
-  onclick="toggleNotifications()"
->
-</span>
-    <input
-      id="email-input"
-      type="email"
-      data-i18n-placeholder="emailExample"
-      placeholder="you@example.com"
-      class="text-sm px-3 py-2 rounded-md bg-black text-white border border-white placeholder-gray-400 w-full"
-    />
-
-    <button
-      id="save-email-btn"
-      data-i18n="save"
-      onclick="saveEmail()"
-      class="text-white hover:text-gray-300 px-4 py-2 rounded-md bg-transparent hover:bg-transparent border border-transparent transition-colors w-full text-center"
-    >
-      Save
-    </button>
-
-    <div class="w-full text-center mt-2">
-  <span id="email-msg" class="text-xs text-white"></span>
-</div>
-  </div>
-</div>
-
-
-    <!-- Right: Info + Add Post -->
-    <div class="flex items-center gap-3 order-3 w-full md:w-auto justify-between sm:justify-end">
-      <input
-        id="api-base-url"
-        type="text"
-        placeholder="https://your-host:port/api/v2"
-        value=""
-        class="hidden w-[300px] h-9 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm"
-      />
-
-      <div class="sm:order-1 order-0 flex-grow">
-  <button
-    onclick="forceShowInfoModal()"
-    data-i18n="info"
-    class="text-[#6aa8a0] text-base px-2 py-1 rounded-md bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent hover:text-[#fff8c2] transition-colors focus:outline-none"
-    title="Info">Info
-  </button>
-</div>
-
-      <div class="sm:order-2 order-1">
-  <button
-    onclick="openAddModal()"
-    data-i18n="addPost"
-    class="text-base font-medium text-[#fdf7d5] hover:text-[#4e857e] px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent focus:outline-none transition-colors">
-    Add Post
-  </button>
-</div>
-    </div>
   </div>
 
-</section>
+  <!-- Main Container -->
+  <main class="max-w-5xl mx-auto">
 
+    <!-- Top Navigation -->
+    <section class="bg-page border border-white rounded-lg p-4 mb-6">
 
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-  <!-- Filters & Search -->
-  <section
-  class="
+        <!-- Left: Signup + Login + Welcome -->
+        <div class="flex items-center gap-4 justify-start order-1 md:order-1 w-full md:w-auto">
+          <button id="signup-button" onclick="openSignupModal()"
+            class="text-base text-[#6aa8a0] hover:text-white bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+            data-i18n="signup">Signup</button>
+
+          <button id="auth-button" onclick="handleAuthClick()"
+            class="text-base text-[#6aa8a0] hover:text-white bg-transparent hover:bg-transparent focus:outline-none transition-colors"
+            data-i18n="login">Login</button>
+
+          <div id="user-info" class="text-white font-normal text-base"></div>
+        </div>
+
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 order-2 w-full md:w-auto">
+          <div id="email-wrapper" class="relative">
+            <!-- Toggle Button -->
+            <span onclick="toggleEmailDropdown()"
+              class="cursor-pointer text-[#6aa8a0] hover:text-white text-base transition-colors mr-3">
+              Email
+            </span>
+
+            <button type="button" onclick="handleFeedbackClick()"
+              class="text-[#6aa8a0] hover:text-white bg-transparent hover:bg-transparent focus:bg-transparent focus:ring-0 focus:outline-none transition-colors ml-4"
+              title="Leave Feedback">
+              Feedback
+            </button>
+
+            <!-- Dropdown Content -->
+            <div id="email-section"
+              class="hidden absolute mt-2 bg-[#14151c] border border-white p-3 rounded-md z-50 w-[250px] md:w-[300px] flex flex-col gap-2">
+
+              <span id="notification-toggle" class="text-sm cursor-pointer text-blue-400 hover:text-blue-300 transition"
+                onclick="toggleNotifications()"></span>
+
+              <input id="email-input" type="email" data-i18n-placeholder="emailExample" placeholder="you@example.com"
+                class="text-sm px-3 py-2 rounded-md bg-black text-white border border-white placeholder-gray-400 w-full" />
+
+              <button id="save-email-btn" data-i18n="save" onclick="saveEmail()"
+                class="text-white hover:text-gray-300 px-4 py-2 rounded-md bg-transparent hover:bg-transparent border border-transparent transition-colors w-full text-center">
+                Save
+              </button>
+
+              <div class="w-full text-center mt-2">
+                <span id="email-msg" class="text-xs text-white"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Info + Add Post -->
+          <div class="flex items-center gap-3 order-3 w-full md:w-auto justify-between sm:justify-end">
+            <input id="api-base-url" type="text" placeholder="https://your-host:port/api/v2" value=""
+              class="hidden w-[300px] h-9 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm" />
+
+            <div class="sm:order-1 order-0 flex-grow">
+              <button onclick="forceShowInfoModal()" data-i18n="info"
+                class="text-[#6aa8a0] text-base px-2 py-1 rounded-md bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent hover:text-[#fff8c2] transition-colors focus:outline-none"
+                title="Info">Info
+              </button>
+            </div>
+
+            <div class="sm:order-2 order-1">
+              <button onclick="openAddModal()" data-i18n="addPost"
+                class="text-base font-medium text-[#fdf7d5] hover:text-[#4e857e] px-4 py-2 rounded-md bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent focus:outline-none transition-colors">
+                Add Post
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- Filters & Search -->
+    <section
+      class="
     bg-transparent border-0 rounded-none p-0 mb-6
     sm:bg-page sm:border sm:border-white sm:rounded-lg sm:p-4
-  "
->
-  <div class="flex flex-col gap-4">
-    <!-- Dropdowns -->
-    <div class="flex flex-col md:flex-row md:items-center md:gap-4">
-      <select id="filter-category" data-i18n-option onchange="loadPosts()"
-  class="w-full md:w-[180px] text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
-  style="background-color: #14151c;"
->
-  <option value="">All Categories</option>
-</select>
+  ">
+      <div class="flex flex-col gap-4">
+        <!-- Dropdowns -->
+        <div class="flex flex-col md:flex-row md:items-center md:gap-4">
 
-      <div class="flex flex-col sm:flex-row gap-4 flex-1 mt-4 md:mt-0">
-        <select id="sort-field" data-i18n-option onchange="loadPosts()"
-  class="flex-1 text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
-  style="background-color: #14151c;"
->
-          <option value="">noSorting</option>
-          <option value="date" data-i18n-option="sortDate">Date</option>
-          <option value="author" data-i18n-option="sortAuthor">Author</option>
-          <option value="title" data-i18n-option="sortTitle">Title</option>
-          <option value="likes" data-i18n-option="sortLikes">Likes</option>
-          <option value="updated" data-i18n-option="sortUpdated">Last Updated</option>
-        </select>
+          <select id="filter-category" data-i18n-option onchange="loadPosts()"
+            class="w-full md:w-[180px] text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
+            style="background-color: #14151c;">
+            <option value="">All Categories</option>
+          </select>
 
-        <select id="sort-direction" data-i18n-option onchange="loadPosts()"
-  class="flex-1 text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
-  style="background-color: #14151c;"
->
-          <option value="desc" data-i18n-option="descending">Descending</option>
-          <option value="asc" data-i18n-option="ascending">Ascending</option>
-        </select>
+          <div class="flex flex-col sm:flex-row gap-4 flex-1 mt-4 md:mt-0">
 
+            <select id="sort-field" data-i18n-option onchange="loadPosts()"
+              class="flex-1 text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
+              style="background-color: #14151c;">
+              <option value="">noSorting</option>
+              <option value="date" data-i18n-option="sortDate">Date</option>
+              <option value="author" data-i18n-option="sortAuthor">Author</option>
+              <option value="title" data-i18n-option="sortTitle">Title</option>
+              <option value="likes" data-i18n-option="sortLikes">Likes</option>
+              <option value="updated" data-i18n-option="sortUpdated">Last Updated</option>
+            </select>
 
+            <select id="sort-direction" data-i18n-option onchange="loadPosts()"
+              class="flex-1 text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
+              style="background-color: #14151c;">
+              <option value="desc" data-i18n-option="descending">Descending</option>
+              <option value="asc" data-i18n-option="ascending">Ascending</option>
+            </select>
 
+            <button onclick="loadPosts()" data-i18n="applyFilters"
+              class="hidden text-sm text-blue-600 hover:text-blue-800 px-4 py-2 rounded-md transition border border-blue-200">
+              Apply Filters
+            </button>
+          </div>
+        </div>
 
-
-          <button
-  onclick="loadPosts()"
-  data-i18n="applyFilters"
-  class="hidden text-sm text-blue-600 hover:text-blue-800 px-4 py-2 rounded-md transition border border-blue-200"
->
-  Apply Filters
-</button>
+        <div class="relative">
+          <input type="text" id="search-input" oninput="loadPosts()" data-i18n-placeholder="searchPlaceholder"
+            placeholder="Search author, title or content..."
+            class="w-full text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
+            style="background-color: rgba(106, 168, 160, 0.15);" />
+          <div class="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none"></div>
         </div>
       </div>
+    </section>
 
-      <div class="relative">
-        <input
-  type="text"
-  id="search-input"
-  oninput="loadPosts()"
-  data-i18n-placeholder="searchPlaceholder"
-  placeholder="Search author, title or content..."
-  class="w-full text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
-  style="background-color: rgba(106, 168, 160, 0.15);"
-/>
-        <div class="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none"></div>
-      </div>
-    </div>
-  </section>
+    <!-- Posts Container -->
+    <section id="post-container"></section>
+  </main>
 
-  <!-- Posts Container -->
-  <section id="post-container"></section>
-</main>
-
-<!-- Modals -->
-<div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-black text-white p-6 rounded-lg w-full max-w-md shadow-lg border border-white">
-    <h2 data-i18n="login" class="text-xl font-bold mb-4">🔐 Login</h2>
-    <input
-  type="text"
-  id="login-username"
-  data-i18n-placeholder="usernamePlaceholder"
-  placeholder="Username"
-  class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400"
-/>
-<input
-  type="password"
-  id="login-password"
-  data-i18n-placeholder="passwordPlaceholder"
-  placeholder="Password"
-  class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400"
-/>
-    <div class="flex justify-end gap-3">
-      <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" data-i18n="login" onclick="submitLogin()">Login</span>
-      <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer" data-i18n="cancel" onclick="closeLoginModal()">Cancel</span>
-    </div>
-  </div>
-</div>
-
-<div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-black text-white p-6 rounded-lg w-full max-w-md shadow-lg border border-white">
-    <h2 data-i18n="signup" class="text-xl font-bold mb-4">📝 Signup</h2>
-
-    <input type="text" id="signup-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username"
-      class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
-
-    <input type="password" id="signup-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password"
-      class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
-
-    <div class="flex justify-end gap-3">
-  <button onclick="submitSignup()"
-    class="text-white bg-blue-600 px-4 py-2 rounded-md"
-    data-i18n="save">Save</button>
-
-  <button onclick="closeSignupModal()"
-    class="text-black bg-white px-4 py-2 rounded-md"
-    data-i18n="cancel">Cancel</button>
-</div>
-  </div>
-</div>
-
-<div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-black text-white p-6 rounded-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-screen overflow-y-auto shadow-lg border border-white">
-    <h2 data-i18n="addPost" class="text-xl font-bold mb-4">📝 Add Post</h2>
-
-    <input type="text" id="add-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title"
-      class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
-
-    <textarea id="add-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"
-      class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400 min-h-[200px]"></textarea>
-
-    <select id="add-category"
-      class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white"></select>
-
-    <div id="custom-category-wrapper-add" class="hidden mb-4">
-      <input type="text" id="custom-category-input-add" placeholder="Enter custom category"
-        class="w-full px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
-    </div>
-
-    <div class="flex justify-end gap-3">
-  <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer"
-        data-i18n="save"
-        onclick="submitAdd()">Save</span>
-
-  <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer"
-        data-i18n="cancel"
-        id="cancel-add-btn">Cancel</span>
-</div>
-  </div>
-</div>
-
-
-<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-black text-white p-6 rounded-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-screen overflow-y-auto shadow-lg border border-white">
-    <h2 data-i18n="editPost" class="text-xl font-bold mb-4">✏️ Edit Post</h2>
-
-    <input type="text" id="edit-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title"
-      class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
-
-    <textarea id="edit-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"
-      class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400 min-h-[200px]"></textarea>
-
-    <select id="edit-category"
-      class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white"></select>
-
-    <div id="custom-category-wrapper-edit" class="hidden mb-4">
-      <input type="text" id="custom-category-input-edit" placeholder="Enter custom category"
-        class="w-full px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
-    </div>
-
-    <div class="flex justify-end gap-3">
-  <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer"
-        data-i18n="save"
-        onclick="submitUpdate()">Save</span>
-
-  <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer"
-        data-i18n="cancel"
-        onclick="closeModal()">Cancel</span>
-</div>
-  </div>
-</div>
-<!-- Feedback Modal -->
-<div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-black text-white p-6 rounded-lg w-full max-w-md shadow-lg border border-white">
-    <h2 class="text-xl font-bold mb-4">⭐ Rate Us</h2>
-    <form id="feedback-form">
-      <div class="flex justify-center mb-4" id="star-rating">
-        <!-- Stars generated by JS -->
-      </div>
-      <textarea
-        id="feedback-text"
-        placeholder="Share your thoughts! We'd love to hear (optional)"
-        class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400 resize-none"
-        rows="4"
-      ></textarea>
+  <!-- Modals -->
+  <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-black text-white p-6 rounded-lg w-full max-w-md shadow-lg border border-white">
+      <h2 data-i18n="login" class="text-xl font-bold mb-4">🔐 Login</h2>
+      <input type="text" id="login-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username"
+        class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
+      <input type="password" id="login-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password"
+        class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
       <div class="flex justify-end gap-3">
-        <button type="submit" id="feedback-submit" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700">Send</button>
-        <button
-  type="button"
-  id="feedback-cancel"
-  class="px-4 py-2 rounded-md bg-white text-black hover:bg-gray-200 focus:outline-none focus:ring-0 active:bg-white active:text-black"
->
-  Cancel
-</button>
+        <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" data-i18n="login"
+          onclick="submitLogin()">Login</span>
+        <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer" data-i18n="cancel"
+          onclick="closeLoginModal()">Cancel</span>
       </div>
-      <p id="feedback-msg" class="mt-2 text-sm"></p>
-    </form>
-  </div>
-</div>
-
-<div id="disclaimerModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-  <div class="modal-content max-w-xl bg-gray-800 p-6 rounded-xl text-white shadow-xl">
-    <h2 class="text-lg font-semibold mb-4">⚠️ Disclaimer</h2>
-    <ul class="text-sm list-disc pl-5 space-y-2 text-gray-300 text-left">
-      <li>This is a study project created as part of a backend & AI engineering curriculum.</li>
-      <li>No guarantees are provided regarding performance, security, or data persistence.</li>
-      <li>AI-generated translations, moderation, and TTS may contain inaccuracies or unpredictable behavior.</li>
-      <li>Email notifications are sent only to demo/test addresses and are not production-secure.</li>
-      <li>The “Upgrade Required” TTS message is a demo placeholder — no upsell or payment exists.</li>
-      <li>Use at your own risk. The developer assumes no liability for any outcomes resulting from usage.</li>
-    </ul>
-    <div class="text-center mt-6">
-      <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')" class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">Close</button>
     </div>
   </div>
-</div>
 
-<!-- Footer -->
-<footer class="text-center text-gray-400 text-sm mt-10">&copy; The Quiet Almanac 2025</footer>
+  <div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-black text-white p-6 rounded-lg w-full max-w-md shadow-lg border border-white">
+      <h2 data-i18n="signup" class="text-xl font-bold mb-4">📝 Signup</h2>
 
-<!-- Scripts -->
+      <input type="text" id="signup-username" data-i18n-placeholder="usernamePlaceholder" placeholder="Username"
+        class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
 
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-    if (typeof forceShowInfoModal === 'function') {
-      forceShowInfoModal();
-    }
-  });
-</script>
-<script src="/static/i18n.js"></script>
-<script src="/static/main.js?v=17" defer></script>
+      <input type="password" id="signup-password" data-i18n-placeholder="passwordPlaceholder" placeholder="Password"
+        class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
+
+      <div class="flex justify-end gap-3">
+        <button onclick="submitSignup()" class="text-white bg-blue-600 px-4 py-2 rounded-md" data-i18n="save">Save</button>
+        <button onclick="closeSignupModal()" class="text-black bg-white px-4 py-2 rounded-md" data-i18n="cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div
+      class="bg-black text-white p-6 rounded-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-screen overflow-y-auto shadow-lg border border-white">
+      <h2 data-i18n="addPost" class="text-xl font-bold mb-4">📝 Add Post</h2>
+
+      <input type="text" id="add-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title"
+        class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
+
+      <textarea id="add-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"
+        class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400 min-h-[200px]"></textarea>
+
+      <select id="add-category" class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white"></select>
+
+      <div id="custom-category-wrapper-add" class="hidden mb-4">
+        <input type="text" id="custom-category-input-add" placeholder="Enter custom category"
+          class="w-full px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" data-i18n="save"
+          onclick="submitAdd()">Save</span>
+
+        <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer" data-i18n="cancel" id="cancel-add-btn">Cancel</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div
+      class="bg-black text-white p-6 rounded-lg w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-screen overflow-y-auto shadow-lg border border-white">
+      <h2 data-i18n="editPost" class="text-xl font-bold mb-4">✏️ Edit Post</h2>
+
+      <input type="text" id="edit-title" data-i18n-placeholder="titlePlaceholder" placeholder="Title"
+        class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
+
+      <textarea id="edit-content" data-i18n-placeholder="contentPlaceholder" placeholder="Content"
+        class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400 min-h-[200px]"></textarea>
+
+      <select id="edit-category" class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white"></select>
+
+      <div id="custom-category-wrapper-edit" class="hidden mb-4">
+        <input type="text" id="custom-category-input-edit" placeholder="Enter custom category"
+          class="w-full px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400" />
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <span class="text-white bg-blue-600 px-4 py-2 rounded-md cursor-pointer" data-i18n="save"
+          onclick="submitUpdate()">Save</span>
+
+        <span class="text-black bg-white px-4 py-2 rounded-md cursor-pointer" data-i18n="cancel"
+          onclick="closeModal()">Cancel</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback Modal -->
+  <div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-black text-white p-6 rounded-lg w-full max-w-md shadow-lg border border-white">
+      <h2 class="text-xl font-bold mb-4">⭐ Rate Us</h2>
+      <form id="feedback-form">
+        <div class="flex justify-center mb-4" id="star-rating">
+          <!-- Stars generated by JS -->
+        </div>
+        <textarea id="feedback-text" placeholder="Share your thoughts! We'd love to hear (optional)"
+          class="w-full mb-4 px-3 py-2 border border-white rounded-md bg-black text-white placeholder-gray-400 resize-none"
+          rows="4"></textarea>
+        <div class="flex justify-end gap-3">
+          <button type="submit" id="feedback-submit" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700">Send</button>
+          <button type="button" id="feedback-cancel"
+            class="px-4 py-2 rounded-md bg-white text-black hover:bg-gray-200 focus:outline-none focus:ring-0 active:bg-white active:text-black">
+            Cancel
+          </button>
+        </div>
+        <p id="feedback-msg" class="mt-2 text-sm"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="disclaimerModal"
+    class="modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+    <div class="modal-content max-w-xl bg-gray-800 p-6 rounded-xl text-white shadow-xl">
+      <h2 class="text-lg font-semibold mb-4">⚠️ Disclaimer</h2>
+      <ul class="text-sm list-disc pl-5 space-y-2 text-gray-300 text-left">
+        <li>This is a study project created as part of a backend & AI engineering curriculum.</li>
+        <li>No guarantees are provided regarding performance, security, or data persistence.</li>
+        <li>AI-generated translations, moderation, and TTS may contain inaccuracies or unpredictable behavior.</li>
+        <li>Email notifications are sent only to demo/test addresses and are not production-secure.</li>
+        <li>The “Upgrade Required” TTS message is a demo placeholder — no upsell or payment exists.</li>
+        <li>Use at your own risk. The developer assumes no liability for any outcomes resulting from usage.</li>
+      </ul>
+      <div class="text-center mt-6">
+        <button onclick="document.getElementById('disclaimerModal').classList.add('hidden')"
+          class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center text-gray-400 text-sm mt-10">&copy; The Quiet Almanac 2025</footer>
+
+  <!-- Scripts -->
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof forceShowInfoModal === 'function') {
+        forceShowInfoModal();
+      }
+    });
+  </script>
+  <script src="/static/i18n.js"></script>
+  <script src="/static/main.js?v=17" defer></script>
 
 </body>
+
 </html>
