@@ -12,7 +12,6 @@ import os
 from backend.v2_routes import v2 as v2_blueprint
 
 
-print("Using DB path:", os.path.abspath('blog.db'))
 init_db()
 
 # 👇 Function for Identification (user or IP) managing separate limiting

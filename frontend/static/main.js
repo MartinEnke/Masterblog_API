@@ -226,6 +226,10 @@ async function checkTTSStatus() {
    document.addEventListener('DOMContentLoaded', async () => {
   console.log("🚀 DOM fully loaded. Starting app.");
 
+  // Initialize currentUser.username from localStorage for persistent auth state
+  currentUser.username = (localStorage.getItem('username') || '').toLowerCase();
+  console.log("🔥 currentUser.username after init:", currentUser.username);
+
   // === Feedback form submit handler ===
   const feedbackForm = document.getElementById("feedback-form");
   console.log("Feedback form element found:", feedbackForm);
@@ -524,46 +528,56 @@ function renderSinglePost(post, hasUsedTTSDemo = false) {
   }
 
   // Lazy load comments on toggle
-  const commentToggle = div.querySelector(`#comments-${post.id} .toggle-comments-btn`);
-  const commentContainer = div.querySelector(`#comments-${post.id} .comments-container`);
-  const commentList = div.querySelector(`#comment-list-${post.id}`);
+const commentToggle = div.querySelector(`#comments-${post.id} .toggle-comments-btn`);
+const commentContainer = div.querySelector(`#comments-${post.id} .comments-container`);
+const commentList = div.querySelector(`#comment-list-${post.id}`);
 
-  let commentsLoaded = false;
+let commentsLoaded = false;
 
-  if (commentToggle && commentContainer && commentList) {
-    commentToggle.addEventListener('click', () => {
-      commentContainer.classList.toggle('hidden');
-      const icon = div.querySelector(`#comments-${post.id} .toggle-icon`);
-      if (icon) icon.classList.toggle('rotate-180');
+if (commentToggle && commentContainer && commentList) {
+  commentToggle.addEventListener('click', () => {
+    commentContainer.classList.toggle('hidden');
+    const icon = div.querySelector(`#comments-${post.id} .toggle-icon`);
+    if (icon) icon.classList.toggle('rotate-180');
 
-      if (!commentsLoaded) {
-        fetch(`${getBaseUrl()}/posts/${post.id}/comments`)
-          .then(res => {
-            if (!res.ok) throw new Error("Failed to load comments");
-            return res.json();
-          })
-          .then(data => {
-            commentList.innerHTML = '';
-            (data.comments || []).forEach(c => {
-              const p = document.createElement('p');
-              p.className = 'comment-line';
-              p.innerHTML = `
-                <strong>${capitalizeName(c.author)}</strong>: ${c.text}
-                <span style="font-size:.8em; color:#888">(${c.date})</span>
-              `;
-              commentList.appendChild(p);
-            });
-            const countEl = div.querySelector(`#comments-${post.id} .comment-count`);
-            if (countEl) countEl.textContent = data.comment_count || (data.comments?.length || 0);
-            commentsLoaded = true;
-          })
-          .catch(err => {
-            commentList.innerHTML = `<p style="color:red;">Error loading comments</p>`;
-            console.error(err);
+    if (!commentsLoaded) {
+      fetch(`${getBaseUrl()}/posts/${post.id}/comments`)
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to load comments");
+          return res.json();
+        })
+        .then(data => {
+          commentList.innerHTML = '';
+          const username = (currentUser.username || localStorage.getItem("username") || "").toLowerCase();
+          const isAdmin = localStorage.getItem("isAdmin") === "true";
+
+          (data.comments || []).forEach(c => {
+            const p = document.createElement('p');
+            p.className = 'comment-line';
+            const isOwner = (c.author || "").toLowerCase() === username;
+
+            p.innerHTML = `
+              <strong>${capitalizeName(c.author)}</strong>: ${c.text}
+              <span style="font-size:.8em; color:#888">(${c.date})</span>
+              ${isOwner || isAdmin
+                ? `<span style="cursor:pointer; color:red; margin-left:10px" onclick="deleteComment(${c.id}, ${post.id})">❌</span>`
+                : ''}
+            `;
+            commentList.appendChild(p);
           });
-      }
-    });
-  }
+
+          const countEl = div.querySelector(`#comments-${post.id} .comment-count`);
+          if (countEl) countEl.textContent = data.comment_count || (data.comments?.length || 0);
+          commentsLoaded = true;
+        })
+        .catch(err => {
+          commentList.innerHTML = `<p style="color:red;">Error loading comments</p>`;
+          console.error(err);
+        });
+    }
+  });
+}
+
 
   // AI Translated badge
   if (isTranslatedCopy && !isOriginalLang) {
@@ -743,7 +757,7 @@ function loadComments(postId) {
     })
     .then(data => {
       const comments = data.comments || [];
-const commentCount = data.comment_count || comments.length;
+      const commentCount = data.comment_count || comments.length;
 
       const list = document.getElementById(`comment-list-${postId}`);
       if (!list) {
@@ -753,11 +767,17 @@ const commentCount = data.comment_count || comments.length;
 
       list.innerHTML = '';
 
-      const currentUser = localStorage.getItem("username") || "";
+      // Get username string from global currentUser or localStorage
+      const username = (currentUser.username || localStorage.getItem("username") || "").toLowerCase();
       const isAdmin = localStorage.getItem("isAdmin") === "true";
 
+      console.log("Logged in username (lowercase):", username);
+
       comments.forEach(c => {
-        const isOwner = (c.author || "").toLowerCase() === currentUser.toLowerCase();
+  const authorLower = (c.author || "").toLowerCase();
+  console.log(`Comment author: "${c.author}" (lowercase: "${authorLower}")`);
+  const isOwner = authorLower === currentUser.username;
+  console.log(`Is owner? ${isOwner}`);
 
         const p = document.createElement('p');
         p.className = 'comment-line';
@@ -778,6 +798,7 @@ const commentCount = data.comment_count || comments.length;
       console.error(`🔥 Error loading comments for post ${postId}:`, err);
     });
 }
+
 
 function searchPosts() {
   const query = document.getElementById('search-input').value.trim();
@@ -1006,15 +1027,15 @@ function submitComment(postId) {
   })
   .then(d => {
     const list = document.getElementById(`comment-list-${postId}`);
-    const currentUser = localStorage.getItem('username');
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    const username = (currentUser.username || localStorage.getItem('username') || "").toLowerCase();
+const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
     const c = d.comment;
     if (!c) return alert("Comment submitted, but awaiting review.");
 
     const p = document.createElement('p');
     p.className = 'comment-line';
-    const showDelete = currentUser && (c.author.toLowerCase() === currentUser.toLowerCase() || isAdmin);
+    const showDelete = username && (c.author.toLowerCase() === username || isAdmin);
 
     p.innerHTML = `
       <strong>${c.author}</strong>: ${c.text}
@@ -1186,6 +1207,8 @@ function submitLogin() {
     saveToken(d.token);
     localStorage.setItem('username', u.toLowerCase());
 
+    // *** Add this line: ***
+    currentUser.username = u.toLowerCase();
 
     // ✅ Try to fetch admin info before proceeding
     try {
@@ -1200,12 +1223,12 @@ function submitLogin() {
         } else {
           localStorage.removeItem('isAdmin');
         }
-        // ✅ ADD THIS to show email input
+        // ✅ Show email input section
         const freshUser = await fetch(`${base}/user`, {
-  headers: { Authorization: `Bearer ${getToken()}` }
-}).then(r => r.json());
+          headers: { Authorization: `Bearer ${getToken()}` }
+        }).then(r => r.json());
 
-showEmailSection(freshUser);
+        showEmailSection(freshUser);
 
       } else {
         console.warn("Warning: Failed to fetch /me. Status:", res.status);
@@ -1221,6 +1244,7 @@ showEmailSection(freshUser);
   })
   .catch(() => alert('Login request failed'));
 }
+
 
 function submitSignup() {
   const base = getBaseUrl().replace(/\/+$/, '');

@@ -9,7 +9,6 @@ load_dotenv(dotenv_path)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "blog.db")
-print("Using DB path:", DB_PATH)
 
 print("POSTGRES_USER:", os.getenv("POSTGRES_USER"))
 print("POSTGRES_PASSWORD:", os.getenv("POSTGRES_PASSWORD"))
