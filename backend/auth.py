@@ -12,7 +12,22 @@ import re
 TOKENS = {}
 
 def is_strong_password(password):
-    # Minimum 8 characters, at least 1 uppercase, 1 lowercase, 1 digit, 1 special char
+    """
+        Check if the given password meets strength requirements.
+
+        Requirements:
+            - Minimum 8 characters
+            - At least 1 uppercase letter
+            - At least 1 lowercase letter
+            - At least 1 digit
+            - At least 1 special character (!@#$%^&*(),.?":{}|<>)
+
+        Args:
+            password (str): Password string to validate.
+
+        Returns:
+            bool: True if password is strong, False otherwise.
+        """
     if len(password) < 8:
         return False
     if not re.search(r"[A-Z]", password):
@@ -26,12 +41,39 @@ def is_strong_password(password):
     return True
 
 def validate_login(username, password):
+    """
+        Validate user credentials for login.
+
+        Args:
+            username (str): Username.
+            password (str): Password.
+
+        Returns:
+            tuple:
+                bool: True if credentials are valid, False otherwise.
+                dict: Error message dict if invalid.
+                int: HTTP status code.
+        """
     user = session.query(User).filter_by(username=username).first()
     if not user or not check_password_hash(user.password, password):
         return False, {"error": "Invalid username or password"}, 401
     return True, {}, 200
 
 def validate_registration(username, password, email=None):
+    """
+        Validate user registration data and create user if valid.
+
+        Args:
+            username (str): Desired username.
+            password (str): Password.
+            email (str, optional): User's email address.
+
+        Returns:
+            tuple:
+                bool: True if registration successful, False otherwise.
+                dict: Error message dict if invalid.
+                int: HTTP status code.
+        """
     existing_user = session.query(User).filter_by(username=username).first()
     if existing_user:
         return False, {"error": "User already exists"}, 400
@@ -48,6 +90,15 @@ def validate_registration(username, password, email=None):
     return True, {}, 201
 
 def generate_jwt(username):
+    """
+        Generate a JWT token for a given username.
+
+        Args:
+            username (str): Username to encode in token.
+
+        Returns:
+            str: JWT token string.
+        """
     payload = {
         "sub": username.strip().lower(),
         "exp": datetime.utcnow() + timedelta(days=1)
@@ -56,6 +107,18 @@ def generate_jwt(username):
     return token
 
 def decode_jwt(token):
+    """
+        Decode and verify a JWT token.
+
+        Args:
+            token (str): JWT token string.
+
+        Raises:
+            Exception: If token is expired or invalid.
+
+        Returns:
+            dict: Decoded JWT payload.
+        """
     try:
         payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
         return payload
@@ -65,6 +128,14 @@ def decode_jwt(token):
         raise Exception("Invalid token")
 
 def register_user():
+    """
+        Flask route handler to register a new user.
+
+        Expects JSON payload with 'username', 'password', and optional 'email'.
+
+        Returns:
+            tuple: JSON response and HTTP status code.
+        """
     data = request.get_json() or {}
     username = data.get("username", "").strip().lower()
     email = data.get("email", "").strip().lower() or None  # Optional
@@ -74,6 +145,14 @@ def register_user():
     return {"message": "User registered successfully"}, code
 
 def login_user():
+    """
+        Flask route handler to authenticate a user and return a JWT token.
+
+        Expects JSON payload with 'username' and 'password'.
+
+        Returns:
+            tuple: JSON response containing login message and token, plus HTTP status.
+        """
     data = request.get_json() or {}
     username = data.get("username", "").strip().lower()  # ✅ Normalize
     ok, resp, code = validate_login(username, data.get("password"))
@@ -84,6 +163,15 @@ def login_user():
     return {"message": "Login successful", "token": token}, 200
 
 def token_required(f):
+    """
+        Decorator to require JWT authentication for Flask routes.
+
+        Verifies 'Authorization' header for Bearer token, decodes token, and
+        loads user from database. Passes the user as first argument to the route.
+
+        Returns:
+            function: Decorated function that enforces token authentication.
+        """
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get("Authorization", "").replace("Bearer ", "")

@@ -16,6 +16,15 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def validate_post_data(data):
+    """
+        Validate post data fields for title, content, and category.
+
+        Args:
+            data (dict): Post data containing 'title', 'content', and 'category'.
+
+        Returns:
+            dict or None: Returns error dict if validation fails, else None.
+        """
     if not data:
         return {"error": "Enter a title, content, and category"}
 
@@ -34,6 +43,13 @@ def validate_post_data(data):
 
 
 def load_posts():
+    """
+        Load all posts from the database with dynamic like counts and comments.
+
+        Returns:
+            list of dict: List of posts with keys like id, author, title, content,
+                          category, date, updated, likes, and comments.
+        """
     """Load all blog posts from the database as dicts, including dynamic like counts."""
     posts = session.query(Post).all()
     result = []
@@ -66,6 +82,16 @@ def load_posts():
 
 
 def save_post(post_data):
+    """
+        Save a new post to the database.
+
+        Args:
+            post_data (dict): Dictionary with post data including 'author',
+                              'title', 'content', 'category', and optional 'likes'.
+
+        Returns:
+            int: ID of the newly created post.
+        """
     """Add a new post to the database."""
     post = Post(
         author=post_data["author"],
@@ -80,6 +106,16 @@ def save_post(post_data):
 
 
 def delete_post_db(post_id, current_user):
+    """
+        Delete a post if it exists and the current user is the author.
+
+        Args:
+            post_id (int): ID of the post to delete.
+            current_user (User): User requesting deletion.
+
+        Returns:
+            tuple: JSON response dict and HTTP status code.
+        """
     """Delete a post from the database if the current user is the author."""
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
@@ -94,6 +130,16 @@ def delete_post_db(post_id, current_user):
 
 
 def update_post_db(post_id, data):
+    """
+        Update the title, content, category, and updated timestamp of a post.
+
+        Args:
+            post_id (int): ID of the post to update.
+            data (dict): Dictionary containing 'title', 'content', and 'category'.
+
+        Returns:
+            Post or None: Updated Post object if found, else None.
+        """
     post = session.query(Post).filter_by(id=post_id).first()
     if post:
         post.title = data['title']
@@ -106,6 +152,15 @@ def update_post_db(post_id, data):
 
 
 def like_post_db(post_id):
+    """
+        Increment the like count of a post.
+
+        Args:
+            post_id (int): ID of the post to like.
+
+        Returns:
+            tuple: JSON response dict and HTTP status code.
+        """
     """Increment the like count of a post in the database."""
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
@@ -117,6 +172,18 @@ def like_post_db(post_id):
 
 
 def send_email(app, to_email, subject, body):
+    """
+        Send an email using SMTP or print to console in development mode.
+
+        Args:
+            app (Flask): Flask application context.
+            to_email (str): Recipient email address.
+            subject (str): Email subject.
+            body (str): Email body content.
+
+        Returns:
+            None
+        """
     with app.app_context():
         if current_app.config.get("ENV") == "development":
             print(f"📧 Dev mode: would send email to {to_email}:\nSubject: {subject}\n{body}")
@@ -160,6 +227,16 @@ def send_email(app, to_email, subject, body):
 
 
 def moderate_post(title, content):
+    """
+        Use GPT-4o-mini to moderate post content.
+
+        Args:
+            title (str): Post title.
+            content (str): Post content.
+
+        Returns:
+            str: One of 'approved', 'rejected', or 'needs_review'.
+        """
     """Moderate a post using gpt-4o-mini (educational-tier access)."""
     prompt = (
         '''You are a helpful but balanced content moderator.
@@ -196,10 +273,25 @@ def moderate_post(title, content):
 openai_usage_counter = {}
 
 def get_request_identity():
+    """
+        Get a unique identifier for the requestor based on Authorization header
+        or IP address.
+
+        Returns:
+            str: Identifier string.
+        """
     return request.headers.get("Authorization", "anonymous") or get_remote_address()
 
 def can_call_openai(limit=10):
-    """Allow only `limit` requests per hour per user/IP"""
+    """
+    Rate limit OpenAI API calls to a maximum number per hour per user/IP.
+
+    Args:
+        limit (int): Maximum allowed calls per hour.
+
+    Returns:
+        bool: True if call is allowed, False if limit exceeded.
+    """
     from time import time
     identity = get_request_identity()
     now = time()

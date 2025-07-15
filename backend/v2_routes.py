@@ -29,6 +29,12 @@ HUME_KEY = os.getenv("HUME_KEY")  # set in .env
 @v2.route("/api/v2/status")
 @swag_from("swagger_docs/status_get.yml")
 def status():
+    """
+        Get API status and count of all posts.
+
+        Returns:
+            dict: JSON response with "status" and total "post_count".
+        """
     from backend.models import Post
     posts = session.query(Post).all()
     return {
@@ -41,6 +47,16 @@ def status():
 @swag_from("swagger_docs/generate_tts_post.yml")
 @token_required
 def gen_tts_hume(current_user):
+    """
+        Generate a Text-To-Speech (TTS) audio file using Hume API for given text.
+
+        Args:
+            current_user (User): Authenticated user invoking this endpoint.
+
+        Returns:
+            Response: Audio file in MP3 format if successful,
+                      JSON error message otherwise.
+        """
     text = request.json.get("text", "")
     if not text:
         return jsonify({"error": "No text provided"}), 400
@@ -85,11 +101,26 @@ def gen_tts_hume(current_user):
 @swag_from("swagger_docs/tts_demo_status_get.yml")
 @token_required
 def tts_demo_status(current_user):
+    """
+        Check if the current user has already used the TTS demo.
+
+        Args:
+            current_user (User): Authenticated user.
+
+        Returns:
+            dict: JSON response indicating TTS demo usage status.
+        """
     session.refresh(current_user)
     return jsonify({"used_demo": current_user.tts_demo_used})
 
 
 def get_current_user_from_token():
+    """
+        Extract and return the current user from JWT token in Authorization header.
+
+        Returns:
+            User or None: User object if token is valid, else None.
+        """
     token = request.headers.get("Authorization", "").replace("Bearer ", "")
     try:
         payload = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
@@ -101,6 +132,15 @@ def get_current_user_from_token():
 
 
 def get_user_from_token_value(token):
+    """
+        Extract and return user from given JWT token string.
+
+        Args:
+            token (str): JWT token.
+
+        Returns:
+            User or None: User object if token is valid, else None.
+        """
     try:
         payload = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
         username = payload["sub"]
@@ -114,6 +154,15 @@ def get_user_from_token_value(token):
 @swag_from("swagger_docs/user_get.yml")
 @token_required
 def get_user(current_user):
+    """
+        Get information about the current authenticated user.
+
+        Args:
+            current_user (User): Authenticated user.
+
+        Returns:
+            dict: JSON with username, email, and notification preference.
+        """
     return jsonify({
         "username": current_user.username,
         "email": current_user.email,
@@ -126,6 +175,15 @@ def get_user(current_user):
 @swag_from("swagger_docs/user_email_put.yml")
 @token_required
 def update_email(current_user):
+    """
+        Update the email address and notification preference for the user.
+
+        Args:
+            current_user (User): Authenticated user.
+
+        Returns:
+            dict: JSON response with updated user info or error message.
+        """
     data = request.get_json()
     new_email = data.get("email")
     notify_pref = data.get("notifications_enabled")  # Optional from frontend
@@ -155,6 +213,15 @@ def update_email(current_user):
 @swag_from("swagger_docs/user_email_delete.yml")
 @token_required
 def delete_email(current_user):
+    """
+        Delete the user's email and disable notifications.
+
+        Args:
+            current_user (User): Authenticated user.
+
+        Returns:
+            dict: JSON message confirming deletion or error.
+        """
     current_user.email = None
     current_user.notifications_enabled = False
     try:
@@ -174,6 +241,15 @@ def delete_email(current_user):
 @swag_from("swagger_docs/user_notifications_put.yml")
 @token_required
 def toggle_notification_setting(current_user):
+    """
+        Enable or disable email notifications for the current user.
+
+        Args:
+            current_user (User): Authenticated user.
+
+        Returns:
+            dict: JSON message with updated notification setting or error.
+        """
     data = request.get_json()
     enabled = data.get("enabled")
 
@@ -198,6 +274,15 @@ def toggle_notification_setting(current_user):
 @swag_from("swagger_docs/feedback_post.yml")
 @token_required
 def submit_feedback(current_user):
+    """
+        Submit user feedback, send it via email to the site admin.
+
+        Args:
+            current_user (User): Authenticated user.
+
+        Returns:
+            dict: JSON success message or error.
+        """
     print(f"Received feedback from user {current_user.username}")
     data = request.get_json() or {}
     rating = data.get("rating")
@@ -248,6 +333,23 @@ post_schema = {
 @swag_from("swagger_docs/posts_get.yml")
 @limiter.exempt
 def get_posts_v2():
+    """
+        Retrieve a paginated, optionally filtered, sorted list of posts,
+        including translation and user-specific data.
+
+        Query Parameters:
+            lang (str): Language code for translation (default: "en").
+            sort (str): Field to sort by (default: "date").
+            direction (str): Sort direction "asc" or "desc" (default: "desc").
+            category (str): Filter by single category.
+            categories (str): Filter by comma-separated categories.
+            page (int): Pagination page number (default: 1).
+            limit (int): Number of posts per page (default: 50).
+            q (str): Search query to filter posts by title or content.
+
+        Returns:
+            dict: Paginated list of posts with metadata or error.
+        """
     print("✅ /api/v2/posts was called")
     try:
         lang = request.args.get("lang", "en")
@@ -432,6 +534,18 @@ def get_posts_v2():
 @v2.route("/posts/<int:post_id>/translate")
 @swag_from("swagger_docs/posts_translate_get.yml")
 def translate_individual_post(post_id):
+    """
+        Translate a single post to the requested language using cached or AI-generated translation.
+
+        Args:
+            post_id (int): ID of the post to translate.
+
+        Query Parameters:
+            lang (str): Target language code (default: "en").
+
+        Returns:
+            dict: Translated title and content or error.
+        """
     lang = request.args.get("lang", "en")
     post = session.query(Post).filter_by(id=post_id).first()
 
@@ -472,6 +586,15 @@ def translate_individual_post(post_id):
 @token_required
 @limiter.limit("5 per minute")
 def add_post_v2(current_user):
+    """
+        Create a new post with validation, moderation, and optional translation.
+
+        Args:
+            current_user (User): Authenticated user creating the post.
+
+        Returns:
+            dict: Response containing post ID, review status, messages, or errors.
+        """
     data = request.get_json()
 
     # ✅ 1. Validate input before doing anything else
@@ -558,6 +681,16 @@ def add_post_v2(current_user):
 @token_required
 @limiter.limit("5 per minute") # Allows productive work but prevents Spam
 def update_post_v2(current_user, post_id):
+    """
+        Update an existing post, with validation, moderation, and translation.
+
+        Args:
+            current_user (User): Authenticated user.
+            post_id (int): ID of the post to update.
+
+        Returns:
+            dict: Response with update status, messages, or errors.
+        """
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return jsonify({"error": "Post not found"}), 404
@@ -642,6 +775,16 @@ def update_post_v2(current_user, post_id):
 @swag_from("swagger_docs/posts_delete.yml")
 @token_required
 def delete_post_v2(current_user, post_id):
+    """
+        Delete a post if the current user is the author or admin.
+
+        Args:
+            current_user (User): Authenticated user.
+            post_id (int): ID of the post to delete.
+
+        Returns:
+            dict: Confirmation message or error.
+        """
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return jsonify({"error": "Post not found"}), 404
@@ -659,6 +802,12 @@ def delete_post_v2(current_user, post_id):
 @swag_from("swagger_docs/categories_get.yml")
 @limiter.exempt
 def get_categories_v2():
+    """
+        Get a sorted list of distinct post categories.
+
+        Returns:
+            list: Categories as JSON array.
+        """
     categories = session.query(Post.category).distinct().all()
     return jsonify(sorted([c[0] for c in categories if c[0]]))
 
@@ -667,6 +816,16 @@ def get_categories_v2():
 @swag_from(os.path.join(BASE_DIR, "swagger_docs", "posts_search_get.yml"))
 @limiter.limit("10 per minute")
 def search_posts_v2():
+    """
+        Search posts by title, content, or author with optional translation support.
+
+        Query Parameters:
+            q (str): Search query (required).
+            lang (str): Language code for searching translations (default: "en").
+
+        Returns:
+            list: Matching posts or error if none found.
+        """
     query = (
         request.args.get("q") or
         request.args.get("title") or
@@ -736,6 +895,16 @@ def search_posts_v2():
 @limiter.limit("20 per minute")
 @token_required
 def like_post(current_user, post_id):
+    """
+        Toggle like/unlike status of a post for the current user.
+
+        Args:
+            current_user (User): Authenticated user.
+            post_id (int): Post ID to like or unlike.
+
+        Returns:
+            dict: Updated like count and status message or error.
+        """
     try:
         post = session.query(Post).filter_by(id=post_id).first()
         if not post:
@@ -788,6 +957,16 @@ def like_post(current_user, post_id):
 @swag_from("swagger_docs/comments_post.yml")
 @token_required
 def add_comment_v2(current_user, post_id):
+    """
+        Add a comment to a post with AI moderation and notification to author.
+
+        Args:
+            current_user (User): Authenticated user.
+            post_id (int): ID of the post to comment on.
+
+        Returns:
+            dict: Comment details or moderation status message.
+        """
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return jsonify({"error": "Post not found"}), 404
@@ -851,6 +1030,15 @@ def add_comment_v2(current_user, post_id):
 @swag_from("swagger_docs/comments_get.yml")
 @limiter.exempt
 def get_comments_v2(post_id):
+    """
+        Get all comments for a post.
+
+        Args:
+            post_id (int): Post ID to retrieve comments for.
+
+        Returns:
+            dict: List of comments with count or error.
+        """
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return jsonify({"error": "Post not found"}), 404
@@ -876,6 +1064,16 @@ def get_comments_v2(post_id):
 @swag_from("swagger_docs/comments_delete.yml")
 @token_required
 def delete_comment(user, comment_id):
+    """
+        Delete a comment if authorized (author or admin).
+
+        Args:
+            user (User): Authenticated user.
+            comment_id (int): ID of comment to delete.
+
+        Returns:
+            dict: Confirmation or error message.
+        """
     comment = session.query(Comment).get(comment_id)
 
     if not comment:
@@ -896,6 +1094,12 @@ def delete_comment(user, comment_id):
 @limiter.limit("3 per minute") # Vulnerable for Brute-Force-Attacks
 @swag_from("swagger_docs/register_post.yml")
 def register_v2():
+    """
+        Register a new user account.
+
+        Returns:
+            Response: Result of registration.
+        """
     return register_user()
 
 # -------------------------
@@ -905,6 +1109,12 @@ def register_v2():
 @limiter.limit("5 per minute") # Vulnerable for Brute-Force-Attacks
 @swag_from("swagger_docs/login_post.yml")
 def login_v2():
+    """
+        Authenticate a user and provide a JWT token.
+
+        Returns:
+            Response: Result of login with token or error.
+        """
     return login_user()
 
 
@@ -912,6 +1122,15 @@ def login_v2():
 @swag_from("swagger_docs/me_get.yml")
 @token_required
 def get_current_user(current_user):
+    """
+        Get current authenticated user information.
+
+        Args:
+            current_user (User): Authenticated user.
+
+        Returns:
+            dict: User details including username, email, and admin status.
+        """
     return jsonify({
         "username": current_user.username,
         "email": current_user.email,
@@ -926,7 +1145,15 @@ def get_current_user(current_user):
 @limiter.limit("3 per minute")
 @swag_from("swagger_docs/secret_get.yml")
 def secret_v2(current_user):
-    """Protected route to test token-based authentication."""
+    """
+        Protected route to verify token-based authentication.
+
+        Args:
+            current_user (User): Authenticated user.
+
+        Returns:
+            dict: Welcome message with user info.
+        """
     return jsonify({"message": f"Welcome, {current_user}!"}), 200
 
 
@@ -938,6 +1165,15 @@ def secret_v2(current_user):
 @token_required
 @limiter.limit("3 per minute")
 def view_openai_usage(current_user):
+    """
+        Admin-only route to view OpenAI API usage aggregated by user and hour.
+
+        Args:
+            current_user (User): Authenticated user.
+
+        Returns:
+            dict: Usage statistics or unauthorized error.
+        """
     if not current_user.is_admin:
         return jsonify({"error": "Unauthorized"}), 403
 
@@ -963,6 +1199,12 @@ def view_openai_usage(current_user):
 @v2.route("/ai-usage", methods=["GET"])
 @swag_from("swagger_docs/ai_usage_get.yml")
 def get_ai_usage_status():
+    """
+        Get the remaining OpenAI API calls available in the current time window.
+
+        Returns:
+            dict: Remaining allowed OpenAI API calls.
+        """
     from utils import openai_usage_counter, can_call_openai
     remaining = max(0, 10 - sum(len(v) for v in openai_usage_counter.values()))
     return jsonify({"remaining_calls": remaining})
