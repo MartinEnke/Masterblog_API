@@ -1,0 +1,35 @@
+tags:
+  - User
+summary: Delete user email
+description: Deletes the current user's email address and disables notifications. Requires authentication.
+responses:
+  '200':
+    description: Email deleted successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Email deleted successfully.
+            username:
+              type: string
+              example: johndoe
+            email:
+              type: string
+              nullable: true
+              example: null
+            notifications_enabled:
+              type: boolean
+              example: false
+  '500':
+    description: Failed to delete email
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Failed to delete email.

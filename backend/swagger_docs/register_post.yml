@@ -1,0 +1,51 @@
+tags:
+  - Auth
+summary: Register a new user
+description: Creates a new user account with a username and password.
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - username
+          - password
+        properties:
+          username:
+            type: string
+            example: new_user
+          password:
+            type: string
+            example: securepassword123
+responses:
+  '200':
+    description: User registered successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: User registered successfully
+  '400':
+    description: Validation error or username taken
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Username already exists
+  '429':
+    description: Too many requests (rate limit)
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Too many requests, try again later.

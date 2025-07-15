@@ -1,0 +1,54 @@
+tags:
+  - Auth
+summary: User login
+description: Authenticates a user and returns a token.
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - username
+          - password
+        properties:
+          username:
+            type: string
+            example: existing_user
+          password:
+            type: string
+            example: mypassword123
+responses:
+  '200':
+    description: Login successful, token returned
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Login successful
+            token:
+              type: string
+              example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+  '401':
+    description: Unauthorized – invalid credentials
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Invalid username or password
+  '429':
+    description: Too many requests (rate limit)
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Too many requests, try again later.

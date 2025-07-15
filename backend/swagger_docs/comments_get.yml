@@ -1,0 +1,49 @@
+tags:
+  - Comments
+summary: Get comments for a post
+description: Retrieves all comments for a specific blog post.
+parameters:
+  - name: post_id
+    in: path
+    required: true
+    schema:
+      type: integer
+    description: ID of the post to fetch comments for
+responses:
+  '200':
+    description: List of comments
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            comments:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 101
+                  author:
+                    type: string
+                    example: Lee
+                  text:
+                    type: string
+                    example: Great post! Thanks for sharing.
+                  date:
+                    type: string
+                    example: April 18, 2025
+            comment_count:
+              type: integer
+              example: 3
+  '404':
+    description: Post not found
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Post not found"

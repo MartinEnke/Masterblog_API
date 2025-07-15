@@ -40,15 +40,20 @@ app.config["SMTP_USERNAME"] = os.getenv("SMTP_USERNAME")
 app.config["SMTP_PASSWORD"] = os.getenv("SMTP_PASSWORD")
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-app.register_blueprint(v2_blueprint, url_prefix="/api/v2")
+
 app.config['SWAGGER'] = {
     "title": "The Quiet Almanac API",
     "uiversion": 3,
-    "description": "A versioned Flask-based blog API with token authentication, rate limiting, and Swagger docs.",
+    "description": (
+        "A versioned Flask blog API with secure token authentication, "
+        "rate limiting, and built-in multilingual support. "
+        "Fully documented with Swagger for seamless developer use."
+    ),
     "version": "2.0",
     "swagger_ui": True,
 }
 Swagger(app)
+app.register_blueprint(v2_blueprint, url_prefix="/api/v2")
 CORS(app, origins="*", supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
 limiter.init_app(app)
 

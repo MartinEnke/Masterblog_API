@@ -1,0 +1,54 @@
+tags:
+  - User
+summary: Update user email
+description: Updates the email address and notification preference of the current user. Requires authentication.
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          email:
+            type: string
+            example: newemail@example.com
+          notifications_enabled:
+            type: boolean
+            example: true
+responses:
+  '200':
+    description: Email updated successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+              example: johndoe
+            email:
+              type: string
+              example: newemail@example.com
+            notifications_enabled:
+              type: boolean
+              example: true
+  '400':
+    description: Invalid email address
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Invalid email address
+  '409':
+    description: Email already in use
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: This email is already in use.

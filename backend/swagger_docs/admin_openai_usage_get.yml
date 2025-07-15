@@ -1,0 +1,35 @@
+tags:
+  - Admin
+summary: View OpenAI usage statistics
+description: Returns OpenAI usage counts per user per hour. Requires admin privileges.
+responses:
+  '200':
+    description: Usage summary returned successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: integer
+  '403':
+    description: Unauthorized access
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Unauthorized
+  '401':
+    description: Unauthorized – missing or invalid token
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Token is missing or invalid

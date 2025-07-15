@@ -1,0 +1,52 @@
+tags:
+  - Feedback
+summary: Submit user feedback
+description: Allows authenticated users to submit feedback with a rating and optional text.
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - rating
+        properties:
+          rating:
+            type: integer
+            minimum: 1
+            maximum: 5
+            example: 4
+          feedback:
+            type: string
+            example: Great app, loving it!
+responses:
+  '201':
+    description: Feedback submitted successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Thank you for your feedback! It has been sent.
+  '400':
+    description: Invalid rating
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Rating must be an integer between 1 and 5
+  '500':
+    description: Failed to send feedback
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              error: "Failed to send feedback email: error message"

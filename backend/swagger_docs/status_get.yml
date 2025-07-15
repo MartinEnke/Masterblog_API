@@ -1,0 +1,18 @@
+tags:
+  - Status
+summary: API status check
+description: Returns a simple status and total post count.
+responses:
+  '200':
+    description: Status information
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: ok
+            post_count:
+              type: integer
+              example: 42

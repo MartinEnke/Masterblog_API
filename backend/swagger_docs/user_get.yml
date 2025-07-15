@@ -1,0 +1,31 @@
+tags:
+  - User
+summary: Get current user info
+description: Returns the current user's username, email, and notification preference. Requires authentication.
+responses:
+  '200':
+    description: User information retrieved successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+              example: johndoe
+            email:
+              type: string
+              example: johndoe@example.com
+            notifications_enabled:
+              type: boolean
+              example: true
+  '401':
+    description: Unauthorized – missing or invalid token
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Token is missing or invalid

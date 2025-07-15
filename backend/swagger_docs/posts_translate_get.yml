@@ -1,0 +1,54 @@
+tags:
+  - Posts
+  - Translations
+summary: Translate individual post
+description: Returns translated title and content for a post. Uses AI fallback with rate limit.
+parameters:
+  - name: post_id
+    in: path
+    required: true
+    schema:
+      type: integer
+    description: ID of the post to translate
+  - name: lang
+    in: query
+    schema:
+      type: string
+    description: 'Language code to translate to (default: "en")'
+responses:
+  '200':
+    description: Translated post data
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            title:
+              type: string
+              example: "Translated Title"
+            content:
+              type: string
+              example: "Translated content here."
+            lang:
+              type: string
+              example: "fr"
+  '404':
+    description: Post not found
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Post not found"
+  '429':
+    description: AI translation rate limit exceeded
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "AI translation limit reached. Try again later."

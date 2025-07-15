@@ -1,0 +1,71 @@
+tags:
+  - Posts
+summary: Create a new post
+description: Adds a new blog post (requires authentication).
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - title
+          - content
+          - category
+        properties:
+          title:
+            type: string
+            example: My first post
+          content:
+            type: string
+            example: This is a great post
+          category:
+            type: string
+            example: General
+          lang:
+            type: string
+            description: Optional UI language code
+            example: en
+responses:
+  '201':
+    description: Post successfully created
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            post_id:
+              type: integer
+              example: 123
+            review_status:
+              type: string
+              example: approved
+            message:
+              type: string
+              example: "✅ Post added successfully and is now visible to others."
+            warning:
+              type: string
+              example: "⚠️ The text appears to be in es, not en."
+  '400':
+    description: Validation failed
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Invalid data provided"
+  '429':
+    description: AI moderation limit reached
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "AI moderation temporarily unavailable. Too many requests this hour."
+            remaining_calls:
+              type: integer
+              example: 0

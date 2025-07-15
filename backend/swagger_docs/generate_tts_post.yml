@@ -1,0 +1,54 @@
+tags:
+  - TTS
+summary: Generate TTS audio
+description: Generates an audio file from provided text. Requires authentication and one-time demo usage.
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - text
+        properties:
+          text:
+            type: string
+            example: Hello, this is a test of the TTS system.
+responses:
+  '200':
+    description: Audio generated successfully (audio/mpeg)
+    content:
+      audio/mpeg:
+        schema:
+          type: string
+          format: binary
+  '400':
+    description: No text provided
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: No text provided
+  '403':
+    description: TTS demo already used
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: TTS demo already used
+  '500':
+    description: Internal server error
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Internal server error

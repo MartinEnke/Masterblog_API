@@ -1,0 +1,31 @@
+tags:
+  - User
+summary: Get logged-in user details
+description: Returns username, email, and admin status of the authenticated user.
+responses:
+  '200':
+    description: User details retrieved successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+              example: johndoe
+            email:
+              type: string
+              example: johndoe@example.com
+            is_admin:
+              type: boolean
+              example: false
+  '401':
+    description: Unauthorized – invalid or missing token
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Token is missing or invalid

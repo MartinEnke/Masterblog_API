@@ -1,0 +1,98 @@
+tags:
+  - Posts
+summary: Update a blog post
+description: Updates the content of an existing blog post. Requires authentication and ownership.
+parameters:
+  - name: post_id
+    in: path
+    required: true
+    schema:
+      type: integer
+    description: The ID of the post to update
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - title
+          - content
+          - category
+        properties:
+          title:
+            type: string
+            example: Updated Post Title
+          content:
+            type: string
+            example: This is the updated content of the blog post.
+          category:
+            type: string
+            example: UpdatedCategory
+          lang:
+            type: string
+            description: Optional UI language code
+            example: en
+responses:
+  '200':
+    description: Post updated successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            post_id:
+              type: integer
+              example: 1
+            review_status:
+              type: string
+              example: approved
+            message:
+              type: string
+              example: "✅ Post updated and remains publicly visible."
+            warning:
+              type: string
+              example: "⚠️ The text appears to be in fr, not en."
+  '400':
+    description: Invalid request
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Validation error"
+  '403':
+    description: Not authorized
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Unauthorized"
+  '404':
+    description: Post not found
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Post not found"
+  '429':
+    description: AI moderation limit reached
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "AI moderation temporarily unavailable. Too many requests this hour."
+            remaining_calls:
+              type: integer
+              example: 0

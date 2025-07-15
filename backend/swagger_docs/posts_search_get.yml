@@ -1,0 +1,70 @@
+tags:
+  - Posts
+summary: Search posts by keyword
+description: Searches for blog posts by matching text in title, content, or author.
+parameters:
+  - name: q
+    in: query
+    required: true
+    schema:
+      type: string
+    description: Keyword to search for
+  - name: lang
+    in: query
+    schema:
+      type: string
+    description: Language code for search, defaults to "en"
+responses:
+  '200':
+    description: List of matching posts
+    content:
+      application/json:
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 5
+              author:
+                type: string
+                example: Lee
+              title:
+                type: string
+                example: Understanding AI
+              content:
+                type: string
+                example: This post explores the basics of artificial intelligence...
+              category:
+                type: string
+                example: Technology
+              date:
+                type: string
+                example: April 10, 2025
+              updated:
+                type: string
+                example: April 12, 2025
+              likes:
+                type: integer
+                example: 42
+  '400':
+    description: Missing query parameter
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Missing query parameter `q`
+  '404':
+    description: No matching posts found
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: No posts found matching 'keyword'

@@ -1,0 +1,48 @@
+tags:
+  - Posts
+summary: Like or unlike a post
+description: Toggles like status for a post. Requires authentication.
+parameters:
+  - name: post_id
+    in: path
+    required: true
+    schema:
+      type: integer
+    description: ID of the post to like or unlike
+responses:
+  '200':
+    description: Like status toggled successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "❤️ username liked post 5"
+            likes:
+              type: integer
+              example: 13
+            liked_by_current_user:
+              type: boolean
+              example: true
+  '404':
+    description: Post not found
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Post not found"
+  '500':
+    description: Server error
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Something went wrong"

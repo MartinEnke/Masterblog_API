@@ -1,0 +1,48 @@
+tags:
+  - User
+summary: Toggle user notification preference
+description: Enables or disables email notifications for the current user. Requires authentication.
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            example: true
+responses:
+  '200':
+    description: Notification preference updated successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Notification preference updated
+            notifications_enabled:
+              type: boolean
+              example: true
+  '400':
+    description: Invalid input
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Invalid 'enabled' value
+  '500':
+    description: Failed to update notification preference
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Failed to update notification preference.

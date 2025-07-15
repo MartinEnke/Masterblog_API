@@ -1,0 +1,104 @@
+tags:
+  - Posts
+summary: Get all blog posts
+description: Returns all blog posts with optional filtering, sorting, and pagination.
+parameters:
+  - name: category
+    in: query
+    schema:
+      type: string
+    description: Filter by a single category
+  - name: categories
+    in: query
+    schema:
+      type: string
+    description: Filter by multiple categories, comma-separated (e.g., Technology,Science)
+  - name: sort
+    in: query
+    schema:
+      type: string
+      enum: [title, author, likes, date, updated]
+    description: Sort by field
+  - name: direction
+    in: query
+    schema:
+      type: string
+      enum: [asc, desc]
+      default: asc
+    description: Sort direction
+  - name: page
+    in: query
+    schema:
+      type: integer
+      default: 1
+    description: Page number
+  - name: limit
+    in: query
+    schema:
+      type: integer
+      default: 5
+    description: Results per page
+responses:
+  '200':
+    description: List of posts
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 5
+            total_posts:
+              type: integer
+              example: 42
+            posts:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  author:
+                    type: string
+                    example: SwaggerUser
+                  title:
+                    type: string
+                    example: Intro to APIs
+                  content:
+                    type: string
+                    example: Let's build a cool API.
+                  category:
+                    type: string
+                    example: Technology
+                  date:
+                    type: string
+                    example: April 18, 2025
+                  likes:
+                    type: integer
+                    example: 12
+                  comment_count:
+                    type: integer
+                    example: 5
+                  translated:
+                    type: boolean
+                    example: true
+                  is_ai_translation:
+                    type: boolean
+                    example: false
+                  original_lang:
+                    type: string
+                    example: en
+                  liked_by_current_user:
+                    type: boolean
+                    example: false
+                  review_status:
+                    type: string
+                    example: approved
+                  is_owner:
+                    type: boolean
+                    example: true

@@ -1,0 +1,42 @@
+tags:
+  - Comments
+summary: Delete a comment
+description: Deletes a comment if the user is the author or admin. Requires authentication.
+parameters:
+  - name: comment_id
+    in: path
+    required: true
+    schema:
+      type: integer
+    description: ID of the comment to delete
+responses:
+  '200':
+    description: Comment deleted successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Comment 42 deleted
+  '403':
+    description: Unauthorized to delete this comment
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Unauthorized to delete this comment
+  '404':
+    description: Comment not found
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Comment not found

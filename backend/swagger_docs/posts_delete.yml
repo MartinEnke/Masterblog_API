@@ -1,0 +1,42 @@
+tags:
+  - Posts
+summary: Delete a blog post
+description: Deletes a blog post. Requires authentication and ownership.
+parameters:
+  - name: post_id
+    in: path
+    required: true
+    schema:
+      type: integer
+    description: ID of the post to delete
+responses:
+  '200':
+    description: Post deleted successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Post deleted"
+  '403':
+    description: Not authorized to delete this post
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Unauthorized"
+  '404':
+    description: Post not found
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Post not found"

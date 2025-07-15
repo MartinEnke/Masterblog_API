@@ -1,4 +1,3 @@
-from flasgger import swag_from
 from datetime import datetime
 from sqlalchemy.orm import joinedload
 from backend.db import session
@@ -18,8 +17,9 @@ import html
 import re
 from threading import Thread
 from sqlalchemy.exc import IntegrityError
-from email_validator import validate_email, EmailNotValidError
+from flasgger import swag_from
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
 
@@ -27,6 +27,7 @@ HUME_KEY = os.getenv("HUME_KEY")  # set in .env
 
 
 @v2.route("/api/v2/status")
+@swag_from("swagger_docs/status_get.yml")
 def status():
     from backend.models import Post
     posts = session.query(Post).all()
@@ -37,6 +38,7 @@ def status():
 
 
 @v2.route("/generate-tts", methods=["POST"])
+@swag_from("swagger_docs/generate_tts_post.yml")
 @token_required
 def gen_tts_hume(current_user):
     text = request.json.get("text", "")
@@ -80,6 +82,7 @@ def gen_tts_hume(current_user):
 
 
 @v2.route("/tts-demo-status", methods=["GET"])
+@swag_from("swagger_docs/tts_demo_status_get.yml")
 @token_required
 def tts_demo_status(current_user):
     session.refresh(current_user)
@@ -108,6 +111,7 @@ def get_user_from_token_value(token):
 
 
 @v2.route("/user", methods=["GET"])
+@swag_from("swagger_docs/user_get.yml")
 @token_required
 def get_user(current_user):
     return jsonify({
@@ -119,6 +123,7 @@ def get_user(current_user):
 
 
 @v2.route("/user/email", methods=["PUT"])
+@swag_from("swagger_docs/user_email_put.yml")
 @token_required
 def update_email(current_user):
     data = request.get_json()
@@ -147,6 +152,7 @@ def update_email(current_user):
 
 
 @v2.route("/user/email", methods=["DELETE"])
+@swag_from("swagger_docs/user_email_delete.yml")
 @token_required
 def delete_email(current_user):
     current_user.email = None
@@ -165,6 +171,7 @@ def delete_email(current_user):
 
 
 @v2.route("/user/notifications", methods=["PUT"])
+@swag_from("swagger_docs/user_notifications_put.yml")
 @token_required
 def toggle_notification_setting(current_user):
     data = request.get_json()
@@ -188,6 +195,7 @@ def toggle_notification_setting(current_user):
 
 
 @v2.route("/feedback", methods=["POST"])
+@swag_from("swagger_docs/feedback_post.yml")
 @token_required
 def submit_feedback(current_user):
     print(f"Received feedback from user {current_user.username}")
@@ -237,48 +245,7 @@ post_schema = {
 # GET /posts
 # -------------------------
 @v2.route("/posts", methods=["GET"])
-@swag_from({
-    "tags": ["Posts"],
-    "summary": "Get all blog posts",
-    "description": "Returns all blog posts with optional filtering, sorting, and pagination.",
-    "parameters": [
-        {"name": "category", "in": "query", "type": "string", "description": "Filter by a single category"},
-        {"name": "categories", "in": "query", "type": "string", "description": "Filter by multiple categories, comma-separated (e.g., Technology,Science)"},
-        {"name": "sort", "in": "query", "type": "string", "enum": ["title", "author", "likes", "date", "updated"], "description": "Sort by field"},
-        {"name": "direction", "in": "query", "type": "string", "enum": ["asc", "desc"], "default": "asc", "description": "Sort direction"},
-        {"name": "page", "in": "query", "type": "integer", "default": 1, "description": "Page number"},
-        {"name": "limit", "in": "query", "type": "integer", "default": 5, "description": "Results per page"}
-    ],
-    "responses": {
-        200: {
-            "description": "List of posts",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "posts": {
-                        "type": "array",
-                        "items": post_schema
-                    }
-                }
-            },
-            "examples": {
-                "application/json": {
-                    "posts": [
-                        {
-                            "id": 1,
-                            "author": "SwaggerUser",
-                            "title": "Intro to APIs",
-                            "content": "Let's build a cool API.",
-                            "category": "Technology",
-                            "date": "April 18, 2025",
-                            "likes": 12
-                        }
-                    ]
-                }
-            }
-        }
-    }
-})
+@swag_from("swagger_docs/posts_get.yml")
 @limiter.exempt
 def get_posts_v2():
     print("✅ /api/v2/posts was called")
@@ -463,6 +430,7 @@ def get_posts_v2():
 
 
 @v2.route("/posts/<int:post_id>/translate")
+@swag_from("swagger_docs/posts_translate_get.yml")
 def translate_individual_post(post_id):
     lang = request.args.get("lang", "en")
     post = session.query(Post).filter_by(id=post_id).first()
@@ -500,41 +468,7 @@ def translate_individual_post(post_id):
 # POST /posts
 # -------------------------
 @v2.route("/posts", methods=["POST"])
-@swag_from({
-    "tags": ["Posts"],
-    "summary": "Create a new post",
-    "description": "Adds a new blog post (requires authentication).",
-    "requestBody": {
-        "required": True,
-        "content": {
-            "application/json": {
-                "schema": {
-                    "type": "object",
-                    "required": ["title", "content", "category"],
-                    "properties": {
-                        "title": {"type": "string"},
-                        "content": {"type": "string"},
-                        "category": {"type": "string"}
-                    },
-                    "example": {
-                        "title": "My first post",
-                        "content": "This is a great post",
-                        "category": "General"
-                    }
-                }
-            }
-        }
-    },
-    "responses": {
-        201: {
-            "description": "Post successfully created",
-            "schema": post_schema
-        },
-        400: {
-            "description": "Validation failed"
-        }
-    }
-})
+@swag_from("swagger_docs/posts_post.yml")
 @token_required
 @limiter.limit("5 per minute")
 def add_post_v2(current_user):
@@ -620,62 +554,7 @@ def add_post_v2(current_user):
 
 
 @v2.route("/posts/<int:post_id>", methods=["PUT"])
-@swag_from({
-    "tags": ["Posts"],
-    "summary": "Update a blog post",
-    "description": "Updates the content of an existing blog post. Requires authentication and ownership.",
-    "parameters": [
-        {
-            "name": "post_id",
-            "in": "path",
-            "type": "integer",
-            "required": True,
-            "description": "The ID of the post to update"
-        }
-    ],
-    "requestBody": {
-        "required": True,
-        "content": {
-            "application/json": {
-                "schema": {
-                    "type": "object",
-                    "required": ["title", "content", "category"],
-                    "properties": {
-                        "title": {"type": "string"},
-                        "content": {"type": "string"},
-                        "category": {"type": "string"}
-                    },
-                    "example": {
-                        "title": "Updated Post Title",
-                        "content": "This is the updated content of the blog post.",
-                        "category": "UpdatedCategory"
-                    }
-                }
-            }
-        }
-    },
-    "responses": {
-        200: {
-            "description": "Post updated successfully",
-            "schema": post_schema,
-            "examples": {
-                "application/json": {
-                    "id": 1,
-                    "author": "SwaggerUser",
-                    "title": "Updated Post Title",
-                    "content": "This is the updated content of the blog post.",
-                    "category": "UpdatedCategory",
-                    "date": "April 17, 2025",
-                    "likes": 14,
-                    "updated": "April 18, 2025"
-                }
-            }
-        },
-        400: {"description": "Invalid request"},
-        403: {"description": "Not authorized"},
-        404: {"description": "Post not found"}
-    }
-})
+@swag_from("swagger_docs/posts_put.yml")
 @token_required
 @limiter.limit("5 per minute") # Allows productive work but prevents Spam
 def update_post_v2(current_user, post_id):
@@ -760,33 +639,7 @@ def update_post_v2(current_user, post_id):
 
 
 @v2.route("/posts/<int:post_id>", methods=["DELETE"])
-@swag_from({
-    "tags": ["Posts"],
-    "summary": "Delete a blog post",
-    "description": "Deletes a blog post. Requires authentication and ownership.",
-    "parameters": [
-        {
-            "name": "post_id",
-            "in": "path",
-            "type": "integer",
-            "required": True,
-            "description": "ID of the post to delete"
-        }
-    ],
-    "responses": {
-        200: {
-            "description": "Post deleted successfully",
-            "examples": {
-                "application/json": {
-                    "message": "Post 3 deleted"
-                }
-            }
-        },
-        403: {"description": "Not authorized to delete this post"},
-        404: {"description": "Post not found"}
-    }
-})
-
+@swag_from("swagger_docs/posts_delete.yml")
 @token_required
 def delete_post_v2(current_user, post_id):
     post = session.query(Post).filter_by(id=post_id).first()
@@ -803,23 +656,7 @@ def delete_post_v2(current_user, post_id):
 
 
 @v2.route("/categories", methods=["GET"])
-@swag_from({
-    "tags": ["Categories"],
-    "summary": "Get all blog post categories",
-    "description": "Returns a list of all categories currently used by blog posts.",
-    "responses": {
-        200: {
-            "description": "List of unique categories",
-            "schema": {
-                "type": "array",
-                "items": {"type": "string"}
-            },
-            "examples": {
-                "application/json": ["Technology", "Science", "Philosophy", "Travel"]
-            }
-        }
-    }
-})
+@swag_from("swagger_docs/categories_get.yml")
 @limiter.exempt
 def get_categories_v2():
     categories = session.query(Post.category).distinct().all()
@@ -827,50 +664,7 @@ def get_categories_v2():
 
 
 @v2.route("/posts/search", methods=["GET"])
-@swag_from({
-    "tags": ["Posts"],
-    "summary": "Search posts by keyword",
-    "description": "Searches for blog posts by matching text in title, content, or author.",
-    "parameters": [
-        {
-            "name": "q",
-            "in": "query",
-            "type": "string",
-            "required": True,
-            "description": "Keyword to search in title, content, or author (e.g., 'AI')"
-        }
-    ],
-    "responses": {
-        200: {
-            "description": "List of matching posts",
-            "schema": {
-                "type": "array",
-                "items": post_schema
-            },
-            "examples": {
-                "application/json": [
-                    {
-                        "id": 5,
-                        "author": "Lee",
-                        "title": "Understanding AI",
-                        "content": "This post explores the basics of artificial intelligence...",
-                        "category": "Technology",
-                        "date": "April 10, 2025",
-                        "likes": 42
-                    }
-                ]
-            }
-        },
-        404: {
-            "description": "No matching posts found",
-            "examples": {
-                "application/json": {
-                    "error": "No posts matched your search"
-                }
-            }
-        }
-    }
-})
+@swag_from(os.path.join(BASE_DIR, "swagger_docs", "posts_search_get.yml"))
 @limiter.limit("10 per minute")
 def search_posts_v2():
     query = (
@@ -938,46 +732,7 @@ def search_posts_v2():
 
 
 @v2.route("/posts/<int:post_id>/like", methods=["POST"])
-@swag_from({
-    "tags": ["Posts"],
-    "summary": "Like a post",
-    "description": "Increments the like count for a post.",
-    "parameters": [
-        {
-            "name": "post_id",
-            "in": "path",
-            "type": "integer",
-            "required": True,
-            "description": "ID of the post to like"
-        }
-    ],
-    "responses": {
-        200: {
-            "description": "Post liked successfully",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "message": {"type": "string"},
-                    "likes": {"type": "integer"}
-                }
-            },
-            "examples": {
-                "application/json": {
-                    "message": "Post 5 liked successfully",
-                    "likes": 13
-                }
-            }
-        },
-        404: {
-            "description": "Post not found",
-            "examples": {
-                "application/json": {
-                    "error": "Post with ID 999 not found"
-                }
-            }
-        }
-    }
-})
+@swag_from(os.path.join(BASE_DIR, "swagger_docs", "posts_like_post.yml"))
 @limiter.limit("20 per minute")
 @token_required
 def like_post(current_user, post_id):
@@ -1030,6 +785,7 @@ def like_post(current_user, post_id):
 
 
 @v2.route("/posts/<int:post_id>/comments", methods=["POST"])
+@swag_from("swagger_docs/comments_post.yml")
 @token_required
 def add_comment_v2(current_user, post_id):
     post = session.query(Post).filter_by(id=post_id).first()
@@ -1092,8 +848,7 @@ def add_comment_v2(current_user, post_id):
 
 
 @v2.route("/posts/<int:post_id>/comments", methods=["GET"])
-@limiter.exempt
-@v2.route("/posts/<int:post_id>/comments", methods=["GET"])
+@swag_from("swagger_docs/comments_get.yml")
 @limiter.exempt
 def get_comments_v2(post_id):
     post = session.query(Post).filter_by(id=post_id).first()
@@ -1118,6 +873,7 @@ def get_comments_v2(post_id):
 
 
 @v2.route("/comments/<int:comment_id>", methods=["DELETE"])
+@swag_from("swagger_docs/comments_delete.yml")
 @token_required
 def delete_comment(user, comment_id):
     comment = session.query(Comment).get(comment_id)
@@ -1138,48 +894,7 @@ def delete_comment(user, comment_id):
 # -------------------------
 @v2.route("/register", methods=["POST"])
 @limiter.limit("3 per minute") # Vulnerable for Brute-Force-Attacks
-@swag_from({
-    "tags": ["Auth"],
-    "summary": "Register a new user",
-    "description": "Creates a new user account with a username and password.",
-    "parameters": [
-        {
-            "name": "body",
-            "in": "body",
-            "required": True,
-            "schema": {
-                "type": "object",
-                "required": ["username", "password"],
-                "properties": {
-                    "username": {"type": "string"},
-                    "password": {"type": "string"}
-                },
-                "example": {
-                    "username": "new_user",
-                    "password": "securepassword123"
-                }
-            }
-        }
-    ],
-    "responses": {
-        200: {
-            "description": "User registered successfully",
-            "examples": {
-                "application/json": {
-                    "message": "User registered successfully"
-                }
-            }
-        },
-        400: {
-            "description": "Validation error or username taken",
-            "examples": {
-                "application/json": {
-                    "error": "Username already exists"
-                }
-            }
-        }
-    }
-})
+@swag_from("swagger_docs/register_post.yml")
 def register_v2():
     return register_user()
 
@@ -1188,54 +903,13 @@ def register_v2():
 # -------------------------
 @v2.route("/login", methods=["POST"])
 @limiter.limit("5 per minute") # Vulnerable for Brute-Force-Attacks
-@swag_from({
-    "tags": ["Auth"],
-    "summary": "User login",
-    "description": "Authenticates a user and returns a token.",
-    "requestBody": {
-        "required": True,
-        "content": {
-            "application/json": {
-                "schema": {
-                    "type": "object",
-                    "required": ["username", "password"],
-                    "properties": {
-                        "username": {"type": "string"},
-                        "password": {"type": "string"}
-                    },
-                    "example": {
-                        "username": "existing_user",
-                        "password": "mypassword123"
-                    }
-                }
-            }
-        }
-    },
-    "responses": {
-        200: {
-            "description": "Login successful, token returned",
-            "examples": {
-                "application/json": {
-                    "message": "Login successful",
-                    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
-                }
-            }
-        },
-        401: {
-            "description": "Unauthorized – invalid credentials",
-            "examples": {
-                "application/json": {
-                    "error": "Invalid username or password"
-                }
-            }
-        }
-    }
-})
+@swag_from("swagger_docs/login_post.yml")
 def login_v2():
     return login_user()
 
 
 @v2.route("/me", methods=["GET"])
+@swag_from("swagger_docs/me_get.yml")
 @token_required
 def get_current_user(current_user):
     return jsonify({
@@ -1250,46 +924,17 @@ def get_current_user(current_user):
 @v2.route("/secret", methods=["GET"])
 @token_required
 @limiter.limit("3 per minute")
-@swag_from({
-    "tags": ["Auth"],
-    "summary": "Test token authentication",
-    "description": "Returns a welcome message if token is valid. Requires a valid Bearer token.",
-    "parameters": [
-        {
-            "name": "Authorization",
-            "in": "header",
-            "type": "string",
-            "required": True,
-            "description": "Bearer token (e.g., Bearer YOUR_TOKEN_HERE)"
-        }
-    ],
-    "responses": {
-        200: {
-            "description": "Token is valid",
-            "examples": {
-                "application/json": {
-                    "message": "Welcome, authenticated user!"
-                }
-            }
-        },
-        401: {
-            "description": "Invalid or missing token",
-            "examples": {
-                "application/json": {
-                    "error": "Token is missing or invalid"
-                }
-            }
-        }
-    }
-})
+@swag_from("swagger_docs/secret_get.yml")
 def secret_v2(current_user):
     """Protected route to test token-based authentication."""
     return jsonify({"message": f"Welcome, {current_user}!"}), 200
+
 
 # -------------------------
 # Admin Route for Viewing Usage
 # -------------------------
 @v2.route("/admin/openai-usage", methods=["GET"])
+@swag_from("swagger_docs/admin_openai_usage_get.yml")
 @token_required
 @limiter.limit("3 per minute")
 def view_openai_usage(current_user):
@@ -1316,6 +961,7 @@ def view_openai_usage(current_user):
 
 
 @v2.route("/ai-usage", methods=["GET"])
+@swag_from("swagger_docs/ai_usage_get.yml")
 def get_ai_usage_status():
     from utils import openai_usage_counter, can_call_openai
     remaining = max(0, 10 - sum(len(v) for v in openai_usage_counter.values()))

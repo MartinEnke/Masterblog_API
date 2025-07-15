@@ -1,0 +1,25 @@
+tags:
+  - TTS
+summary: Check TTS demo usage status
+description: Returns whether the current user has already used the TTS demo. Requires authentication.
+responses:
+  '200':
+    description: TTS demo usage status
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            used_demo:
+              type: boolean
+              example: false
+  '401':
+    description: Unauthorized – invalid or missing token
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: Token is missing or invalid

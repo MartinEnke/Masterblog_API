@@ -1,0 +1,89 @@
+tags:
+  - Comments
+summary: Add a comment to a post
+description: Adds a new comment to a specific blog post. Requires authentication.
+parameters:
+  - name: post_id
+    in: path
+    required: true
+    schema:
+      type: integer
+    description: ID of the post to comment on
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - text
+        properties:
+          text:
+            type: string
+            example: Really insightful post, thanks!
+responses:
+  '201':
+    description: Comment added successfully
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Comment added"
+            comment:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 101
+                author:
+                  type: string
+                  example: Lee
+                text:
+                  type: string
+                  example: Really insightful post, thanks!
+                date:
+                  type: string
+                  example: April 18, 2025
+  '400':
+    description: Missing comment text
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Comment text required"
+  '403':
+    description: Comment rejected due to inappropriate content
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Comment rejected due to harmful or inappropriate content."
+  '404':
+    description: Post not found
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Post not found"
+  '429':
+    description: AI moderation limit reached
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "AI moderation limit reached. Try again later."

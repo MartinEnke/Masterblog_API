@@ -1,0 +1,15 @@
+tags:
+  - AI
+summary: Get AI usage status
+description: Returns how many OpenAI calls remain for the current hour.
+responses:
+  '200':
+    description: Remaining AI calls
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            remaining_calls:
+              type: integer
+              example: 7
