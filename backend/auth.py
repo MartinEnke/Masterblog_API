@@ -55,7 +55,6 @@ def generate_jwt(username):
     token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm="HS256")
     return token
 
-
 def decode_jwt(token):
     try:
         payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
@@ -64,7 +63,6 @@ def decode_jwt(token):
         raise Exception("Token expired")
     except InvalidTokenError:
         raise Exception("Invalid token")
-
 
 def register_user():
     data = request.get_json() or {}

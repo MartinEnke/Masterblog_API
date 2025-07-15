@@ -23,6 +23,7 @@ class User(Base):
     def __repr__(self):
         return f"<User(username={self.username})>"
 
+
 class Post(Base):
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True)
@@ -47,6 +48,7 @@ class Post(Base):
     @property
     def author(self):
         return self.user.username
+
 
 class Comment(Base):
     __tablename__ = 'comments'

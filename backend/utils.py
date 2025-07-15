@@ -1,4 +1,3 @@
-from flask import jsonify
 from backend.models import Post, Comment, PostLike
 from backend.translations_db import session
 from datetime import datetime
@@ -64,7 +63,6 @@ def load_posts():
         result.append(post_dict)
 
     return result
-
 
 
 def save_post(post_data):

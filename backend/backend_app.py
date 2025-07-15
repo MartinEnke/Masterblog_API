@@ -12,7 +12,6 @@ import os
 from backend.v2_routes import v2 as v2_blueprint
 
 
-
 print("Using DB path:", os.path.abspath('blog.db'))
 init_db()
 
@@ -53,6 +52,7 @@ Swagger(app)
 CORS(app, origins="*", supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
 limiter.init_app(app)
 
+
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_frontend(path):
@@ -60,6 +60,7 @@ def serve_frontend(path):
     if path and os.path.exists(static_path):
         return app.send_static_file(path)
     return render_template("index.html")
+
 
 @app.route("/api/v1/posts", methods=["GET"])
 @limiter.exempt
@@ -104,6 +105,7 @@ def get_posts():
 
     return jsonify({"page": page, "limit": limit, "total_posts": len(posts), "posts": paginated})
 
+
 @app.route("/api/v1/posts", methods=["POST"])
 @token_required
 @limiter.limit("5 per minute")
@@ -125,6 +127,7 @@ def add_post(current_user):
     new_post["date"] = datetime.now().strftime("%B %d, %Y")
     return jsonify(new_post), 201
 
+
 @app.route("/api/v1/posts/<int:post_id>", methods=['PUT'])
 @limiter.limit("5 per minute")
 @token_required
@@ -142,6 +145,7 @@ def update_post(current_user, post_id):
 
     return jsonify(updated_post), 200
 
+
 @app.route("/api/v1/posts/<int:post_id>", methods=['DELETE'])
 @token_required
 @limiter.limit("5 per minute")
@@ -153,6 +157,7 @@ def delete_post(current_user, post_id):
         return jsonify({"error": f"Post with ID {post_id} not found"}), 404
     return jsonify({"message": f"Post {post_id} deleted"}), 200
 
+
 @app.route("/api/v1/posts/<int:post_id>/like", methods=["POST"])
 @limiter.limit("20 per minute")
 def like_post(post_id):
@@ -160,6 +165,7 @@ def like_post(post_id):
     if updated_likes is None:
         return jsonify({"error": f"Post with ID {post_id} not found"}), 404
     return jsonify({"message": f"Post {post_id} liked", "likes": updated_likes}), 200
+
 
 @app.route("/api/v1/posts/search", methods=['GET'])
 @limiter.limit("10 per minute")
@@ -195,6 +201,7 @@ def search_post():
 
     return jsonify(posts), 200
 
+
 @app.route("/api/v1/categories", methods=["GET"])
 @limiter.exempt
 def get_categories():
@@ -202,21 +209,26 @@ def get_categories():
     unique_categories = sorted({c[0] for c in categories if c[0]})
     return jsonify(unique_categories)
 
+
 @app.route("/api/v1/register", methods=["POST"])
 @limiter.limit("3 per minute")
 def register():
     return register_user()
+
 
 @app.route("/api/v1/login", methods=["POST"])
 @limiter.limit("5 per minute")
 def login():
     return login_user()
 
+
 @app.route('/api/v1/secret', methods=['GET'])
 @token_required
 @limiter.limit("3 per minute")
 def secret(current_user):
     return jsonify({'message': f'Welcome, {current_user}!'}), 200
+
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5021))

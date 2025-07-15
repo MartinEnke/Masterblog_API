@@ -52,11 +52,11 @@ const UI_TRANSLATIONS = {
     yes: "Yes",
     readAloud: "Read Aloud (Demo)",
     ttsUsedUp: "⚠️ You've used your demo listen. Upgrade required for more.",
-    "getnotif": "Get notified on likes & comments",   // when no email is stored
-    "noEmailSet": "Please save email first",    // when clicked on getnotif but no email is stored
-    "invalid": "Invalid", // when user enters false email format
-    "notificationsOn": "Notifications ON", // only shows when email is stored and notifications_enabled = 1
-    "notificationsOff": "Notifications disabled — click to enable", // only shows when email is stored and notifications_enabled = 0
+    "getnotif": "Get notified on likes & comments",
+    "noEmailSet": "Please save email first",
+    "invalid": "Invalid",
+    "notificationsOn": "Notifications ON",
+    "notificationsOff": "Notifications disabled — click to enable",
     "infoTitle": "Welcome!",
 "infoIntro": "This project began as a school assignment and grew into an exploration of core backend and frontend web development, featuring multilingual publishing and AI-powered tools.",
 "infoFeaturesTitle": "Highlights:",

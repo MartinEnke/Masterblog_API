@@ -1,9 +1,9 @@
 from backend.db import session
 from backend.models import User
 from dotenv import load_dotenv
-import os
 
-load_dotenv()  # Loads environment variables
+
+load_dotenv()
 
 def make_admin(username="admin"):
     user = session.query(User).filter_by(username=username).first()

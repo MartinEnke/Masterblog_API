@@ -5,19 +5,15 @@ from backend.db import session
 from backend.models import Post, User, Comment, PostLike
 from backend.rate_limit import limiter
 from backend.auth import token_required, register_user, login_user, TOKENS
-from backend.utils import load_posts, save_post, update_post_db, delete_post_db, like_post_db, validate_post_data, send_email
+from backend.utils import validate_post_data, send_email
 from backend.translations_db import get_translation, save_translation, translate_post
-from babel.dates import format_date
 from langdetect import detect
-from traceback import print_exc
-from flask import g
 import jwt
 from backend.utils import can_call_openai, moderate_post
 from sqlalchemy import func
 import os, requests, base64
 from flask import Blueprint, request, jsonify, send_file, current_app
 from io import BytesIO
-# from backend.notifications import send_email
 import html
 import re
 from threading import Thread
@@ -25,10 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from email_validator import validate_email, EmailNotValidError
 
 
-
-
 v2 = Blueprint("v2", __name__, url_prefix="/api/v2")
-
 
 HUME_KEY = os.getenv("HUME_KEY")  # set in .env
 
@@ -41,6 +34,7 @@ def status():
         "status": "ok",
         "post_count": len(posts)
     }
+
 
 @v2.route("/generate-tts", methods=["POST"])
 @token_required
@@ -85,12 +79,12 @@ def gen_tts_hume(current_user):
         return jsonify({"error": "Internal server error"}), 500
 
 
-
 @v2.route("/tts-demo-status", methods=["GET"])
 @token_required
 def tts_demo_status(current_user):
     session.refresh(current_user)
     return jsonify({"used_demo": current_user.tts_demo_used})
+
 
 def get_current_user_from_token():
     token = request.headers.get("Authorization", "").replace("Bearer ", "")
@@ -101,6 +95,7 @@ def get_current_user_from_token():
     except Exception as e:
         print("❌ Invalid token:", e)
         return None
+
 
 def get_user_from_token_value(token):
     try:
@@ -120,6 +115,7 @@ def get_user(current_user):
         "email": current_user.email,
         "notifications_enabled": bool(current_user.notifications_enabled)  # ✅ force boolean
     }), 200
+
 
 
 @v2.route("/user/email", methods=["PUT"])
@@ -166,6 +162,7 @@ def delete_email(current_user):
     except Exception as e:
         session.rollback()
         return jsonify({"error": "Failed to delete email."}), 500
+
 
 @v2.route("/user/notifications", methods=["PUT"])
 @token_required
@@ -222,7 +219,6 @@ def submit_feedback(current_user):
 # -------------------------
 # Swagger schemas
 # -------------------------
-
 post_schema = {
     "type": "object",
     "properties": {
@@ -240,7 +236,6 @@ post_schema = {
 # -------------------------
 # GET /posts
 # -------------------------
-
 @v2.route("/posts", methods=["GET"])
 @swag_from({
     "tags": ["Posts"],
@@ -284,7 +279,6 @@ post_schema = {
         }
     }
 })
-
 @limiter.exempt
 def get_posts_v2():
     print("✅ /api/v2/posts was called")
@@ -468,7 +462,6 @@ def get_posts_v2():
         return jsonify({"error": str(e)}), 500
 
 
-
 @v2.route("/posts/<int:post_id>/translate")
 def translate_individual_post(post_id):
     lang = request.args.get("lang", "en")
@@ -502,10 +495,10 @@ def translate_individual_post(post_id):
         "content": new_content,
         "lang": lang
     })
+
 # -------------------------
 # POST /posts
 # -------------------------
-
 @v2.route("/posts", methods=["POST"])
 @swag_from({
     "tags": ["Posts"],
@@ -624,9 +617,6 @@ def add_post_v2(current_user):
         response["warning"] = f"⚠️ The text appears to be in {original_lang}, not {ui_lang}."
 
     return jsonify(response), 201
-
-
-
 
 
 @v2.route("/posts/<int:post_id>", methods=["PUT"])
@@ -769,7 +759,6 @@ def update_post_v2(current_user, post_id):
     return jsonify(response), 200
 
 
-
 @v2.route("/posts/<int:post_id>", methods=["DELETE"])
 @swag_from({
     "tags": ["Posts"],
@@ -831,7 +820,6 @@ def delete_post_v2(current_user, post_id):
         }
     }
 })
-
 @limiter.exempt
 def get_categories_v2():
     categories = session.query(Post.category).distinct().all()
@@ -1041,7 +1029,6 @@ def like_post(current_user, post_id):
         return jsonify({"error": "Something went wrong"}), 500
 
 
-
 @v2.route("/posts/<int:post_id>/comments", methods=["POST"])
 @token_required
 def add_comment_v2(current_user, post_id):
@@ -1104,7 +1091,6 @@ def add_comment_v2(current_user, post_id):
     }), 201
 
 
-
 @v2.route("/posts/<int:post_id>/comments", methods=["GET"])
 @limiter.exempt
 @v2.route("/posts/<int:post_id>/comments", methods=["GET"])
@@ -1131,8 +1117,6 @@ def get_comments_v2(post_id):
     })
 
 
-
-
 @v2.route("/comments/<int:comment_id>", methods=["DELETE"])
 @token_required
 def delete_comment(user, comment_id):
@@ -1149,11 +1133,9 @@ def delete_comment(user, comment_id):
     session.commit()
     return jsonify({"message": f"Comment {comment_id} deleted"}), 200
 
-
 # -------------------------
 # POST /register
 # -------------------------
-
 @v2.route("/register", methods=["POST"])
 @limiter.limit("3 per minute") # Vulnerable for Brute-Force-Attacks
 @swag_from({
@@ -1201,11 +1183,9 @@ def delete_comment(user, comment_id):
 def register_v2():
     return register_user()
 
-
 # -------------------------
 # POST /login
 # -------------------------
-
 @v2.route("/login", methods=["POST"])
 @limiter.limit("5 per minute") # Vulnerable for Brute-Force-Attacks
 @swag_from({
@@ -1267,7 +1247,6 @@ def get_current_user(current_user):
 # -------------------------
 # POST /login
 # -------------------------
-
 @v2.route("/secret", methods=["GET"])
 @token_required
 @limiter.limit("3 per minute")
@@ -1307,11 +1286,9 @@ def secret_v2(current_user):
     """Protected route to test token-based authentication."""
     return jsonify({"message": f"Welcome, {current_user}!"}), 200
 
-
 # -------------------------
 # Admin Route for Viewing Usage
 # -------------------------
-
 @v2.route("/admin/openai-usage", methods=["GET"])
 @token_required
 @limiter.limit("3 per minute")

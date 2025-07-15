@@ -1,8 +1,5 @@
 # translations_db.py
-from sqlalchemy import Column, Integer, String, UniqueConstraint, Boolean, ForeignKey
-from sqlalchemy.orm import declarative_base, relationship
 from backend.db import Base, engine, session
-from backend.models import Post
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -46,8 +43,6 @@ def save_translation(post_id, lang, title, content, is_ai=True):
     except Exception as e:
         print("❌ Error saving translation:", e)
 
-
-
 def translate_text(text, lang):
     # 🔁 Replace with OpenAI or DeepL later
     return f"[{lang.upper()}] {text}"
@@ -63,7 +58,6 @@ def translate_post(title, content, target_lang):
         f"- Your output must **only** include the translated title and content.\n\n"
         f"Title:\n{title}\n\nContent:\n{content}"
     )
-
 
     try:
         response = client.chat.completions.create(
