@@ -159,6 +159,13 @@ html {
   box-shadow: none;
 }
 
+.filter-bar select:focus,
+#search-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(106, 168, 160, 0.5); /* subtle teal glow */
+  border-color: white;
+}
+
 /* ========================================================================
    POSTS
    ======================================================================== */

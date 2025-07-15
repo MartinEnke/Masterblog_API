@@ -79,7 +79,9 @@
   <div class="flex flex-col items-center">
     <h3 class="font-normal text-white mb-2">OpenAI Translator</h3>
     <select id="lang-select" onchange="setLanguage(this.value)"
-  class="text-sm border border-white bg-black text-white rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
+  class="text-sm border border-white rounded-md px-3 py-2 text-white focus:outline-none transition-colors duration-200"
+  style="background-color: #14151c;"
+>
 
       <option value="en">English</option>
       <option value="de">Deutsch</option>
@@ -103,7 +105,7 @@
 </div>
 
 <!-- Main Container -->
-<main class="bg-black border border-white max-w-5xl mx-auto p-4 md:p-6 rounded-lg shadow-md">
+<main class="max-w-5xl mx-auto">
 
   <!-- Top Navigation -->
   <section class="bg-page border border-white rounded-lg p-4 mb-6">
@@ -214,18 +216,27 @@
 
 
   <!-- Filters & Search -->
-  <section class="bg-page border border-white rounded-lg p-4 mb-6">
+  <section
+  class="
+    bg-transparent border-0 rounded-none p-0 mb-6
+    sm:bg-page sm:border sm:border-white sm:rounded-lg sm:p-4
+  "
+>
   <div class="flex flex-col gap-4">
     <!-- Dropdowns -->
     <div class="flex flex-col md:flex-row md:items-center md:gap-4">
       <select id="filter-category" data-i18n-option onchange="loadPosts()"
-        class="w-full md:w-[180px] text-sm px-3 py-2 bg-black text-white border border-white rounded-md focus:ring-2 focus:ring-blue-500">
-        <option value="">All Categories</option>
-      </select>
+  class="w-full md:w-[180px] text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
+  style="background-color: #14151c;"
+>
+  <option value="">All Categories</option>
+</select>
 
       <div class="flex flex-col sm:flex-row gap-4 flex-1 mt-4 md:mt-0">
         <select id="sort-field" data-i18n-option onchange="loadPosts()"
-          class="flex-1 text-sm px-3 py-2 bg-black text-white border border-white rounded-md focus:ring-2 focus:ring-blue-500">
+  class="flex-1 text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
+  style="background-color: #14151c;"
+>
           <option value="">noSorting</option>
           <option value="date" data-i18n-option="sortDate">Date</option>
           <option value="author" data-i18n-option="sortAuthor">Author</option>
@@ -235,7 +246,9 @@
         </select>
 
         <select id="sort-direction" data-i18n-option onchange="loadPosts()"
-          class="flex-1 text-sm px-3 py-2 bg-black text-white border border-white rounded-md focus:ring-2 focus:ring-blue-500">
+  class="flex-1 text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
+  style="background-color: #14151c;"
+>
           <option value="desc" data-i18n-option="descending">Descending</option>
           <option value="asc" data-i18n-option="ascending">Ascending</option>
         </select>
@@ -261,7 +274,8 @@
   oninput="loadPosts()"
   data-i18n-placeholder="searchPlaceholder"
   placeholder="Search author, title or content..."
-  class="w-full text-sm pl-10 pr-4 py-2 text-white placeholder-gray-400 border border-white rounded-md focus:ring-2 focus:ring-blue-500"
+  class="w-full text-sm px-3 py-2 text-white border border-white rounded-md focus:outline-none transition-colors duration-200"
+  style="background-color: rgba(106, 168, 160, 0.15);"
 />
         <div class="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none"></div>
       </div>
