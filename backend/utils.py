@@ -2,29 +2,29 @@ from backend.models import Post, Comment, PostLike
 from backend.translations_db import session
 from datetime import datetime
 from dotenv import load_dotenv
-from openai import OpenAI
+from google import genai
 import os
-from flask import request
+from flask import request, current_app
 from flask_limiter.util import get_remote_address
 import re
-load_dotenv()
 import smtplib
 from email.mime.text import MIMEText
-from flask import current_app
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+load_dotenv()
+
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 
 def validate_post_data(data):
     """
-        Validate post data fields for title, content, and category.
+    Validate post data fields for title, content, and category.
 
-        Args:
-            data (dict): Post data containing 'title', 'content', and 'category'.
+    Args:
+        data (dict): Post data containing 'title', 'content', and 'category'.
 
-        Returns:
-            dict or None: Returns error dict if validation fails, else None.
-        """
+    Returns:
+        dict or None: Returns error dict if validation fails, else None.
+    """
     if not data:
         return {"error": "Enter a title, content, and category"}
 
@@ -44,13 +44,12 @@ def validate_post_data(data):
 
 def load_posts():
     """
-        Load all posts from the database with dynamic like counts and comments.
+    Load all posts from the database with dynamic like counts and comments.
 
-        Returns:
-            list of dict: List of posts with keys like id, author, title, content,
-                          category, date, updated, likes, and comments.
-        """
-    """Load all blog posts from the database as dicts, including dynamic like counts."""
+    Returns:
+        list of dict: List of posts with keys like id, author, title, content,
+                      category, date, updated, likes, and comments.
+    """
     posts = session.query(Post).all()
     result = []
 
@@ -65,7 +64,7 @@ def load_posts():
             "category": post.category,
             "date": post.date.strftime("%B %d, %Y") if post.date else None,
             "updated": post.updated.strftime("%B %d, %Y") if post.updated else None,
-            "likes": like_count,  # ✅ dynamically computed like count
+            "likes": like_count,
             "comments": [
                 {
                     "author": c.author,
@@ -83,16 +82,15 @@ def load_posts():
 
 def save_post(post_data):
     """
-        Save a new post to the database.
+    Save a new post to the database.
 
-        Args:
-            post_data (dict): Dictionary with post data including 'author',
-                              'title', 'content', 'category', and optional 'likes'.
+    Args:
+        post_data (dict): Dictionary with post data including 'author',
+                          'title', 'content', 'category', and optional 'likes'.
 
-        Returns:
-            int: ID of the newly created post.
-        """
-    """Add a new post to the database."""
+    Returns:
+        int: ID of the newly created post.
+    """
     post = Post(
         author=post_data["author"],
         title=post_data["title"],
@@ -107,16 +105,15 @@ def save_post(post_data):
 
 def delete_post_db(post_id, current_user):
     """
-        Delete a post if it exists and the current user is the author.
+    Delete a post if it exists and the current user is the author.
 
-        Args:
-            post_id (int): ID of the post to delete.
-            current_user (User): User requesting deletion.
+    Args:
+        post_id (int): ID of the post to delete.
+        current_user (User): User requesting deletion.
 
-        Returns:
-            tuple: JSON response dict and HTTP status code.
-        """
-    """Delete a post from the database if the current user is the author."""
+    Returns:
+        tuple: JSON response dict and HTTP status code.
+    """
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return {"error": f"Post with ID {post_id} not found"}, 404
@@ -131,20 +128,20 @@ def delete_post_db(post_id, current_user):
 
 def update_post_db(post_id, data):
     """
-        Update the title, content, category, and updated timestamp of a post.
+    Update the title, content, category, and updated timestamp of a post.
 
-        Args:
-            post_id (int): ID of the post to update.
-            data (dict): Dictionary containing 'title', 'content', and 'category'.
+    Args:
+        post_id (int): ID of the post to update.
+        data (dict): Dictionary containing 'title', 'content', and 'category'.
 
-        Returns:
-            Post or None: Updated Post object if found, else None.
-        """
+    Returns:
+        Post or None: Updated Post object if found, else None.
+    """
     post = session.query(Post).filter_by(id=post_id).first()
     if post:
-        post.title = data['title']
-        post.content = data['content']
-        post.category = data['category']
+        post.title = data["title"]
+        post.content = data["content"]
+        post.category = data["category"]
         post.updated = datetime.utcnow()
         session.commit()
         return post
@@ -153,15 +150,14 @@ def update_post_db(post_id, data):
 
 def like_post_db(post_id):
     """
-        Increment the like count of a post.
+    Increment the like count of a post.
 
-        Args:
-            post_id (int): ID of the post to like.
+    Args:
+        post_id (int): ID of the post to like.
 
-        Returns:
-            tuple: JSON response dict and HTTP status code.
-        """
-    """Increment the like count of a post in the database."""
+    Returns:
+        tuple: JSON response dict and HTTP status code.
+    """
     post = session.query(Post).filter_by(id=post_id).first()
     if not post:
         return {"error": f"Post with ID {post_id} not found"}, 404
@@ -173,17 +169,17 @@ def like_post_db(post_id):
 
 def send_email(app, to_email, subject, body):
     """
-        Send an email using SMTP or print to console in development mode.
+    Send an email using SMTP or print to console in development mode.
 
-        Args:
-            app (Flask): Flask application context.
-            to_email (str): Recipient email address.
-            subject (str): Email subject.
-            body (str): Email body content.
+    Args:
+        app (Flask): Flask application context.
+        to_email (str): Recipient email address.
+        subject (str): Email subject.
+        body (str): Email body content.
 
-        Returns:
-            None
-        """
+    Returns:
+        None
+    """
     with app.app_context():
         if current_app.config.get("ENV") == "development":
             print(f"📧 Dev mode: would send email to {to_email}:\nSubject: {subject}\n{body}")
@@ -202,7 +198,6 @@ def send_email(app, to_email, subject, body):
         msg["To"] = to_email
 
         try:
-            # Try STARTTLS first (most common for port 587)
             server = smtplib.SMTP(smtp_server, smtp_port)
             server.ehlo()
             server.starttls()
@@ -215,7 +210,6 @@ def send_email(app, to_email, subject, body):
             print(f"⚠️ STARTTLS failed: {e1}. Trying SSL fallback...")
 
             try:
-                # Fallback: SSL (commonly used with port 465)
                 server = smtplib.SMTP_SSL(smtp_server, smtp_ssl_port)
                 server.login(smtp_user, smtp_password)
                 server.sendmail(from_email, [to_email], msg.as_string())
@@ -228,35 +222,34 @@ def send_email(app, to_email, subject, body):
 
 def moderate_post(title, content):
     """
-        Use GPT-4o-mini to moderate post content.
+    Use Gemini to moderate post content.
 
-        Args:
-            title (str): Post title.
-            content (str): Post content.
+    Args:
+        title (str): Post title.
+        content (str): Post content.
 
-        Returns:
-            str: One of 'approved', 'rejected', or 'needs_review'.
-        """
-    """Moderate a post using gpt-4o-mini (educational-tier access)."""
+    Returns:
+        str: One of 'approved', 'rejected', or 'needs_review'.
+    """
     prompt = (
-        '''You are a helpful but balanced content moderator.
-           Return ONLY one of: 'approved', 'rejected', or 'needs_review'.
-           'rejected' = clearly offensive, harmful, violent, or unsafe
-           'needs_review' = likely problematic but unclear — use this rarely
-           'approved' = appropriate or benign
-           Be generous with what is safe. Avoid flagging harmless or emotional expressions.'''
-           f"Title:\n{title}\n\nContent:\n{content}"
+        "You are a helpful but balanced content moderator.\n"
+        "Return ONLY one of: approved, rejected, or needs_review.\n"
+        "rejected = clearly offensive, harmful, violent, or unsafe\n"
+        "needs_review = likely problematic but unclear — use this rarely\n"
+        "approved = appropriate or benign\n"
+        "Be generous with what is safe. Avoid flagging harmless or emotional expressions.\n\n"
+        f"Title:\n{title}\n\nContent:\n{content}"
     )
 
     try:
-        print("🔍 Prompt being sent to GPT:\n", prompt)
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0
+        print("🔍 Prompt being sent to Gemini:\n", prompt)
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
         )
 
-        decision = response.choices[0].message.content.strip().lower()
+        decision = (response.text or "").strip().lower()
         print("🤖 Moderation decision:", decision)
 
         if decision in ["approved", "rejected", "needs_review"]:
@@ -270,21 +263,23 @@ def moderate_post(title, content):
         return "needs_review"
 
 
-openai_usage_counter = {}
+gemini_usage_counter = {}
+
 
 def get_request_identity():
     """
-        Get a unique identifier for the requestor based on Authorization header
-        or IP address.
+    Get a unique identifier for the requestor based on Authorization header
+    or IP address.
 
-        Returns:
-            str: Identifier string.
-        """
+    Returns:
+        str: Identifier string.
+    """
     return request.headers.get("Authorization", "anonymous") or get_remote_address()
 
-def can_call_openai(limit=10):
+
+def can_call_gemini(limit=10):
     """
-    Rate limit OpenAI API calls to a maximum number per hour per user/IP.
+    Rate limit Gemini API calls to a maximum number per hour per user/IP.
 
     Args:
         limit (int): Maximum allowed calls per hour.
@@ -293,19 +288,19 @@ def can_call_openai(limit=10):
         bool: True if call is allowed, False if limit exceeded.
     """
     from time import time
+
     identity = get_request_identity()
     now = time()
 
-    if identity not in openai_usage_counter:
-        openai_usage_counter[identity] = []
+    if identity not in gemini_usage_counter:
+        gemini_usage_counter[identity] = []
 
-    # Keep only timestamps within the last hour
-    openai_usage_counter[identity] = [
-        t for t in openai_usage_counter[identity] if now - t < 3600
+    gemini_usage_counter[identity] = [
+        t for t in gemini_usage_counter[identity] if now - t < 3600
     ]
 
-    if len(openai_usage_counter[identity]) >= limit:
+    if len(gemini_usage_counter[identity]) >= limit:
         return False
 
-    openai_usage_counter[identity].append(now)
+    gemini_usage_counter[identity].append(now)
     return True
