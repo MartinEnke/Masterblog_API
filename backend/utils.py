@@ -14,6 +14,14 @@ load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+def can_call_openai() -> bool:
+    """
+    Backward-compatible name.
+
+    The application now uses Gemini, but older routes still import
+    can_call_openai().
+    """
+    return bool(os.getenv("GEMINI_API_KEY", "").strip())
 
 def validate_post_data(data):
     """
