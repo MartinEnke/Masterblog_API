@@ -21,6 +21,7 @@ Flask==3.1.0
 flask-cors==5.0.1
 Flask-Limiter==3.12
 frozenlist==1.7.0
+google-genai
 h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1

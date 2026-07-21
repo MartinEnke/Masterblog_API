@@ -1,95 +1,149 @@
-# translations_db.py
-from backend.db import Base, engine, session
-import os
-from dotenv import load_dotenv
-from openai import OpenAI
-from backend.models import PostTranslation
-load_dotenv()  # Loads .env file
+# backend/translations_db.py
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-# client = OpenAI(
-#     api_key=os.getenv("TOGETHER_AI_KEY"),
-#     base_url="https://api.together.xyz/v1"
-# )
+import json
+import os
+
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
+
+from backend.db import Base, engine, session
+from backend.models import PostTranslation
+
+load_dotenv()
+
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
+
+def get_gemini_client() -> genai.Client:
+    """
+    Create the Gemini client only when a translation is requested.
+
+    This prevents the entire application from crashing during startup
+    when GEMINI_API_KEY is missing or misconfigured.
+    """
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is missing")
+
+    return genai.Client(api_key=api_key)
 
 
 def init_db():
     Base.metadata.create_all(engine)
 
+
 # Translation helpers
 def get_translation(post_id, lang):
-    return session.query(PostTranslation).filter_by(post_id=post_id, lang=lang).first()
+    return (
+        session.query(PostTranslation)
+        .filter_by(post_id=post_id, lang=lang)
+        .first()
+    )
+
 
 def save_translation(post_id, lang, title, content, is_ai=True):
     try:
         existing = get_translation(post_id, lang)
+
         if existing:
             existing.title = title
             existing.content = content
             existing.is_ai_translation = is_ai
             existing.original_post_id = post_id
         else:
-            new = PostTranslation(
+            new_translation = PostTranslation(
                 post_id=post_id,
                 lang=lang,
                 title=title,
                 content=content,
                 is_ai_translation=is_ai,
-                original_post_id=post_id
+                original_post_id=post_id,
             )
-            session.add(new)
+            session.add(new_translation)
 
-        session.commit()  # ← added this
-    except Exception as e:
-        print("❌ Error saving translation:", e)
+        session.commit()
+
+    except Exception as exc:
+        session.rollback()
+        print("Error saving translation:", exc)
+
 
 def translate_text(text, lang):
-    # 🔁 Replace with OpenAI or DeepL later
+    """
+    Simple fallback helper.
+
+    This function currently does not call Gemini because translate_post()
+    handles the structured title-and-content translation.
+    """
     return f"[{lang.upper()}] {text}"
+
 
 def translate_post(title, content, target_lang):
     prompt = (
         f"Translate the following blog post into {target_lang.upper()}.\n\n"
-        f"- Translate both the title and the content fully, even if they contain technical or stylized phrases.\n"
-        f"- Do not skip words that seem like proper nouns unless they are truly universal (e.g., 'AI').\n"
-        f"- Do not add explanations, credits, usernames, or translator notes.\n"
-        f"- Do not expand short phrases or poetic lines.\n"
-        f"- Maintain brevity, tone, and sentence structure.\n"
-        f"- Your output must **only** include the translated title and content.\n\n"
-        f"Title:\n{title}\n\nContent:\n{content}"
+        "- Translate both the title and content fully, including technical "
+        "or stylized phrases.\n"
+        "- Preserve proper nouns unless they have an established translation.\n"
+        "- Do not add explanations, credits, usernames, or translator notes.\n"
+        "- Do not expand short phrases or poetic lines.\n"
+        "- Preserve the original tone, brevity, paragraph structure, and meaning.\n"
+        "- Return only the translated title and content in the required JSON format.\n\n"
+        f"Original title:\n{title}\n\n"
+        f"Original content:\n{content}"
     )
 
+    response_schema = {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+                "description": "The fully translated blog-post title.",
+            },
+            "content": {
+                "type": "string",
+                "description": "The fully translated blog-post content.",
+            },
+        },
+        "required": ["title", "content"],
+        "additionalProperties": False,
+    }
+
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0
+        client = get_gemini_client()
+
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0,
+                response_mime_type="application/json",
+                response_json_schema=response_schema,
+            ),
         )
-        # response = client.chat.completions.create(
-        #     model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        #     messages=[{"role": "user", "content": prompt}],
-        #     temperature=0.7
-        # )
 
-        result = response.choices[0].message.content.strip()
-        print("📤 AI raw response:\n", repr(result))
+        raw_result = (response.text or "").strip()
 
-        # Look for multiple variants of "title" and "content"
-        title_markers = ["Title:", "Titre :", "Título:", "Titel:"]
-        content_markers = ["Content:", "Contenu :", "Contenido:", "Inhalt:"]
+        if not raw_result:
+            raise ValueError("Gemini returned an empty response")
 
-        for t in title_markers:
-            if t in result:
-                for c in content_markers:
-                    if c in result:
-                        new_title = result.split(t)[1].split(c)[0].strip()
-                        new_content = result.split(c)[1].strip()
-                        return new_title, new_content
+        result = json.loads(raw_result)
 
-        # Fallback to entire response
-        return title, result
+        translated_title = str(result.get("title", "")).strip()
+        translated_content = str(result.get("content", "")).strip()
 
-    except Exception as e:
-        print("❌ AI translation failed:", e)
+        if not translated_title or not translated_content:
+            raise ValueError(
+                "Gemini response did not contain a translated title and content"
+            )
+
+        return translated_title, translated_content
+
+    except (json.JSONDecodeError, TypeError, ValueError, RuntimeError) as exc:
+        print("Gemini translation failed:", exc)
         return title, content
 
+    except Exception as exc:
+        print("Unexpected Gemini translation error:", exc)
+        return title, content
